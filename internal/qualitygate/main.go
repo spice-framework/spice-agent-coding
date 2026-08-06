@@ -29,8 +29,8 @@ const (
 	spiceVersion       = "v0.1.0-preview.1.0.20260806200749-524424a04df0"
 	toolchainVersion   = "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6"
 	agentVersion       = "v0.0.0-20260806204214-1f072842707a"
-	providerVersion    = "v0.0.0-20260806204218-b0d4099d2754"
-	codingToolsVersion = "v0.0.0-20260806202006-d06a11929ddb"
+	providerVersion    = "v0.0.0-20260806210759-4beed3838dd2"
+	codingToolsVersion = "v0.0.0-20260806210553-17cbef3b93fa"
 )
 
 var output io.Writer = os.Stdout

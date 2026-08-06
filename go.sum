@@ -6,10 +6,10 @@ github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0 
 github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0/go.mod h1:dBZV5UZcbY6pzhfGNtvAwQIJ8YsFna+jf1SAlmukJfk=
 github.com/spice-framework/spice-agent v0.0.0-20260806204214-1f072842707a h1:g+AafVIq7RCzp8ZHANXC2yWSL9yKqq2oNGVZma3TiSo=
 github.com/spice-framework/spice-agent v0.0.0-20260806204214-1f072842707a/go.mod h1:pJO+ySRXrN40m5KKelXAsY3wUxhwS89VNpnLWJkOtZY=
-github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806204218-b0d4099d2754 h1:8/Q2Zvn/Kr0KImW7uYNP7cy+CFs4LAp5hSyLCCUovGw=
-github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806204218-b0d4099d2754/go.mod h1:tMsa68cYR0coUVgYjGljo07YjI+idOFpaDZGx00FV+M=
-github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806202006-d06a11929ddb h1:WZjSXHPTjccG+oUkj61NA7OzL9LJt35WiW+OjNuFI58=
-github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806202006-d06a11929ddb/go.mod h1:AKB0NZmj2d0olYvTS+UWR7lMfz8aPW5qiCRpcLv0/OQ=
+github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806210759-4beed3838dd2 h1:EZWJ0pm5yltJaTbs9ElvmMFHpuuhW+CnI3nPCRX88aQ=
+github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806210759-4beed3838dd2/go.mod h1:J3pRFvqQVXokKiNa9d9C4IyLT+bP7k2E7saNDurUaxg=
+github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806210553-17cbef3b93fa h1:95onEHIxU8EOeISjt5XNbrNDUm18e73ab0j+zsZRV0o=
+github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806210553-17cbef3b93fa/go.mod h1:M45WXiH4f1L0/J3sUEquVWXpgF9RV8H930UubsgI5lI=
 github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6 h1:paTYw/o/6OsbNAvOWvjicOOqWyyt2Nd3vWdoPq8+BjA=
 github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6/go.mod h1:5qwAMEFRzVhJTTD96xwQXMYFlUYwBWlwNNeOhZqqPeg=
 github.com/tidwall/gjson v1.14.2/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=

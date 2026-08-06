@@ -60,11 +60,11 @@ github.com/spice-framework/spice-agent/message
 github.com/spice-framework/spice-agent/model
 github.com/spice-framework/spice-agent/stage
 github.com/spice-framework/spice-agent/tool
-# github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806204218-b0d4099d2754
+# github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806210759-4beed3838dd2
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-provider-openai
 github.com/spice-framework/spice-agent-provider-openai/autoconfigure
-# github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806202006-d06a11929ddb
+# github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806210553-17cbef3b93fa
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-tools-coding
 github.com/spice-framework/spice-agent-tools-coding/autoconfigure
