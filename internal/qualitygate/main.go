@@ -124,11 +124,14 @@ func checkIdentity(root string) error {
 }
 
 type compatibility struct {
-	Schema         int     `json:"schema"`
-	Go             string  `json:"go"`
-	SpiceAgentAPI  *string `json:"spice_agent_api"`
-	SpiceCore      *string `json:"spice_core"`
-	SpiceToolchain *string `json:"spice_toolchain"`
+	Schema                   int     `json:"schema"`
+	Go                       string  `json:"go"`
+	Spice                    *string `json:"spice"`
+	SpiceToolchain           *string `json:"spice_toolchain"`
+	SpiceAgent               *string `json:"spice_agent"`
+	SpiceAgentTUI            *string `json:"spice_agent_tui"`
+	SpiceAgentProviderOpenAI *string `json:"spice_agent_provider_openai"`
+	SpiceAgentToolsCoding    *string `json:"spice_agent_tools_coding"`
 }
 
 func validateCompatibility(content []byte) error {
@@ -142,9 +145,22 @@ func validateCompatibility(content []byte) error {
 	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
 		return errors.New("compatibility metadata has trailing JSON values")
 	}
-	if value.Schema != 1 || value.Go != "1.26.5" || value.SpiceAgentAPI != nil ||
-		value.SpiceCore != nil || value.SpiceToolchain != nil {
-		return errors.New("compatibility metadata must record Go 1.26.5 and explicit null Phase 0 contracts")
+	if value.Schema != 1 || value.Go != "1.26.5" || value.Spice != nil ||
+		value.SpiceToolchain != nil || value.SpiceAgent != nil || value.SpiceAgentTUI != nil ||
+		value.SpiceAgentProviderOpenAI != nil || value.SpiceAgentToolsCoding != nil {
+		return errors.New("compatibility metadata must record Go 1.26.5 and explicit null pre-selection contracts")
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(content, &fields); err != nil {
+		return fmt.Errorf("decode compatibility metadata fields: %w", err)
+	}
+	for _, name := range []string{
+		"spice", "spice_toolchain", "spice_agent", "spice_agent_tui",
+		"spice_agent_provider_openai", "spice_agent_tools_coding",
+	} {
+		if raw, present := fields[name]; !present || !bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
+			return fmt.Errorf("compatibility metadata field %q must be present with explicit null before selection", name)
+		}
 	}
 	return nil
 }

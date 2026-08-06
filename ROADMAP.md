@@ -1,21 +1,12 @@
 # Roadmap
 
-## Phase 0 — repository foundation
+Program phase status, ordering, and exit evidence live only in the canonical
+[Spice Agent implementation ledger](https://github.com/spice-framework/spice-agent/blob/main/docs/implementation/README.md).
+This repository does not maintain a second phase numbering scheme.
 
-- [x] Establish Apache-2.0 licensing and governance.
-- [x] Enforce Go 1.26.5 through cross-platform fast/check/verify gates.
-- [x] Reserve distribution boundaries without speculative APIs or generated files.
-- [x] Document generated ownership and the unsupported bare-process path.
-
-## Phase 1 — contract adoption
-
-- [ ] Adopt immutable Spice Agent protocol, daemon, and TUI versions.
-- [ ] Select compatible Spice core and toolchain versions.
-- [ ] Define typed configuration, secret redaction, lifecycle, and policy.
-
-## Phase 2 — generated distribution
-
-- [ ] Add valid handwritten Spice application source.
-- [ ] Commit deterministic generated composition and ownership manifests.
-- [ ] Prove cancellation, rollback, cleanup, offline build, and debugging.
-- [ ] Package and test Windows and Linux distributions.
+Its bounded distribution deliverables are two independently generated Spice
+`@Application` targets: `spice-agentd` for explicit daemon service and
+`spice-agent` for the TUI, explicit attach, and managed attach-or-start.
+Version selection, generation, protocol behavior, cancellation, rollback,
+cleanup, offline builds, debugging, packaging, and Windows/Linux evidence
+follow the canonical ledger and are recorded there only after their gates pass.

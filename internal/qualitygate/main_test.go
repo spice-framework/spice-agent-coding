@@ -12,7 +12,7 @@ import (
 
 func TestValidateCompatibility(t *testing.T) {
 	t.Parallel()
-	valid := `{"schema":1,"go":"1.26.5","spice_agent_api":null,"spice_core":null,"spice_toolchain":null}`
+	valid := `{"schema":1,"go":"1.26.5","spice":null,"spice_toolchain":null,"spice_agent":null,"spice_agent_tui":null,"spice_agent_provider_openai":null,"spice_agent_tools_coding":null}`
 	tests := []struct {
 		name, content, wantErr string
 	}{
@@ -21,7 +21,9 @@ func TestValidateCompatibility(t *testing.T) {
 		{name: "unknown", content: strings.Replace(valid, `}`, `,"extra":true}`, 1), wantErr: "unknown field"},
 		{name: "trailing", content: valid + `{}`, wantErr: "trailing"},
 		{name: "wrong Go", content: strings.Replace(valid, "1.26.5", "1.26.4", 1), wantErr: "explicit null"},
-		{name: "premature API", content: strings.Replace(valid, `"spice_agent_api":null`, `"spice_agent_api":"v1"`, 1), wantErr: "explicit null"},
+		{name: "premature core", content: strings.Replace(valid, `"spice_agent":null`, `"spice_agent":"v1"`, 1), wantErr: "explicit null"},
+		{name: "premature TUI", content: strings.Replace(valid, `"spice_agent_tui":null`, `"spice_agent_tui":"v1"`, 1), wantErr: "explicit null"},
+		{name: "missing selection", content: strings.Replace(valid, `,"spice_agent_tui":null`, "", 1), wantErr: "explicit null"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -41,7 +43,7 @@ func TestIdentityAndPins(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	writeFile(t, root, "go.mod", "module "+modulePath+"\n\ngo 1.26.0\n\ntoolchain go1.26.5\n")
-	writeFile(t, root, "compatibility.json", `{"schema":1,"go":"1.26.5","spice_agent_api":null,"spice_core":null,"spice_toolchain":null}`)
+	writeFile(t, root, "compatibility.json", `{"schema":1,"go":"1.26.5","spice":null,"spice_toolchain":null,"spice_agent":null,"spice_agent_tui":null,"spice_agent_provider_openai":null,"spice_agent_tools_coding":null}`)
 	writeFile(t, root, "tools/go.mod", strings.Join([]string{
 		"github.com/golangci/golangci-lint/v2 v2.12.2",
 		"github.com/securego/gosec/v2 v2.28.0",

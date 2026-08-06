@@ -3,8 +3,9 @@
 ## Mission
 
 Build the installable coding-agent distribution by composing separately owned,
-versioned Spice Agent daemon and TUI contracts through a generated Spice
-application. Phase 0 establishes those boundaries without inventing the APIs.
+versioned Spice Agent daemon and TUI contracts through two independently
+generated Spice applications. The repository foundation establishes those
+boundaries without inventing the APIs.
 
 ## Invariants
 
@@ -12,11 +13,14 @@ application. Phase 0 establishes those boundaries without inventing the APIs.
 - This repository owns distribution composition, configuration, packaging,
   compatibility evidence, and end-to-end acceptance—not the daemon protocol,
   terminal widget system, compiler, or framework runtime.
-- The eventual executable is the generated Spice application. It must own
-  daemon and terminal lifecycle, dependency construction, configuration,
-  cancellation, observability, rollback, and cleanup.
-- Do not present a bare daemon or TUI child process as a supported entrypoint;
-  it bypasses generated ownership and can leak resources or skip policy.
+- `spice-agentd` is one generated Spice `@Application` target; `spice-agent` is
+  the independently generated TUI and managed-launcher `@Application` target.
+- Explicit daemon serve and client attach are supported. Managed launch must
+  attach to a compatible daemon or start one and must clean up only a daemon
+  process whose lifecycle it owns.
+- The statement that coding tools have bare user-process privileges describes
+  their security authority. A directly launched generated daemon is supported;
+  daemon and TUI lifecycle do not collapse into one process.
 - Do not create placeholder generated files. Generation begins only after the
   source annotations and adopted APIs form a valid compile-time contract.
 - Commands use discrete arguments without a shell. Normal analysis is offline

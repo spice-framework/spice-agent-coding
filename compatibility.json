@@ -1,7 +1,10 @@
 {
   "schema": 1,
   "go": "1.26.5",
-  "spice_agent_api": null,
-  "spice_core": null,
-  "spice_toolchain": null
+  "spice": null,
+  "spice_toolchain": null,
+  "spice_agent": null,
+  "spice_agent_tui": null,
+  "spice_agent_provider_openai": null,
+  "spice_agent_tools_coding": null
 }

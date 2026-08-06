@@ -2,27 +2,38 @@
 
 ## Distribution ownership
 
-The future coding distribution is one generated Spice application:
+The coding distribution contains two independently generated Spice application
+targets:
 
 ```text
-handwritten application source
-        |
-        v
-inspectable generated application
-        |-- owns daemon construction and shutdown
-        |-- owns terminal-client construction and shutdown
-        |-- owns configuration, policy, telemetry, rollback, and cleanup
-        `-- is the only supported executable entrypoint
+spice-agentd @Application             spice-agent @Application
+        |                                      |
+        v                                      v
+inspectable generated daemon          inspectable generated TUI/launcher
+        |                                      |
+        |-- authenticated local IPC            |-- explicit attach
+        |-- engine and run lifecycle            |-- managed attach-or-start
+        |-- configuration and policy            |-- terminal lifecycle
+        `-- graceful shutdown                   `-- owned-child cleanup
 ```
+
+`spice-agentd` supports explicit serve. `spice-agent` supports explicit attach;
+its default managed mode attaches to a compatible daemon or starts one. An
+attached daemon remains externally owned. A daemon started by managed mode is a
+supported process whose lease and cleanup belong to that launcher instance.
+Each target independently owns dependency construction, configuration,
+cancellation, observability, rollback, and cleanup for its boundary.
 
 `internal/distribution` owns composition and packaging.
 `internal/daemon` will adapt the separately versioned host contract.
 `internal/terminal` will compose the separately versioned TUI client.
 
-Running a daemon or terminal process directly may appear to work, but it
-bypasses generated dependency, configuration, security, lifecycle, and cleanup
-boundaries. That bare-process path is unsupported and must produce an explicit
-warning if a future diagnostic command exposes it.
+Explicit serve and attach are supported lifecycle modes. Internal packages are
+not alternative entrypoints, and neither generated target may bypass the other
+target's protocol boundary. The security phrase "bare user-process privileges"
+applies to coding tools: they execute with the selected user process's authority
+and are not sandboxed. It does not describe or prohibit the daemon process
+topology.
 
 Phase 0 contains no fake application marker, generated directory, manifest, or
 command. Those artifacts become legitimate only after Spice core, toolchain,
@@ -31,6 +42,7 @@ handwritten source exists.
 
 ## Compatibility
 
-`compatibility.json` records Go 1.26.5 and explicit null values for contracts
-that have not been adopted. Replacing null requires immutable selections and
-executable compatibility tests.
+`compatibility.json` records Go 1.26.5 and explicit null values for every
+distribution module that has not been adopted: Spice, the Spice toolchain,
+Spice Agent, the TUI, the OpenAI provider, and coding tools. Replacing null
+requires immutable selections and executable compatibility tests.
