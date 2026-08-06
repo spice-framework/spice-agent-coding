@@ -13,6 +13,8 @@ and permits only the public checksum database and module proxy. It verifies that
 the repository is byte-for-byte unchanged even when a download fails. A
 repository without a tools module is valid. No API keys, tokens, passwords, or
 secrets are passed to the Go subprocess.
+Every child Go command uses the selected Go 1.26.5 binary from `runtime.GOROOT`,
+not an older `go` that may appear first on `PATH`.
 
 - `make fast` validates repository identity and runs shuffled tests.
 - `make check` adds formatting, module/vendor consistency, vet, and shuffled tests.

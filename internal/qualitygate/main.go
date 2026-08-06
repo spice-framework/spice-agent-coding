@@ -533,6 +533,7 @@ func repositoryRoot() (string, error) {
 }
 
 func command(ctx context.Context, directory string, overrides map[string]string, executable string, arguments ...string) error {
+	executable = qualityExecutable(executable)
 	// #nosec G204,G702 -- executable paths are gate-owned and arguments are discrete.
 	cmd := exec.CommandContext(ctx, executable, arguments...)
 	cmd.Dir = directory
@@ -547,7 +548,7 @@ func command(ctx context.Context, directory string, overrides map[string]string,
 
 func networkCommand(ctx context.Context, directory string, arguments ...string) error {
 	// #nosec G204,G702 -- fixed Go executable and gate-owned discrete arguments.
-	cmd := exec.CommandContext(ctx, "go", arguments...)
+	cmd := exec.CommandContext(ctx, exactGoExecutable(), arguments...)
 	cmd.Dir = directory
 	cmd.Env = commandEnvironment(true, nil)
 	cmd.Stdout = output
@@ -559,6 +560,7 @@ func networkCommand(ctx context.Context, directory string, arguments ...string) 
 }
 
 func capture(ctx context.Context, directory, executable string, arguments ...string) (string, error) {
+	executable = qualityExecutable(executable)
 	// #nosec G204,G702 -- executable paths are gate-owned and arguments are discrete.
 	cmd := exec.CommandContext(ctx, executable, arguments...)
 	cmd.Dir = directory
@@ -570,6 +572,24 @@ func capture(ctx context.Context, directory, executable string, arguments ...str
 		return "", fmt.Errorf("%s %s: %w\n%s", executable, strings.Join(arguments, " "), err, strings.TrimSpace(stderr.String()))
 	}
 	return stdout.String(), nil
+}
+
+func qualityExecutable(executable string) string {
+	if executable == "go" {
+		return exactGoExecutable()
+	}
+	return executable
+}
+
+func exactGoExecutable() string {
+	return filepath.Join(runtime.GOROOT(), "bin", goExecutableName(runtime.GOOS)) //nolint:staticcheck // Gate runs in place under the selected exact toolchain.
+}
+
+func goExecutableName(goos string) string {
+	if goos == "windows" {
+		return "go.exe"
+	}
+	return "go"
 }
 
 func commandEnvironment(network bool, overrides map[string]string) []string {

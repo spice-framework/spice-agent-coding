@@ -22,6 +22,19 @@ func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 	}
 }
 
+func TestExactGoExecutable(t *testing.T) {
+	t.Parallel()
+	if goExecutableName("windows") != "go.exe" || goExecutableName("linux") != "go" {
+		t.Fatal("go executable name is not platform-correct")
+	}
+	actualName := filepath.Base(exactGoExecutable())
+	if (actualName != "go" && actualName != "go.exe") || filepath.Base(filepath.Dir(exactGoExecutable())) != "bin" ||
+		qualityExecutable("go") != exactGoExecutable() ||
+		qualityExecutable("gofumpt") != "gofumpt" {
+		t.Fatalf("exact Go executable = %q", exactGoExecutable())
+	}
+}
+
 func TestBootstrapDownloadArguments(t *testing.T) {
 	t.Parallel()
 	moduleFile := filepath.Join("private", "graph.mod")
