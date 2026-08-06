@@ -23,9 +23,14 @@ import (
 )
 
 const (
-	requiredGoVersion = "go1.26.5"
-	modulePath        = "github.com/spice-framework/spice-agent-coding"
-	minimumCoverage   = 85.0
+	requiredGoVersion  = "go1.26.5"
+	modulePath         = "github.com/spice-framework/spice-agent-coding"
+	minimumCoverage    = 85.0
+	spiceVersion       = "v0.1.0-preview.1.0.20260806200749-524424a04df0"
+	toolchainVersion   = "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6"
+	agentVersion       = "v0.0.0-20260806204214-1f072842707a"
+	providerVersion    = "v0.0.0-20260806204218-b0d4099d2754"
+	codingToolsVersion = "v0.0.0-20260806202006-d06a11929ddb"
 )
 
 var output io.Writer = os.Stdout
@@ -115,9 +120,26 @@ func checkIdentity(root string) error {
 	if err != nil {
 		return fmt.Errorf("read go.mod: %w", err)
 	}
-	want := "module " + modulePath + "\n\ngo 1.26.0\n\ntoolchain go1.26.5\n"
-	if strings.ReplaceAll(string(content), "\r\n", "\n") != want {
-		return errors.New("go.mod must contain only the canonical module, Go 1.26.0 language version, and Go 1.26.5 toolchain in the repository foundation")
+	text := strings.ReplaceAll(string(content), "\r\n", "\n")
+	for _, required := range []string{
+		"module " + modulePath + "\n",
+		"\ngo 1.26.0\n",
+		"\ntoolchain go1.26.5\n",
+		"github.com/spice-framework/spice " + spiceVersion,
+		"github.com/spice-framework/toolchain " + toolchainVersion,
+		"github.com/spice-framework/spice-agent " + agentVersion,
+		"github.com/spice-framework/spice-agent-provider-openai " + providerVersion,
+		"github.com/spice-framework/spice-agent-tools-coding " + codingToolsVersion,
+		"github.com/spice-framework/spice-agent/cmd/spice-agent-annotations",
+		"github.com/spice-framework/toolchain/cmd/spice",
+		"github.com/spice-framework/toolchain/cmd/spice-annotation-core",
+	} {
+		if !strings.Contains(text, required) {
+			return fmt.Errorf("go.mod is missing canonical selection %q", required)
+		}
+	}
+	if strings.Contains(text, "\nreplace ") || strings.Contains(text, "\nreplace (") {
+		return errors.New("committed go.mod must not contain replace directives")
 	}
 	compatibilityContent, err := os.ReadFile(filepath.Join(root, "compatibility.json")) // #nosec G304 -- fixed repository file.
 	if err != nil {
@@ -151,10 +173,27 @@ func validateCompatibility(content []byte) error {
 	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
 		return errors.New("compatibility metadata has trailing JSON values")
 	}
-	if value.Schema != 1 || value.Go != "1.26.5" || value.Spice != nil ||
-		value.SpiceToolchain != nil || value.SpiceAgent != nil || value.SpiceAgentTUI != nil ||
-		value.SpiceAgentProviderOpenAI != nil || value.SpiceAgentToolsCoding != nil {
-		return errors.New("compatibility metadata must record Go 1.26.5 and explicit null pre-selection contracts")
+	if value.Schema != 1 || value.Go != "1.26.5" {
+		return errors.New("compatibility metadata must record schema 1 and Go 1.26.5")
+	}
+	selections := []struct {
+		name string
+		got  *string
+		want string
+	}{
+		{name: "spice", got: value.Spice, want: spiceVersion},
+		{name: "spice_toolchain", got: value.SpiceToolchain, want: toolchainVersion},
+		{name: "spice_agent", got: value.SpiceAgent, want: agentVersion},
+		{name: "spice_agent_provider_openai", got: value.SpiceAgentProviderOpenAI, want: providerVersion},
+		{name: "spice_agent_tools_coding", got: value.SpiceAgentToolsCoding, want: codingToolsVersion},
+	}
+	for _, selection := range selections {
+		if selection.got == nil || *selection.got != selection.want {
+			return fmt.Errorf("compatibility metadata %s must select %s", selection.name, selection.want)
+		}
+	}
+	if value.SpiceAgentTUI != nil {
+		return errors.New("compatibility metadata must leave spice_agent_tui unselected until the terminal target exists")
 	}
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(content, &fields); err != nil {
@@ -164,8 +203,8 @@ func validateCompatibility(content []byte) error {
 		"spice", "spice_toolchain", "spice_agent", "spice_agent_tui",
 		"spice_agent_provider_openai", "spice_agent_tools_coding",
 	} {
-		if raw, present := fields[name]; !present || !bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
-			return fmt.Errorf("compatibility metadata field %q must be present with explicit null before selection", name)
+		if _, present := fields[name]; !present {
+			return fmt.Errorf("compatibility metadata field %q must be present", name)
 		}
 	}
 	return nil
@@ -457,6 +496,9 @@ func coverage(ctx context.Context, root string) (resultErr error) {
 	if coverageErr := command(ctx, root, nil, "go", append(arguments, packages...)...); coverageErr != nil {
 		return coverageErr
 	}
+	if err = excludeGeneratedCoverage(path); err != nil {
+		return err
+	}
 	profileContent, err := os.ReadFile(path) // #nosec G304 -- temporary path created above.
 	if err != nil {
 		return err
@@ -480,6 +522,28 @@ func coverage(ctx context.Context, root string) (resultErr error) {
 		return fmt.Errorf("product coverage %.1f%% is below %.1f%%", percentage, minimumCoverage)
 	}
 	return nil
+}
+
+func excludeGeneratedCoverage(path string) error {
+	content, err := os.ReadFile(path) // #nosec G304 -- gate-owned temporary profile.
+	if err != nil {
+		return fmt.Errorf("read coverage profile: %w", err)
+	}
+	lines := strings.Split(string(content), "\n")
+	if len(lines) == 0 || !strings.HasPrefix(lines[0], "mode: ") {
+		return errors.New("coverage profile has no mode header")
+	}
+	filtered := make([]string, 0, len(lines))
+	filtered = append(filtered, lines[0])
+	generatedPrefix := modulePath + "/internal/spicegen/"
+	for _, line := range lines[1:] {
+		if line == "" || strings.Contains(line, generatedPrefix) {
+			continue
+		}
+		filtered = append(filtered, line)
+	}
+	// #nosec G304,G703 -- path is the gate-owned temporary profile created above.
+	return os.WriteFile(path, []byte(strings.Join(filtered, "\n")+"\n"), 0o600)
 }
 
 func totalCoverage(report string) (float64, error) {

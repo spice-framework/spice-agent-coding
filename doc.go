@@ -1,7 +1,6 @@
-// Package agentcoding will own the Spice Agent coding distribution.
+// Package agentcoding owns the Spice Agent coding distribution.
 //
-// The repository foundation intentionally exports no agent, daemon, or
-// application API. Those contracts require independent review before this
-// distribution composes the independently generated spice-agentd and
-// spice-agent application targets.
+// Its internal generated architecture proof freezes the Spice-native Agent,
+// provider, and coding-tool composition seam. Daemon and terminal commands are
+// introduced only after their independently reviewed protocols are selected.
 package agentcoding

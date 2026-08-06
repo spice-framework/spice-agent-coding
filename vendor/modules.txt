@@ -1,0 +1,158 @@
+# github.com/openai/openai-go/v3 v3.50.0
+## explicit; go 1.25.0
+github.com/openai/openai-go/v3/auth
+github.com/openai/openai-go/v3/internal
+github.com/openai/openai-go/v3/internal/apierror
+github.com/openai/openai-go/v3/internal/apiform
+github.com/openai/openai-go/v3/internal/apijson
+github.com/openai/openai-go/v3/internal/apiquery
+github.com/openai/openai-go/v3/internal/encoding/json
+github.com/openai/openai-go/v3/internal/encoding/json/sentinel
+github.com/openai/openai-go/v3/internal/encoding/json/shims
+github.com/openai/openai-go/v3/internal/paramutil
+github.com/openai/openai-go/v3/internal/requestconfig
+github.com/openai/openai-go/v3/option
+github.com/openai/openai-go/v3/packages/pagination
+github.com/openai/openai-go/v3/packages/param
+github.com/openai/openai-go/v3/packages/respjson
+github.com/openai/openai-go/v3/packages/ssestream
+github.com/openai/openai-go/v3/responses
+github.com/openai/openai-go/v3/shared
+github.com/openai/openai-go/v3/shared/constant
+# github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0
+## explicit; go 1.26.0
+github.com/spice-framework/spice/annotation
+github.com/spice-framework/spice/annotation/async
+github.com/spice-framework/spice/annotation/cache
+github.com/spice-framework/spice/annotation/core
+github.com/spice-framework/spice/annotation/coretool
+github.com/spice-framework/spice/annotation/data
+github.com/spice-framework/spice/annotation/event
+github.com/spice-framework/spice/annotation/lifecycle
+github.com/spice-framework/spice/annotation/management
+github.com/spice-framework/spice/annotation/modulith
+github.com/spice-framework/spice/annotation/observability
+github.com/spice-framework/spice/annotation/schedule
+github.com/spice-framework/spice/annotation/sdk
+github.com/spice-framework/spice/annotation/sdk/protocol
+github.com/spice-framework/spice/annotation/sdk/starter
+github.com/spice-framework/spice/annotation/security
+github.com/spice-framework/spice/annotation/web
+github.com/spice-framework/spice/bean
+github.com/spice-framework/spice/config
+github.com/spice-framework/spice/conversion
+github.com/spice-framework/spice/expression
+github.com/spice-framework/spice/lifecycle
+github.com/spice-framework/spice/security
+github.com/spice-framework/spice/starter
+github.com/spice-framework/spice/validation
+github.com/spice-framework/spice/web
+# github.com/spice-framework/spice-agent v0.0.0-20260806204214-1f072842707a
+## explicit; go 1.26.0
+github.com/spice-framework/spice-agent/agent
+github.com/spice-framework/spice-agent/annotation/agent
+github.com/spice-framework/spice-agent/annotation/agenttool
+github.com/spice-framework/spice-agent/cmd/spice-agent-annotations
+github.com/spice-framework/spice-agent/event
+github.com/spice-framework/spice-agent/interaction
+github.com/spice-framework/spice-agent/internal/annotationtool
+github.com/spice-framework/spice-agent/message
+github.com/spice-framework/spice-agent/model
+github.com/spice-framework/spice-agent/stage
+github.com/spice-framework/spice-agent/tool
+# github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806204218-b0d4099d2754
+## explicit; go 1.26.0
+github.com/spice-framework/spice-agent-provider-openai
+github.com/spice-framework/spice-agent-provider-openai/autoconfigure
+# github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806202006-d06a11929ddb
+## explicit; go 1.26.0
+github.com/spice-framework/spice-agent-tools-coding
+github.com/spice-framework/spice-agent-tools-coding/autoconfigure
+# github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6
+## explicit; go 1.26.0
+github.com/spice-framework/toolchain/cmd/spice
+github.com/spice-framework/toolchain/cmd/spice-annotation-core
+github.com/spice-framework/toolchain/compiler/annotationcatalog
+github.com/spice-framework/toolchain/compiler/annotationhost
+github.com/spice-framework/toolchain/compiler/annotationimport
+github.com/spice-framework/toolchain/compiler/annotationinstall
+github.com/spice-framework/toolchain/compiler/application
+github.com/spice-framework/toolchain/compiler/async
+github.com/spice-framework/toolchain/compiler/autoconfigure
+github.com/spice-framework/toolchain/compiler/bootstrap
+github.com/spice-framework/toolchain/compiler/cache
+github.com/spice-framework/toolchain/compiler/configuration
+github.com/spice-framework/toolchain/compiler/controller
+github.com/spice-framework/toolchain/compiler/descriptor
+github.com/spice-framework/toolchain/compiler/diagnostic
+github.com/spice-framework/toolchain/compiler/diagnostic/adapt
+github.com/spice-framework/toolchain/compiler/event
+github.com/spice-framework/toolchain/compiler/generate
+github.com/spice-framework/toolchain/compiler/graph
+github.com/spice-framework/toolchain/compiler/lifecycle
+github.com/spice-framework/toolchain/compiler/load
+github.com/spice-framework/toolchain/compiler/modulith
+github.com/spice-framework/toolchain/compiler/parser
+github.com/spice-framework/toolchain/compiler/provider
+github.com/spice-framework/toolchain/compiler/resolve
+github.com/spice-framework/toolchain/compiler/scan
+github.com/spice-framework/toolchain/compiler/schedule
+github.com/spice-framework/toolchain/compiler/service
+github.com/spice-framework/toolchain/compiler/signature
+github.com/spice-framework/toolchain/compiler/starter
+github.com/spice-framework/toolchain/compiler/targetid
+github.com/spice-framework/toolchain/compiler/transaction
+github.com/spice-framework/toolchain/compiler/validate
+github.com/spice-framework/toolchain/internal/annotationcore
+github.com/spice-framework/toolchain/internal/cli
+github.com/spice-framework/toolchain/internal/devloop
+github.com/spice-framework/toolchain/internal/genfs
+github.com/spice-framework/toolchain/internal/identity
+github.com/spice-framework/toolchain/internal/lsp
+github.com/spice-framework/toolchain/internal/moduleenv
+github.com/spice-framework/toolchain/internal/scaffold
+# github.com/tidwall/gjson v1.19.0
+## explicit; go 1.23
+github.com/tidwall/gjson
+# github.com/tidwall/match v1.1.1
+## explicit; go 1.15
+github.com/tidwall/match
+# github.com/tidwall/pretty v1.2.1
+## explicit; go 1.16
+github.com/tidwall/pretty
+# github.com/tidwall/sjson v1.2.5
+## explicit; go 1.14
+github.com/tidwall/sjson
+# golang.org/x/mod v0.38.0
+## explicit; go 1.25.0
+golang.org/x/mod/internal/lazyregexp
+golang.org/x/mod/modfile
+golang.org/x/mod/module
+golang.org/x/mod/semver
+# golang.org/x/sync v0.22.0
+## explicit; go 1.25.0
+golang.org/x/sync/errgroup
+# golang.org/x/sys v0.47.0
+## explicit; go 1.25.0
+golang.org/x/sys/windows
+# golang.org/x/tools v0.48.0
+## explicit; go 1.25.0
+golang.org/x/tools/go/ast/edge
+golang.org/x/tools/go/ast/inspector
+golang.org/x/tools/go/gcexportdata
+golang.org/x/tools/go/packages
+golang.org/x/tools/go/types/objectpath
+golang.org/x/tools/go/types/typeutil
+golang.org/x/tools/internal/aliases
+golang.org/x/tools/internal/event
+golang.org/x/tools/internal/event/core
+golang.org/x/tools/internal/event/keys
+golang.org/x/tools/internal/event/label
+golang.org/x/tools/internal/gcimporter
+golang.org/x/tools/internal/gocommand
+golang.org/x/tools/internal/packagesinternal
+golang.org/x/tools/internal/pkgbits
+golang.org/x/tools/internal/stdlib
+golang.org/x/tools/internal/typeparams
+golang.org/x/tools/internal/typesinternal
+golang.org/x/tools/internal/versions

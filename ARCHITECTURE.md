@@ -35,14 +35,17 @@ applies to coding tools: they execute with the selected user process's authority
 and are not sandboxed. It does not describe or prohibit the daemon process
 topology.
 
-The repository foundation contains no fake application marker, generated
-directory, manifest, or command. Those artifacts become legitimate only after
-Spice core, toolchain, agent protocol, daemon, and TUI compatibility versions
-are selected and the handwritten source exists.
+`internal/architectureproof` is a real generated application used to freeze the
+SDK composition boundary before daemon and terminal commands are added. It
+proves a normal provider replacing a fallback provider, three explicit
+auto-configured coding-tool beans, a canonical `map[string]tool.Tool`, reverse
+cleanup, and the provider → tool → provider continuation loop. Generated code
+lives only under `internal/spicegen/architectureproof`; the ownership manifest
+and source mappings live in `.spice/architectureproof.manifest.json`.
 
 ## Compatibility
 
-`compatibility.json` records Go 1.26.5 and explicit null values for every
-distribution module that has not been adopted: Spice, the Spice toolchain,
-Spice Agent, the TUI, the OpenAI provider, and coding tools. Replacing null
-requires immutable selections and executable compatibility tests.
+`compatibility.json` records Go 1.26.5 plus the exact immutable Spice,
+toolchain, Agent, OpenAI provider, and coding-tools selections exercised by the
+architecture proof. The TUI remains explicitly null until the terminal target
+adopts it. Replacing any selection requires executable compatibility tests.

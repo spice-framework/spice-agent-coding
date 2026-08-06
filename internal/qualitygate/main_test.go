@@ -177,7 +177,7 @@ func bootstrapFixture(t *testing.T, tools bool) string {
 
 func TestValidateCompatibility(t *testing.T) {
 	t.Parallel()
-	valid := `{"schema":1,"go":"1.26.5","spice":null,"spice_toolchain":null,"spice_agent":null,"spice_agent_tui":null,"spice_agent_provider_openai":null,"spice_agent_tools_coding":null}`
+	valid := compatibilityFixture()
 	tests := []struct {
 		name, content, wantErr string
 	}{
@@ -185,10 +185,10 @@ func TestValidateCompatibility(t *testing.T) {
 		{name: "malformed", content: `{`, wantErr: "decode"},
 		{name: "unknown", content: strings.Replace(valid, `}`, `,"extra":true}`, 1), wantErr: "unknown field"},
 		{name: "trailing", content: valid + `{}`, wantErr: "trailing"},
-		{name: "wrong Go", content: strings.Replace(valid, "1.26.5", "1.26.4", 1), wantErr: "explicit null"},
-		{name: "premature core", content: strings.Replace(valid, `"spice_agent":null`, `"spice_agent":"v1"`, 1), wantErr: "explicit null"},
-		{name: "premature TUI", content: strings.Replace(valid, `"spice_agent_tui":null`, `"spice_agent_tui":"v1"`, 1), wantErr: "explicit null"},
-		{name: "missing selection", content: strings.Replace(valid, `,"spice_agent_tui":null`, "", 1), wantErr: "explicit null"},
+		{name: "wrong Go", content: strings.Replace(valid, "1.26.5", "1.26.4", 1), wantErr: "Go 1.26.5"},
+		{name: "wrong core", content: strings.Replace(valid, agentVersion, "v1.0.0", 1), wantErr: "spice_agent"},
+		{name: "premature TUI", content: strings.Replace(valid, `"spice_agent_tui":null`, `"spice_agent_tui":"v1"`, 1), wantErr: "unselected"},
+		{name: "missing selection", content: strings.Replace(valid, `,"spice_agent_tui":null`, "", 1), wantErr: "present"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -207,8 +207,20 @@ func TestValidateCompatibility(t *testing.T) {
 func TestIdentityAndPins(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	writeFile(t, root, "go.mod", "module "+modulePath+"\n\ngo 1.26.0\n\ntoolchain go1.26.5\n")
-	writeFile(t, root, "compatibility.json", `{"schema":1,"go":"1.26.5","spice":null,"spice_toolchain":null,"spice_agent":null,"spice_agent_tui":null,"spice_agent_provider_openai":null,"spice_agent_tools_coding":null}`)
+	writeFile(t, root, "go.mod", strings.Join([]string{
+		"module " + modulePath,
+		"go 1.26.0",
+		"toolchain go1.26.5",
+		"tool github.com/spice-framework/spice-agent/cmd/spice-agent-annotations",
+		"tool github.com/spice-framework/toolchain/cmd/spice",
+		"tool github.com/spice-framework/toolchain/cmd/spice-annotation-core",
+		"require github.com/spice-framework/spice " + spiceVersion,
+		"require github.com/spice-framework/toolchain " + toolchainVersion,
+		"require github.com/spice-framework/spice-agent " + agentVersion,
+		"require github.com/spice-framework/spice-agent-provider-openai " + providerVersion,
+		"require github.com/spice-framework/spice-agent-tools-coding " + codingToolsVersion,
+	}, "\n")+"\n")
+	writeFile(t, root, "compatibility.json", compatibilityFixture())
 	writeFile(t, root, "tools/go.mod", strings.Join([]string{
 		"github.com/golangci/golangci-lint/v2 v2.12.2",
 		"github.com/securego/gosec/v2 v2.28.0",
@@ -219,9 +231,17 @@ func TestIdentityAndPins(t *testing.T) {
 		t.Fatalf("checkIdentity() error = %v", err)
 	}
 	writeFile(t, root, "go.mod", "module example.com/wrong\n")
-	if err := checkIdentity(root); err == nil || !strings.Contains(err.Error(), "canonical module") {
+	if err := checkIdentity(root); err == nil || !strings.Contains(err.Error(), "canonical selection") {
 		t.Fatalf("checkIdentity() error = %v, want identity diagnostic", err)
 	}
+}
+
+func compatibilityFixture() string {
+	return `{"schema":1,"go":"1.26.5","spice":"` + spiceVersion +
+		`","spice_toolchain":"` + toolchainVersion +
+		`","spice_agent":"` + agentVersion +
+		`","spice_agent_tui":null,"spice_agent_provider_openai":"` + providerVersion +
+		`","spice_agent_tools_coding":"` + codingToolsVersion + `"}`
 }
 
 func TestFilesCoverageAndModeBoundaries(t *testing.T) {
@@ -251,6 +271,28 @@ func TestFilesCoverageAndModeBoundaries(t *testing.T) {
 	}
 	if err := run(t.Context(), root, "unknown"); err == nil || !strings.Contains(err.Error(), "unknown mode") {
 		t.Fatalf("run(unknown) error = %v", err)
+	}
+}
+
+func TestExcludeGeneratedCoverage(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "coverage.out")
+	content := "mode: atomic\n" +
+		modulePath + "/internal/spicegen/proof/generated.go:1.1,2.1 1 1\n" +
+		modulePath + "/internal/architectureproof/proof.go:1.1,2.1 1 1\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := excludeGeneratedCoverage(path); err != nil {
+		t.Fatal(err)
+	}
+	filtered, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes := string(filtered); strings.Contains(bytes, "/internal/spicegen/") ||
+		!strings.Contains(bytes, "/internal/architectureproof/") {
+		t.Fatalf("filtered coverage = %q", bytes)
 	}
 }
 

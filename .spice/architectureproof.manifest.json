@@ -1,0 +1,413 @@
+{
+  "schema": 5,
+  "target": {
+    "id": "architectureproof",
+    "layout": "generated-package",
+    "module": "github.com/spice-framework/spice-agent-coding",
+    "package": "github.com/spice-framework/spice-agent-coding/internal/spicegen/architectureproof",
+    "output_dir": "internal/spicegen/architectureproof",
+    "manifest_path": ".spice/architectureproof.manifest.json"
+  },
+  "generator_version": "0.1.0-dev",
+  "go_format_line": "1.26",
+  "input_sha256": "sha256:4368e7f870ba4d59af71d78d9f410b59de74e2cf2b715e58395f0ce8e3f544c0",
+  "files": [
+    {
+      "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/application_spice_gen.go",
+      "sha256": "sha256:26005f73ede090e38590bd32bc83bdc4d1502ca44a3d4be78540bdfc9bd325ac",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/architectureproof/application.go",
+        "line": 13,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+      },
+      "mappings": [
+        {
+          "kind": "application-target",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof",
+          "source": {
+            "path": "internal/architectureproof/application.go",
+            "line": 13,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+          },
+          "generated": {
+            "start_line": 8,
+            "start_column": 4,
+            "end_line": 8,
+            "end_column": 47
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/proof_spice_gen.go",
+      "sha256": "sha256:8fe88602bb3eb496d8e0776f89b5a5db44823b1ed1a81f098779582b8d5163af",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/architectureproof/proof.go",
+        "line": 41,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof",
+          "source": {
+            "path": "internal/architectureproof/proof.go",
+            "line": 41,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
+          },
+          "generated": {
+            "start_line": 17,
+            "start_column": 4,
+            "end_line": 17,
+            "end_column": 27
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/responses_spice_gen.go",
+      "sha256": "sha256:7db0de82a6a214c7b38e02b7a47224d8b92406e1054710eac252ecf9a5fee1fa",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/architectureproof/responses.go",
+        "line": 38,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider",
+          "source": {
+            "path": "internal/architectureproof/responses.go",
+            "line": 51,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
+          },
+          "generated": {
+            "start_line": 17,
+            "start_column": 4,
+            "end_line": 17,
+            "end_column": 45
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture",
+          "source": {
+            "path": "internal/architectureproof/responses.go",
+            "line": 38,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
+          },
+          "generated": {
+            "start_line": 28,
+            "start_column": 4,
+            "end_line": 28,
+            "end_column": 38
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/workspace_spice_gen.go",
+      "sha256": "sha256:34200c89c3a53a8db6db018183e47511d1368f40975d43afde8a07559efc1478",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/architectureproof/workspace.go",
+        "line": 23,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|15:NewCodingConfig"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|15:NewCodingConfig",
+          "source": {
+            "path": "internal/architectureproof/workspace.go",
+            "line": 23,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|15:NewCodingConfig"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 34
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/sources/vendor_/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure_spice_gen.go",
+      "sha256": "sha256:5b5315e75bba2037256b2b19dea78138151a015a3f9f21c4bcaeb91b4ce70d65",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+        "line": 12,
+        "column": 6,
+        "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead",
+          "source": {
+            "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+            "line": 12,
+            "column": 6,
+            "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
+          },
+          "generated": {
+            "start_line": 19,
+            "start_column": 4,
+            "end_line": 19,
+            "end_column": 26
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell",
+          "source": {
+            "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+            "line": 22,
+            "column": 6,
+            "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
+          },
+          "generated": {
+            "start_line": 30,
+            "start_column": 4,
+            "end_line": 30,
+            "end_column": 27
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace",
+          "source": {
+            "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+            "line": 17,
+            "column": 6,
+            "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"
+          },
+          "generated": {
+            "start_line": 41,
+            "start_column": 4,
+            "end_line": 41,
+            "end_column": 29
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/spice_assembly_gen.go",
+      "sha256": "sha256:58e9816c6fe181134be239aa81039e70188c88efed3408e2939515bed3cf6267",
+      "role": "target-assembly",
+      "related_sources": [
+        {
+          "path": "internal/architectureproof/application.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        },
+        {
+          "path": "internal/architectureproof/proof.go",
+          "line": 41,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
+        },
+        {
+          "path": "internal/architectureproof/responses.go",
+          "line": 38,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
+        },
+        {
+          "path": "internal/architectureproof/responses.go",
+          "line": 51,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
+        },
+        {
+          "path": "internal/architectureproof/workspace.go",
+          "line": 23,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|15:NewCodingConfig"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 12,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 17,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 22,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/spice_command_gen.go",
+      "sha256": "sha256:2afaeb2f943191295594a8584a6f2412f3de75279b790db1b9767d7b82d93096",
+      "role": "target-command",
+      "related_sources": [
+        {
+          "path": "internal/architectureproof/application.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/spice_configuration_gen.go",
+      "sha256": "sha256:99802b022ee243ea84e9e518162c373f49b3753d04f5d1d9c415efa53302e8a4",
+      "role": "target-configuration",
+      "related_sources": [
+        {
+          "path": "internal/architectureproof/application.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/spice_contracts_gen.go",
+      "sha256": "sha256:d42595906c683a4f3bff72a1b4a83a573feb16b02b33a780896b40d11e42db32",
+      "role": "target-contracts",
+      "related_sources": [
+        {
+          "path": "internal/architectureproof/application.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        },
+        {
+          "path": "internal/architectureproof/proof.go",
+          "line": 41,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
+        },
+        {
+          "path": "internal/architectureproof/responses.go",
+          "line": 38,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
+        },
+        {
+          "path": "internal/architectureproof/responses.go",
+          "line": 51,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
+        },
+        {
+          "path": "internal/architectureproof/workspace.go",
+          "line": 23,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|15:NewCodingConfig"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 12,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 17,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 22,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/spice_lifecycle_gen.go",
+      "sha256": "sha256:0184facdc6475b5fa879631e6537990f88ac70adf9bd61e191d1506f959f3508",
+      "role": "target-lifecycle",
+      "related_sources": [
+        {
+          "path": "internal/architectureproof/application.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/architectureproof/spice_providers_gen.go",
+      "sha256": "sha256:150b42bcc249f9ae2b8f63f7e505cfe36c1adf462940be8269a486ce60ec18f5",
+      "role": "target-providers",
+      "related_sources": [
+        {
+          "path": "internal/architectureproof/application.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        },
+        {
+          "path": "internal/architectureproof/proof.go",
+          "line": 41,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
+        },
+        {
+          "path": "internal/architectureproof/responses.go",
+          "line": 38,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
+        },
+        {
+          "path": "internal/architectureproof/responses.go",
+          "line": 51,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
+        },
+        {
+          "path": "internal/architectureproof/workspace.go",
+          "line": 23,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|15:NewCodingConfig"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 12,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 17,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+          "line": 22,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
+        }
+      ]
+    }
+  ]
+}

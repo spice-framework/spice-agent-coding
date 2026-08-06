@@ -19,7 +19,14 @@ not an older `go` that may appear first on `PATH`.
 - `make fast` validates repository identity and runs shuffled tests.
 - `make check` adds formatting, module/vendor consistency, vet, and shuffled tests.
 - `make verify` adds lint, NilAway, gosec, govulncheck, race tests, coverage, and
-  vendor-offline tests/builds.
+  vendor-offline tests/builds. It compiles and executes committed Spice output
+  while excluding canonical generated statements from the handwritten 85%
+  coverage denominator.
+
+The architecture-proof acceptance additionally runs `spice generate --check`,
+`spice generate --diff`, and `spice beans --explain` against the selected
+vendored toolchain. It then executes the generated provider → read tool →
+provider continuation locally without external network access.
 
 The repository-owned verifier is cross-platform. `make fast`, `make check`, and
 `make verify` force `GOPROXY=off`; missing cache entries fail instead of causing

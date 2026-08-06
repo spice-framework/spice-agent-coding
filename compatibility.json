@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "go": "1.26.5",
-  "spice": null,
-  "spice_toolchain": null,
-  "spice_agent": null,
+  "spice": "v0.1.0-preview.1.0.20260806200749-524424a04df0",
+  "spice_toolchain": "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6",
+  "spice_agent": "v0.0.0-20260806204214-1f072842707a",
   "spice_agent_tui": null,
-  "spice_agent_provider_openai": null,
-  "spice_agent_tools_coding": null
+  "spice_agent_provider_openai": "v0.0.0-20260806204218-b0d4099d2754",
+  "spice_agent_tools_coding": "v0.0.0-20260806202006-d06a11929ddb"
 }

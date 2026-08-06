@@ -2,15 +2,28 @@
 
 ## Product graph
 
-The repository foundation uses only the Go standard library and exports no
-runtime behavior. It does not depend on Spice, the toolchain, an agent protocol,
-a daemon, or the TUI because none of those compatibility contracts has been
-selected.
+The generated architecture proof selects exact immutable versions of Spice,
+the Spice toolchain, Spice Agent, the OpenAI provider, and the coding-tool
+starter. The provider pins `openai-go/v3 v3.50.0`; the coding tools pin
+`x/sys v0.47.0`. Transitive versions and checksums are committed in `go.sum`
+and `vendor/modules.txt`.
 
-Every future product dependency must document maintenance, Apache-2.0 license
+The Spice projects are Apache-2.0. Their repository-local reviews cover their
+transitive Apache-2.0, BSD, and MIT dependencies. The distribution adds no
+independent third-party runtime dependency. `make verify` runs gosec and
+govulncheck over the selected product graph and reproduces vendor contents.
+
+The proof exercises cancellation-aware kernel/provider/tool APIs, bounded
+provider and filesystem payloads, reverse cleanup, secret-redacted provider
+configuration, Windows-safe paths, and a local TLS transport. Its fixed test
+credential is not a real secret and is never retained in events or generated
+metadata. Coding tools retain bare process privileges; the product must display
+their exported capability warning before the release application enables them.
+
+Future product dependencies must document maintenance, Apache-2.0 license
 compatibility, checksum and vulnerability status, cancellation and bounded
 resource behavior, observability and secret handling, Windows/Linux support,
-and the executable compatibility evidence that justifies the selected version.
+and executable compatibility evidence.
 
 ## Verification tools
 
