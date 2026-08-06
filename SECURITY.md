@@ -16,6 +16,7 @@ that dispatches them and are not sandboxed. "Bare privileges" describes that
 authority; the generated daemon's direct serve mode remains supported. Process
 separation alone is not a security boundary.
 
-Phase 0 has no runtime or third-party product dependencies. Verification tools
-are isolated and pinned in `tools/go.mod`; dependency preparation is explicit,
-and analysis thereafter is offline and workspace-isolated.
+The repository foundation has no runtime or third-party product dependencies.
+Verification tools are isolated and pinned in `tools/go.mod`; dependency
+preparation is explicit, and analysis thereafter is offline and
+workspace-isolated.

@@ -111,7 +111,7 @@ func checkIdentity(root string) error {
 	}
 	want := "module " + modulePath + "\n\ngo 1.26.0\n\ntoolchain go1.26.5\n"
 	if strings.ReplaceAll(string(content), "\r\n", "\n") != want {
-		return errors.New("go.mod must contain only the canonical module, Go 1.26.0 language version, and Go 1.26.5 toolchain during Phase 0")
+		return errors.New("go.mod must contain only the canonical module, Go 1.26.0 language version, and Go 1.26.5 toolchain in the repository foundation")
 	}
 	compatibilityContent, err := os.ReadFile(filepath.Join(root, "compatibility.json")) // #nosec G304 -- fixed repository file.
 	if err != nil {

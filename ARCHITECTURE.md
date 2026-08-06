@@ -35,10 +35,10 @@ applies to coding tools: they execute with the selected user process's authority
 and are not sandboxed. It does not describe or prohibit the daemon process
 topology.
 
-Phase 0 contains no fake application marker, generated directory, manifest, or
-command. Those artifacts become legitimate only after Spice core, toolchain,
-agent protocol, daemon, and TUI compatibility versions are selected and the
-handwritten source exists.
+The repository foundation contains no fake application marker, generated
+directory, manifest, or command. Those artifacts become legitimate only after
+Spice core, toolchain, agent protocol, daemon, and TUI compatibility versions
+are selected and the handwritten source exists.
 
 ## Compatibility
 

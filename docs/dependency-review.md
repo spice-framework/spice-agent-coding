@@ -2,9 +2,10 @@
 
 ## Product graph
 
-Phase 0 uses only the Go standard library and exports no runtime behavior. It
-does not depend on Spice, the toolchain, an agent protocol, a daemon, or the
-TUI because none of those compatibility contracts has been selected.
+The repository foundation uses only the Go standard library and exports no
+runtime behavior. It does not depend on Spice, the toolchain, an agent protocol,
+a daemon, or the TUI because none of those compatibility contracts has been
+selected.
 
 Every future product dependency must document maintenance, Apache-2.0 license
 compatibility, checksum and vulnerability status, cancellation and bounded
