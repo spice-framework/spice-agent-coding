@@ -10,7 +10,7 @@
   },
   "generator_version": "0.1.0-dev",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:a5b93f0dbb1f4c8c28d1db8d8bb9bccb40dd08b42dbae6514e6f779d3111795f",
+  "input_sha256": "sha256:25a1f5ce7c42c7cd4fcb6774cc3c289859b9f2654e4129415c0a3880f9dd3894",
   "files": [
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/application_spice_gen.go",
@@ -42,8 +42,101 @@
       ]
     },
     {
+      "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/plan_spice_gen.go",
+      "sha256": "sha256:e46a63085480bc2f83062e595a57be67827e4ad0ccda61529588a894a19561a5",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/architectureproof/plan.go",
+        "line": 40,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|24:NewExecutionPlanMetadata"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolDispatcher",
+          "source": {
+            "path": "internal/architectureproof/plan.go",
+            "line": 60,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolDispatcher"
+          },
+          "generated": {
+            "start_line": 24,
+            "start_column": 4,
+            "end_line": 24,
+            "end_column": 53
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolPlanSource",
+          "source": {
+            "path": "internal/architectureproof/plan.go",
+            "line": 77,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolPlanSource"
+          },
+          "generated": {
+            "start_line": 35,
+            "start_column": 4,
+            "end_line": 35,
+            "end_column": 53
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker",
+          "source": {
+            "path": "internal/architectureproof/plan.go",
+            "line": 89,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker"
+          },
+          "generated": {
+            "start_line": 46,
+            "start_column": 4,
+            "end_line": 46,
+            "end_column": 56
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|24:NewExecutionPlanMetadata",
+          "source": {
+            "path": "internal/architectureproof/plan.go",
+            "line": 40,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|24:NewExecutionPlanMetadata"
+          },
+          "generated": {
+            "start_line": 53,
+            "start_column": 4,
+            "end_line": 53,
+            "end_column": 52
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine",
+          "source": {
+            "path": "internal/architectureproof/plan.go",
+            "line": 98,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
+          },
+          "generated": {
+            "start_line": 60,
+            "start_column": 4,
+            "end_line": 60,
+            "end_column": 45
+          }
+        }
+      ]
+    },
+    {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/proof_spice_gen.go",
-      "sha256": "sha256:cc36033f719a8e907a9fee0bbe238ebbc5be4e794d8f9051dbe711f7ec780950",
+      "sha256": "sha256:20ba1dc0b665a6f1284e730df51a8192773c75fc742d19a90db2189d95eef341",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/architectureproof/proof.go",
@@ -207,7 +300,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_assembly_gen.go",
-      "sha256": "sha256:58e9816c6fe181134be239aa81039e70188c88efed3408e2939515bed3cf6267",
+      "sha256": "sha256:9009223b3926c5bd9a7998a2fe51b7a01e90835f0c9bae45e78c86d48a186e3e",
       "role": "target-assembly",
       "related_sources": [
         {
@@ -215,6 +308,36 @@
           "line": 13,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 40,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|24:NewExecutionPlanMetadata"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 60,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolDispatcher"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 77,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolPlanSource"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 89,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 98,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
         },
         {
           "path": "internal/architectureproof/proof.go",
@@ -288,7 +411,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_contracts_gen.go",
-      "sha256": "sha256:d42595906c683a4f3bff72a1b4a83a573feb16b02b33a780896b40d11e42db32",
+      "sha256": "sha256:6bd5ffc9d681a320e45c0e6e8fcd4f69ae3e6c34454e2c5c55d02b51cd63b3eb",
       "role": "target-contracts",
       "related_sources": [
         {
@@ -296,6 +419,36 @@
           "line": 13,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 40,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|24:NewExecutionPlanMetadata"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 60,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolDispatcher"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 77,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolPlanSource"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 89,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 98,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
         },
         {
           "path": "internal/architectureproof/proof.go",
@@ -356,7 +509,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_providers_gen.go",
-      "sha256": "sha256:150b42bcc249f9ae2b8f63f7e505cfe36c1adf462940be8269a486ce60ec18f5",
+      "sha256": "sha256:3dea1b60d1cc4d2fa15be77c3aa70f255c6f44b2b23026e8ba9c0ea77bcef81a",
       "role": "target-providers",
       "related_sources": [
         {
@@ -364,6 +517,36 @@
           "line": 13,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 40,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|24:NewExecutionPlanMetadata"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 60,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolDispatcher"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 77,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:NewToolPlanSource"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 89,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker"
+        },
+        {
+          "path": "internal/architectureproof/plan.go",
+          "line": 98,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
         },
         {
           "path": "internal/architectureproof/proof.go",

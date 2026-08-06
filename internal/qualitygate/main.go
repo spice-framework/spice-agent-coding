@@ -28,9 +28,9 @@ const (
 	minimumCoverage    = 85.0
 	spiceVersion       = "v0.1.0-preview.1.0.20260806200749-524424a04df0"
 	toolchainVersion   = "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6"
-	agentVersion       = "v0.0.0-20260806204214-1f072842707a"
-	providerVersion    = "v0.0.0-20260806210759-4beed3838dd2"
-	codingToolsVersion = "v0.0.0-20260806210553-17cbef3b93fa"
+	agentVersion       = "v0.0.0-20260806225954-af79fc7fe4ad"
+	providerVersion    = "v0.0.0-20260806230257-a6962fe2dabc"
+	codingToolsVersion = "v0.0.0-20260806232406-25b93fb6e1b2"
 )
 
 var output io.Writer = os.Stdout

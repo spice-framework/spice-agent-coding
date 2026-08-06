@@ -4,7 +4,10 @@ This repository provides the installable Spice Agent coding distribution. Its
 first executable slice is the generated
 `internal/spicegen/architectureproof` application: the real OpenAI Responses
 adapter, explicitly activated coding-tool starter, and deterministic Agent
-kernel are assembled through ordinary Spice beans. The offline acceptance test
+kernel are assembled through ordinary Spice beans. The generated graph owns an
+explicit static tool-plan source and portable snapshot compatibility identity;
+every run reports the exact compiled identities, tool generation, and combined
+fingerprint selected by the graph. The offline acceptance test
 executes a local TLS Responses endpoint, a compiled `read` call, provider
 continuation, final event delivery, and provider cancellation without
 credentials or external network access. See

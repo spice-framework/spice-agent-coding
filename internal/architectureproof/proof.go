@@ -7,15 +7,11 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/spice-framework/spice-agent/agent"
 	"github.com/spice-framework/spice-agent/event"
 	"github.com/spice-framework/spice-agent/message"
-	"github.com/spice-framework/spice-agent/model"
 	"github.com/spice-framework/spice-agent/stage"
-	"github.com/spice-framework/spice-agent/tool"
-	"github.com/spice-framework/spice/lifecycle"
 )
 
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
@@ -29,13 +25,17 @@ type Proof struct {
 
 // Report is inspectable evidence from one architecture-proof run.
 type Report struct {
-	Kinds        []event.Kind
-	FinalText    string
-	Tools        []string
-	Requests     int
-	Authorized   bool
-	Continuation bool
-	SecretSeen   bool
+	Kinds                         []event.Kind
+	FinalText                     string
+	Tools                         []string
+	CompiledPlanIdentities        []string
+	SnapshotCompatibilityIdentity string
+	ToolPlanID                    string
+	PlanFingerprint               string
+	Requests                      int
+	Authorized                    bool
+	Continuation                  bool
+	SecretSeen                    bool
 }
 
 // NewProof consumes the exact provider and canonical named tool map selected
@@ -43,38 +43,24 @@ type Report struct {
 //
 // @Bean(name="proof")
 func NewProof(
-	provider model.Provider,
-	tools map[string]tool.Tool,
+	engine *agent.Engine,
+	dispatcher stage.ToolDispatcher,
 	fixture *ResponsesFixture,
-) (*Proof, lifecycle.Cleanup, error) {
-	dispatcher, err := stage.NewDispatcher(tools)
-	if err != nil {
-		return nil, nil, fmt.Errorf("construct architecture-proof dispatcher: %w", err)
+) (*Proof, error) {
+	if engine == nil {
+		return nil, fmt.Errorf("construct architecture proof: engine is nil")
 	}
-	options := agent.DefaultEngineOptions()
-	options.MetadataNamespaces = []string{"github.com/spice-framework/spice-agent-provider-openai"}
-	options.StaticPlanIdentities = []string{
-		"broker:unavailable",
-		"provider:architecture-proof-openai",
-		"stage:kernel",
+	if fixture == nil {
+		return nil, fmt.Errorf("construct architecture proof: responses fixture is nil")
 	}
-	engine, err := agent.NewEngineWithOptions(
-		provider,
-		dispatcher,
-		&agent.AtomicIDSource{},
-		time.Now,
-		nil,
-		nil,
-		options,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("construct architecture-proof engine: %w", err)
+	if dispatcher == nil {
+		return nil, fmt.Errorf("construct architecture proof: tool dispatcher is nil")
 	}
-	names := make([]string, 0, len(tools))
+	names := make([]string, 0, len(dispatcher.Definitions()))
 	for _, definition := range dispatcher.Definitions() {
 		names = append(names, definition.Name())
 	}
-	return &Proof{engine: engine, fixture: fixture, tools: names}, engine.Shutdown, nil
+	return &Proof{engine: engine, fixture: fixture, tools: names}, nil
 }
 
 // Run executes OpenAI translation, a compiled read tool, continuation, and a
@@ -100,7 +86,7 @@ func (proof *Proof) Run(ctx context.Context) (Report, error) {
 		run.Cancel()
 		return Report{}, err
 	}
-	report := Report{Tools: slices.Clone(proof.tools)}
+	report := reportForRun(proof.tools, run)
 	for envelope := range subscription.Events() {
 		report.Kinds = append(report.Kinds, envelope.Kind())
 		report.SecretSeen = report.SecretSeen || strings.Contains(string(envelope.Data()), fixtureSecret)
@@ -192,7 +178,7 @@ func (proof *Proof) finishCancellation(
 	run *agent.Run,
 	subscription *event.Subscription,
 ) (Report, error) {
-	report := Report{Tools: slices.Clone(proof.tools)}
+	report := reportForRun(proof.tools, run)
 	for envelope := range subscription.Events() {
 		report.Kinds = append(report.Kinds, envelope.Kind())
 		report.SecretSeen = report.SecretSeen || strings.Contains(string(envelope.Data()), fixtureSecret)
@@ -211,6 +197,17 @@ func (proof *Proof) finishCancellation(
 		return Report{}, fmt.Errorf("provider request did not observe cancellation")
 	}
 	return report, nil
+}
+
+func reportForRun(toolNames []string, run *agent.Run) Report {
+	identity := run.PlanIdentity()
+	return Report{
+		Tools:                         slices.Clone(toolNames),
+		CompiledPlanIdentities:        identity.CompiledIdentities(),
+		SnapshotCompatibilityIdentity: identity.SnapshotCompatibilityIdentity(),
+		ToolPlanID:                    identity.ToolPlanID().String(),
+		PlanFingerprint:               identity.Fingerprint(),
+	}
 }
 
 func architectureProofInput() (agent.Input, error) {

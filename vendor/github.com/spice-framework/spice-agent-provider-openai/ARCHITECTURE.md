@@ -17,7 +17,11 @@ Only finalized function calls from the completed response become Spice tool
 calls. This prevents partial argument deltas from becoming executable work.
 Unknown tools, provider-hosted executable output, malformed arguments,
 duplicate call IDs, inconsistent final text, and limit violations fail closed.
-The adapter does not expose provider reasoning or raw SDK objects.
+The adapter does not expose provider reasoning or raw SDK objects. Tool effects,
+replay safety, capabilities, and fingerprints are authoritative host policy and
+identity metadata. Translation deliberately sends only the function name,
+description, and JSON input schema to OpenAI, so policy-only changes cannot
+alter or disclose provider request content.
 
 `autoconfigure` is the only library-default activation surface. It is selected
 solely by an explicit blank import and contributes one fallback

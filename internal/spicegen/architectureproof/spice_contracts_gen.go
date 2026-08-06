@@ -12,7 +12,10 @@ import (
 	architectureproof "github.com/spice-framework/spice-agent-coding/internal/architectureproof"
 	spiceArchitectureproof "github.com/spice-framework/spice-agent-coding/internal/spicegen/architectureproof/sources/internal_/architectureproof"
 	coding "github.com/spice-framework/spice-agent-tools-coding"
+	agent "github.com/spice-framework/spice-agent/agent"
+	interaction "github.com/spice-framework/spice-agent/interaction"
 	model "github.com/spice-framework/spice-agent/model"
+	stage "github.com/spice-framework/spice-agent/stage"
 	tool "github.com/spice-framework/spice-agent/tool"
 	spicebean "github.com/spice-framework/spice/bean"
 	spiceconfig "github.com/spice-framework/spice/config"
@@ -38,10 +41,20 @@ type Components struct {
 	Shell tool.Tool
 	// Replace is bean "replace".
 	Replace tool.Tool
+	// ArchitectureProofToolDispatcher is bean "architectureProofToolDispatcher".
+	ArchitectureProofToolDispatcher stage.ToolDispatcher
+	// ArchitectureProofToolPlanSource is bean "architectureProofToolPlanSource".
+	ArchitectureProofToolPlanSource stage.ToolPlanSource
 	// ResponsesFixture is bean "responsesFixture".
 	ResponsesFixture *architectureproof.ResponsesFixture
-	// Provider5 is bean "architecture-proof-openai".
-	Provider5 model.Provider
+	// Provider7 is bean "architecture-proof-openai".
+	Provider7 model.Provider
+	// ArchitectureProofInteractionBroker is bean "architectureProofInteractionBroker".
+	ArchitectureProofInteractionBroker interaction.Broker
+	// ArchitectureProofExecutionPlan is bean "architectureProofExecutionPlan".
+	ArchitectureProofExecutionPlan architectureproof.ExecutionPlanMetadata
+	// ArchitectureProofEngine is bean "architectureProofEngine".
+	ArchitectureProofEngine *agent.Engine
 	// Proof is bean "proof".
 	Proof *architectureproof.Proof
 }
@@ -57,10 +70,20 @@ type BeanOverrides struct {
 	Shell spicebean.Override[tool.Tool]
 	// Replace replaces bean "replace".
 	Replace spicebean.Override[tool.Tool]
+	// ArchitectureProofToolDispatcher replaces bean "architectureProofToolDispatcher".
+	ArchitectureProofToolDispatcher spicebean.Override[stage.ToolDispatcher]
+	// ArchitectureProofToolPlanSource replaces bean "architectureProofToolPlanSource".
+	ArchitectureProofToolPlanSource spicebean.Override[stage.ToolPlanSource]
 	// ResponsesFixture replaces bean "responsesFixture".
 	ResponsesFixture spicebean.Override[*architectureproof.ResponsesFixture]
-	// Provider5 replaces bean "architecture-proof-openai".
-	Provider5 spicebean.Override[model.Provider]
+	// Provider7 replaces bean "architecture-proof-openai".
+	Provider7 spicebean.Override[model.Provider]
+	// ArchitectureProofInteractionBroker replaces bean "architectureProofInteractionBroker".
+	ArchitectureProofInteractionBroker spicebean.Override[interaction.Broker]
+	// ArchitectureProofExecutionPlan replaces bean "architectureProofExecutionPlan".
+	ArchitectureProofExecutionPlan spicebean.Override[architectureproof.ExecutionPlanMetadata]
+	// ArchitectureProofEngine replaces bean "architectureProofEngine".
+	ArchitectureProofEngine spicebean.Override[*agent.Engine]
 	// Proof replaces bean "proof".
 	Proof spicebean.Override[*architectureproof.Proof]
 }
@@ -97,11 +120,26 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.Replace.Enabled() {
 			result.Replace = layer.Overrides.Replace
 		}
+		if layer.Overrides.ArchitectureProofToolDispatcher.Enabled() {
+			result.ArchitectureProofToolDispatcher = layer.Overrides.ArchitectureProofToolDispatcher
+		}
+		if layer.Overrides.ArchitectureProofToolPlanSource.Enabled() {
+			result.ArchitectureProofToolPlanSource = layer.Overrides.ArchitectureProofToolPlanSource
+		}
 		if layer.Overrides.ResponsesFixture.Enabled() {
 			result.ResponsesFixture = layer.Overrides.ResponsesFixture
 		}
-		if layer.Overrides.Provider5.Enabled() {
-			result.Provider5 = layer.Overrides.Provider5
+		if layer.Overrides.Provider7.Enabled() {
+			result.Provider7 = layer.Overrides.Provider7
+		}
+		if layer.Overrides.ArchitectureProofInteractionBroker.Enabled() {
+			result.ArchitectureProofInteractionBroker = layer.Overrides.ArchitectureProofInteractionBroker
+		}
+		if layer.Overrides.ArchitectureProofExecutionPlan.Enabled() {
+			result.ArchitectureProofExecutionPlan = layer.Overrides.ArchitectureProofExecutionPlan
+		}
+		if layer.Overrides.ArchitectureProofEngine.Enabled() {
+			result.ArchitectureProofEngine = layer.Overrides.ArchitectureProofEngine
 		}
 		if layer.Overrides.Proof.Enabled() {
 			result.Proof = layer.Overrides.Proof

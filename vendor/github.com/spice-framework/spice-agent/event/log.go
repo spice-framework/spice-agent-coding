@@ -353,6 +353,10 @@ func (subscription *Subscription) terminateLocked(err error) {
 }
 
 func (subscription *Subscription) deliver() {
+	subscription.deliverWithAfterSend(nil)
+}
+
+func (subscription *Subscription) deliverWithAfterSend(afterSend func()) {
 	defer close(subscription.events)
 	defer close(subscription.done)
 	defer func() {
@@ -382,10 +386,21 @@ func (subscription *Subscription) deliver() {
 			return
 		case subscription.events <- entry.envelope:
 		}
+		if afterSend != nil {
+			afterSend()
+		}
 		subscription.mu.Lock()
-		subscription.queue = subscription.queue[1:]
-		subscription.queuedBytes -= entry.bytes
+		// Cancellation may terminate the subscription and clear its queue after
+		// the send commits but before this goroutine reacquires the lock.
+		if len(subscription.queue) != 0 &&
+			subscription.queue[0].envelope.Sequence() == entry.envelope.Sequence() {
+			subscription.queue = subscription.queue[1:]
+			subscription.queuedBytes -= entry.bytes
+		}
 		subscription.lastDelivered = entry.envelope.Sequence()
+		if exhausted, found := errors.AsType[*ResourceExhaustedError](subscription.err); found {
+			exhausted.LastDelivered = subscription.lastDelivered
+		}
 		subscription.mu.Unlock()
 	}
 }

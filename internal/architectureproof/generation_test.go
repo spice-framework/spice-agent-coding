@@ -58,7 +58,9 @@ func TestGeneratedArchitectureProofContainsInspectableDirectCalls(t *testing.T) 
 		t.Fatal(err)
 	}
 	for _, expected := range []string{
-		"ConstructCodingConfig", "ConstructArchitectureProofOpenai", "ConstructProof",
+		"ConstructCodingConfig", "ConstructArchitectureProofOpenai", "ConstructArchitectureProofToolDispatcher",
+		"ConstructArchitectureProofToolPlanSource", "ConstructArchitectureProofInteractionBroker",
+		"ConstructArchitectureProofExecutionPlan", "ConstructArchitectureProofEngine", "ConstructProof",
 		`map[string]tool.Tool{"read": read, "replace": replace, "shell": shell}`,
 	} {
 		if !bytes.Contains(providers, []byte(expected)) {
@@ -82,6 +84,10 @@ func TestGeneratedArchitectureProofContainsInspectableDirectCalls(t *testing.T) 
 		`"kind": "provider-construction"`,
 		"github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
 		"internal/architectureproof/proof.go",
+		"internal/architectureproof/plan.go",
+		"NewExecutionPlanMetadata",
+		"NewToolPlanSource",
+		"NewEngine",
 	} {
 		if !bytes.Contains(manifest, []byte(expected)) {
 			t.Fatalf("generation manifest lacks %q", expected)

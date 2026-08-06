@@ -41,7 +41,10 @@ The adapter translates provider-neutral messages and function tools to the
 Responses API and returns text deltas, finalized function calls, usage, and a
 single completion event. Provider-hosted executable tools and unknown extension
 parts fail closed. Output text and tool calls use the core operation limits.
-The generated request sets `store=false`.
+The generated request sets `store=false`. Only a tool's model-facing name,
+description, and input schema cross the provider boundary. Its effect, replay
+safety, capabilities, and complete fingerprint remain host policy metadata and
+are never serialized into an OpenAI request, event, diagnostic, or log.
 
 Failures before a stream exists are `model.ProviderError`; receive failures are
 `model.StreamError`. Provider retries are bounded and permitted only before the

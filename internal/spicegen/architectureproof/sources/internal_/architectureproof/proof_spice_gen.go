@@ -9,18 +9,18 @@ import (
 	fmt "fmt"
 
 	architectureproof "github.com/spice-framework/spice-agent-coding/internal/architectureproof"
-	model "github.com/spice-framework/spice-agent/model"
-	tool "github.com/spice-framework/spice-agent/tool"
+	agent "github.com/spice-framework/spice-agent/agent"
+	stage "github.com/spice-framework/spice-agent/stage"
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
 )
 
 // ConstructProof_579c091e performs the direct construction selected for bean "proof".
 // Spice source identity: spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof.
-func ConstructProof_579c091e(dependency0 model.Provider, dependency1 map[string]tool.Tool, dependency2 *architectureproof.ResponsesFixture) (*architectureproof.Proof, spicelifecycle.Cleanup, error) {
-	value, cleanup, err := architectureproof.NewProof(dependency0, dependency1, dependency2)
+func ConstructProof_579c091e(dependency0 *agent.Engine, dependency1 stage.ToolDispatcher, dependency2 *architectureproof.ResponsesFixture) (*architectureproof.Proof, spicelifecycle.Cleanup, error) {
+	value, err := architectureproof.NewProof(dependency0, dependency1, dependency2)
 	if err != nil {
 		var zero *architectureproof.Proof
 		return zero, nil, fmt.Errorf("construct bean proof (*github.com/spice-framework/spice-agent-coding/internal/architectureproof.Proof, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof): %w", err)
 	}
-	return value, cleanup, nil
+	return value, nil, nil
 }

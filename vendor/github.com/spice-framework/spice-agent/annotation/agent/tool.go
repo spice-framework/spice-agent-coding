@@ -14,6 +14,9 @@ import (
 // The required canonical name is the static DI/map identity; model-provided
 // input can never select an undeclared bean. Aliases, qualifiers, replacement,
 // preference, and ordering use normal generated Spice bean selection.
+// Each implementation's tool.Definition must explicitly classify its external
+// effect and replay safety and declare a canonical capability set. Dispatcher
+// construction fails closed on missing, contradictory, or invalid metadata.
 //
 // An exact interface-returning factory needs no InterfaceContribution: its Go
 // output already is tool.Tool. The generic compiler derives canonical result

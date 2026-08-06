@@ -12,9 +12,9 @@ tool (
 
 require (
 	github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0
-	github.com/spice-framework/spice-agent v0.0.0-20260806204214-1f072842707a
-	github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806210759-4beed3838dd2
-	github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806210553-17cbef3b93fa
+	github.com/spice-framework/spice-agent v0.0.0-20260806225954-af79fc7fe4ad
+	github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc
+	github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806232406-25b93fb6e1b2
 )
 
 require (

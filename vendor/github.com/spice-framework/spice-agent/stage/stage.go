@@ -32,6 +32,44 @@ type ToolDispatchDecorator interface {
 	Wrap(ToolDispatcher) ToolDispatcher
 }
 
+// DispatchFailure preserves both a valid tool execution outcome and a progress
+// reporter failure without joining their potentially sensitive text. It occurs
+// only when both failures happen in one dispatch.
+type DispatchFailure struct {
+	execution *tool.ExecutionError
+	reporter  error
+}
+
+func (failure *DispatchFailure) Error() string {
+	return "tool execution and progress reporting both failed"
+}
+
+// Unwrap preserves execution errors.Is/errors.As inspection. Reporter failures
+// are excluded from errors.Is so a reporter cancellation sentinel cannot
+// misclassify the execution lifecycle.
+func (failure *DispatchFailure) Unwrap() error {
+	if failure == nil {
+		return nil
+	}
+	return failure.execution
+}
+
+// ExecutionFailure returns the validated correlated execution failure.
+func (failure *DispatchFailure) ExecutionFailure() *tool.ExecutionError {
+	if failure == nil {
+		return nil
+	}
+	return failure.execution
+}
+
+// ReporterFailure returns the reporter rejection for structured inspection.
+func (failure *DispatchFailure) ReporterFailure() error {
+	if failure == nil {
+		return nil
+	}
+	return failure.reporter
+}
+
 type toolEntry struct {
 	definition     tool.Definition
 	implementation tool.Tool
@@ -107,12 +145,20 @@ func (dispatcher *Dispatcher) Dispatch(ctx context.Context, call tool.Call, repo
 		return tool.Result{}, fmt.Errorf("tool %q is not available", call.Name())
 	}
 	scoped := &scopedReporter{callID: call.ID(), delegate: reporter}
-	result := entry.implementation.Execute(ctx, call.Clone(), scoped)
-	if err := scoped.Err(); err != nil {
-		return tool.Result{}, err
+	result, executionErr := entry.implementation.Execute(ctx, call.Clone(), scoped)
+	reporterErr := scoped.Err()
+	if executionErr != nil {
+		validated := validateExecutionError(call, entry.definition, result, executionErr)
+		if reporterErr != nil {
+			//nolint:errorlint // The exact boundary type was enforced by validateExecutionError.
+			if failure, typed := validated.(*tool.ExecutionError); typed {
+				return tool.Result{}, &DispatchFailure{execution: failure, reporter: reporterErr}
+			}
+		}
+		return tool.Result{}, validated
 	}
-	if err := ctx.Err(); err != nil {
-		return tool.Result{}, err
+	if reporterErr != nil {
+		return tool.Result{}, reporterErr
 	}
 	if err := result.Validate(); err != nil {
 		return tool.Result{}, fmt.Errorf("validate tool %q result: %w", call.Name(), err)
@@ -121,6 +167,40 @@ func (dispatcher *Dispatcher) Dispatch(ctx context.Context, call tool.Call, repo
 		return tool.Result{}, fmt.Errorf("tool %q returned call ID %q for active call %q", call.Name(), result.CallID(), call.ID())
 	}
 	return result.Clone(), nil
+}
+
+func validateExecutionError(
+	call tool.Call,
+	definition tool.Definition,
+	result tool.Result,
+	executionErr error,
+) error {
+	if !result.IsZero() {
+		return fmt.Errorf("tool %q returned both a result and an execution error", call.Name())
+	}
+	//nolint:errorlint // Wrappers and joins are invalid here; the top-level type is the contract.
+	failure, typed := executionErr.(*tool.ExecutionError)
+	if !typed || failure == nil {
+		return fmt.Errorf("tool %q returned an error that is not exactly one *tool.ExecutionError", call.Name())
+	}
+	if err := failure.Validate(); err != nil {
+		return fmt.Errorf("tool %q returned an invalid execution error: %w", call.Name(), err)
+	}
+	if failure.CallID() != call.ID() {
+		return fmt.Errorf(
+			"tool %q execution error used call ID %q for active call %q",
+			call.Name(),
+			failure.CallID(),
+			call.ID(),
+		)
+	}
+	if failure.State() == tool.ExecutionUncertain && definition.Effect() != tool.EffectMutating {
+		return fmt.Errorf("read-only tool %q returned an uncertain mutation outcome", call.Name())
+	}
+	if failure.RetryDisposition() == tool.RetryAllowed && definition.ReplaySafety() == tool.ReplayUnsafe {
+		return fmt.Errorf("replay-unsafe tool %q returned retry-allowed execution failure", call.Name())
+	}
+	return failure
 }
 
 type scopedReporter struct {

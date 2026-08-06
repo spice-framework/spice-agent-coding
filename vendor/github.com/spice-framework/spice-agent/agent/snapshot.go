@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"slices"
 	"strings"
 
 	"github.com/spice-framework/spice-agent/interaction"
 	"github.com/spice-framework/spice-agent/message"
+	"github.com/spice-framework/spice-agent/stage"
 )
 
 const (
-	SnapshotVersion         = "spice.agent.snapshot/v1alpha1"
+	SnapshotVersion         = "spice.agent.snapshot/v1alpha2"
 	MaximumSnapshotBytes    = 16 << 20
 	maximumSnapshotMessages = 4096
 	maximumPlanIdentities   = 512
@@ -35,28 +35,27 @@ const (
 // Snapshot is immutable provider-neutral run state. It intentionally excludes
 // contexts, services, credentials, processes, clients, and mutable registries.
 type Snapshot struct {
-	version           string
-	runID             string
-	definition        Definition
-	completedTurns    uint32
-	history           []message.Message
-	staticPlan        []string
-	dynamicGeneration string
-	interactionIDs    []interaction.ID
-	lastSequence      uint64
-	status            LifecycleStatus
+	version        string
+	runID          string
+	definition     Definition
+	completedTurns uint32
+	history        []message.Message
+	planIdentity   PlanIdentity
+	interactionIDs []interaction.ID
+	lastSequence   uint64
+	status         LifecycleStatus
 }
 
 // NewSnapshot constructs and fully validates one safe-state snapshot.
-func NewSnapshot(runID string, definition Definition, completedTurns uint32, history []message.Message, staticPlan []string, dynamicGeneration string, lastSequence uint64, status LifecycleStatus) (Snapshot, error) {
-	return newSnapshot(runID, definition, completedTurns, history, staticPlan, dynamicGeneration, nil, lastSequence, status)
+func NewSnapshot(runID string, definition Definition, completedTurns uint32, history []message.Message, planIdentity PlanIdentity, lastSequence uint64, status LifecycleStatus) (Snapshot, error) {
+	return newSnapshot(runID, definition, completedTurns, history, planIdentity, nil, lastSequence, status)
 }
 
-func newSnapshot(runID string, definition Definition, completedTurns uint32, history []message.Message, staticPlan []string, dynamicGeneration string, interactionIDs []interaction.ID, lastSequence uint64, status LifecycleStatus) (Snapshot, error) {
+func newSnapshot(runID string, definition Definition, completedTurns uint32, history []message.Message, planIdentity PlanIdentity, interactionIDs []interaction.ID, lastSequence uint64, status LifecycleStatus) (Snapshot, error) {
 	result := Snapshot{
 		version: SnapshotVersion, runID: runID, definition: definition,
 		completedTurns: completedTurns, history: cloneHistory(history),
-		staticPlan: append([]string(nil), staticPlan...), dynamicGeneration: dynamicGeneration,
+		planIdentity:   planIdentity.clone(),
 		interactionIDs: append([]interaction.ID(nil), interactionIDs...),
 		lastSequence:   lastSequence, status: status,
 	}
@@ -83,10 +82,7 @@ func (snapshot Snapshot) Validate() error {
 	if len(snapshot.history) == 0 || len(snapshot.history) > maximumSnapshotMessages {
 		return fmt.Errorf("agent snapshot message count must be between 1 and %d", maximumSnapshotMessages)
 	}
-	if len(snapshot.staticPlan) == 0 || len(snapshot.staticPlan) > maximumPlanIdentities {
-		return fmt.Errorf("agent snapshot static plan count must be between 1 and %d", maximumPlanIdentities)
-	}
-	if err := snapshotToken("dynamic generation", snapshot.dynamicGeneration, 256); err != nil {
+	if err := snapshot.planIdentity.Validate(); err != nil {
 		return err
 	}
 	if snapshot.lastSequence == 0 || snapshot.lastSequence == math.MaxUint64 {
@@ -101,21 +97,20 @@ func (snapshot Snapshot) Validate() error {
 	default:
 		return fmt.Errorf("agent snapshot lifecycle status %q is unsafe", snapshot.status)
 	}
-	if err := validateStaticPlan(snapshot.staticPlan); err != nil {
-		return err
-	}
 	if err := validateInteractionIDs(snapshot.interactionIDs); err != nil {
 		return err
 	}
 	return validateSnapshotHistory(snapshot.history)
 }
 
-func (snapshot Snapshot) Version() string           { return snapshot.version }
-func (snapshot Snapshot) RunID() string             { return snapshot.runID }
-func (snapshot Snapshot) Definition() Definition    { return snapshot.definition }
-func (snapshot Snapshot) CompletedTurns() uint32    { return snapshot.completedTurns }
-func (snapshot Snapshot) StaticPlan() []string      { return append([]string(nil), snapshot.staticPlan...) }
-func (snapshot Snapshot) DynamicGeneration() string { return snapshot.dynamicGeneration }
+func (snapshot Snapshot) Version() string        { return snapshot.version }
+func (snapshot Snapshot) RunID() string          { return snapshot.runID }
+func (snapshot Snapshot) Definition() Definition { return snapshot.definition }
+func (snapshot Snapshot) CompletedTurns() uint32 { return snapshot.completedTurns }
+func (snapshot Snapshot) PlanIdentity() PlanIdentity {
+	return snapshot.planIdentity.clone()
+}
+func (snapshot Snapshot) ToolPlanID() stage.PlanID { return snapshot.planIdentity.ToolPlanID() }
 func (snapshot Snapshot) InteractionIDs() []interaction.ID {
 	return append([]interaction.ID(nil), snapshot.interactionIDs...)
 }
@@ -175,7 +170,16 @@ func ParseSnapshot(encoded []byte) (Snapshot, error) {
 	for index, value := range wire.InteractionIDs {
 		interactionIDs[index] = interaction.ID(value)
 	}
-	result, err := newSnapshot(wire.RunID, definition, wire.CompletedTurns, history, wire.StaticPlan, wire.DynamicGeneration, interactionIDs, wire.LastSequence, wire.Status)
+	planIdentity, err := reconstructPlanIdentity(
+		wire.PlanIdentity.CompiledIdentities,
+		wire.PlanIdentity.SnapshotCompatibilityIdentity,
+		wire.PlanIdentity.ToolPlanID,
+		wire.PlanIdentity.Fingerprint,
+	)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	result, err := newSnapshot(wire.RunID, definition, wire.CompletedTurns, history, planIdentity, interactionIDs, wire.LastSequence, wire.Status)
 	if err != nil {
 		return Snapshot{}, err
 	}
@@ -183,16 +187,22 @@ func ParseSnapshot(encoded []byte) (Snapshot, error) {
 }
 
 type snapshotWire struct {
-	Version           string             `json:"version"`
-	RunID             string             `json:"run_id"`
-	Definition        snapshotDefinition `json:"definition"`
-	CompletedTurns    uint32             `json:"completed_turns"`
-	History           []snapshotMessage  `json:"history"`
-	StaticPlan        []string           `json:"static_plan"`
-	DynamicGeneration string             `json:"dynamic_generation"`
-	InteractionIDs    []string           `json:"seen_interaction_ids"`
-	LastSequence      uint64             `json:"last_sequence"`
-	Status            LifecycleStatus    `json:"status"`
+	Version        string               `json:"version"`
+	RunID          string               `json:"run_id"`
+	Definition     snapshotDefinition   `json:"definition"`
+	CompletedTurns uint32               `json:"completed_turns"`
+	History        []snapshotMessage    `json:"history"`
+	PlanIdentity   snapshotPlanIdentity `json:"plan_identity"`
+	InteractionIDs []string             `json:"seen_interaction_ids"`
+	LastSequence   uint64               `json:"last_sequence"`
+	Status         LifecycleStatus      `json:"status"`
+}
+
+type snapshotPlanIdentity struct {
+	CompiledIdentities            []string `json:"compiled_identities"`
+	SnapshotCompatibilityIdentity string   `json:"snapshot_compatibility_identity"`
+	ToolPlanID                    string   `json:"tool_plan_id"`
+	Fingerprint                   string   `json:"fingerprint"`
 }
 
 type snapshotDefinition struct {
@@ -229,7 +239,12 @@ func (snapshot Snapshot) toWire() (snapshotWire, error) {
 		Version: snapshot.version, RunID: snapshot.runID,
 		Definition:     snapshotDefinition{Name: snapshot.definition.name, Model: snapshot.definition.model, MaxTurns: snapshot.definition.maxTurns},
 		CompletedTurns: snapshot.completedTurns, History: history,
-		StaticPlan: append([]string(nil), snapshot.staticPlan...), DynamicGeneration: snapshot.dynamicGeneration,
+		PlanIdentity: snapshotPlanIdentity{
+			CompiledIdentities:            snapshot.planIdentity.CompiledIdentities(),
+			SnapshotCompatibilityIdentity: snapshot.planIdentity.SnapshotCompatibilityIdentity(),
+			ToolPlanID:                    snapshot.planIdentity.ToolPlanID().String(),
+			Fingerprint:                   snapshot.planIdentity.Fingerprint(),
+		},
 		InteractionIDs: interactionIDStrings(snapshot.interactionIDs),
 		LastSequence:   snapshot.lastSequence, Status: snapshot.status,
 	}, nil
@@ -334,30 +349,6 @@ func validateSnapshotHistory(history []message.Message) error {
 	}
 	if len(pending) != 0 {
 		return errors.New("agent snapshot contains uncertain tool calls without results")
-	}
-	return nil
-}
-
-func validateStaticPlan(values []string) error {
-	if !slices.IsSorted(values) {
-		return errors.New("agent snapshot static plan must be sorted")
-	}
-	for index, value := range values {
-		if err := snapshotToken("static plan identity", value, 256); err != nil {
-			return err
-		}
-		if index > 0 && values[index-1] == value {
-			return fmt.Errorf("agent snapshot static plan identity %q is duplicated", value)
-		}
-		category, name, found := strings.Cut(value, ":")
-		if !found || name == "" {
-			return fmt.Errorf("agent snapshot static plan identity %q must use category:name", value)
-		}
-		switch category {
-		case "provider", "stage", "observer", "broker", "tool":
-		default:
-			return fmt.Errorf("agent snapshot static plan identity %q has unsupported category", value)
-		}
 	}
 	return nil
 }

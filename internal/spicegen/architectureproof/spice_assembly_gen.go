@@ -56,13 +56,18 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 	}
 	_ = dependencies
 	application.components = Components{
-		CodingConfig:     dependencies.codingConfig,
-		Read:             dependencies.read,
-		Shell:            dependencies.shell,
-		Replace:          dependencies.replace,
-		ResponsesFixture: dependencies.responsesFixture,
-		Provider5:        dependencies.architectureProofOpenai,
-		Proof:            dependencies.proof,
+		CodingConfig:                       dependencies.codingConfig,
+		Read:                               dependencies.read,
+		Shell:                              dependencies.shell,
+		Replace:                            dependencies.replace,
+		ArchitectureProofToolDispatcher:    dependencies.architectureProofToolDispatcher,
+		ArchitectureProofToolPlanSource:    dependencies.architectureProofToolPlanSource,
+		ResponsesFixture:                   dependencies.responsesFixture,
+		Provider7:                          dependencies.architectureProofOpenai,
+		ArchitectureProofInteractionBroker: dependencies.architectureProofInteractionBroker,
+		ArchitectureProofExecutionPlan:     dependencies.architectureProofExecutionPlan,
+		ArchitectureProofEngine:            dependencies.architectureProofEngine,
+		Proof:                              dependencies.proof,
 	}
 	return application, nil
 }

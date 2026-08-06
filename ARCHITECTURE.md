@@ -39,7 +39,15 @@ topology.
 SDK composition boundary before daemon and terminal commands are added. It
 proves a normal provider replacing a fallback provider, three explicit
 auto-configured coding-tool beans, a canonical `map[string]tool.Tool`, reverse
-cleanup, and the provider → tool → provider continuation loop. Generated code
+cleanup, and the provider → tool → provider continuation loop. The graph also
+constructs the dispatcher, source-guaranteed static `stage.ToolPlanSource`,
+explicit unavailable interaction broker, execution-plan metadata, and engine as
+ordinary inspectable beans. The metadata records every executable provider,
+kernel/dispatch stage, broker, and static tool with its selected module version;
+there are no observer or dispatcher-decorator beans in this proof. A semantic
+snapshot compatibility identity is explicit and stable across machines, while
+the kernel combines it with the exact leased tool generation and definition
+fingerprints for each run. Generated code
 lives only under `internal/spicegen/architectureproof`; the ownership manifest
 and source mappings live in `.spice/architectureproof.manifest.json`.
 

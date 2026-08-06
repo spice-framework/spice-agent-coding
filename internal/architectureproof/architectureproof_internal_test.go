@@ -12,31 +12,68 @@ import (
 
 	"github.com/spice-framework/spice-agent/agent"
 	"github.com/spice-framework/spice-agent/event"
+	"github.com/spice-framework/spice-agent/message"
 	"github.com/spice-framework/spice-agent/model"
+	"github.com/spice-framework/spice-agent/stage"
 	"github.com/spice-framework/spice-agent/tool"
 )
 
 func TestProofConstructionAndRunRejectInvalidState(t *testing.T) {
 	t.Parallel()
-	if proof, cleanup, err := NewProof(nil, map[string]tool.Tool{"broken": nil}, &ResponsesFixture{}); proof != nil || cleanup != nil || err == nil || !strings.Contains(err.Error(), "dispatcher") {
-		t.Fatalf("invalid tool construction = %#v, %#v, %v", proof, cleanup, err)
+	if dispatcher, err := NewToolDispatcher(map[string]tool.Tool{"broken": nil}); dispatcher != nil || err == nil || !strings.Contains(err.Error(), "dispatcher") {
+		t.Fatalf("invalid tool dispatcher = %#v, %v", dispatcher, err)
 	}
-	if proof, cleanup, err := NewProof(nil, map[string]tool.Tool{}, &ResponsesFixture{}); proof != nil || cleanup != nil || err == nil || !strings.Contains(err.Error(), "engine") {
-		t.Fatalf("nil provider construction = %#v, %#v, %v", proof, cleanup, err)
-	}
-	var nilProof *Proof
-	if _, err := nilProof.Run(t.Context()); err == nil || !strings.Contains(err.Error(), "not initialized") {
-		t.Fatalf("nil Proof.Run() error = %v", err)
-	}
-	if _, err := (&Proof{}).Run(t.Context()); err == nil || !strings.Contains(err.Error(), "not initialized") {
-		t.Fatalf("empty Proof.Run() error = %v", err)
-	}
-	if _, err := nilProof.RunCancellation(t.Context()); err == nil || !strings.Contains(err.Error(), "not initialized") {
-		t.Fatalf("nil Proof.RunCancellation() error = %v", err)
-	}
-	proof, cleanup, err := NewProof(unavailableProvider{}, map[string]tool.Tool{}, &ResponsesFixture{})
+	dispatcher, err := NewToolDispatcher(map[string]tool.Tool{})
 	if err != nil {
 		t.Fatal(err)
+	}
+	toolPlans, err := NewToolPlanSource(dispatcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if source, sourceErr := NewToolPlanSource(nil); source != nil || sourceErr == nil || !strings.Contains(sourceErr.Error(), "source") {
+		t.Fatalf("nil dispatcher source = %#v, %v", source, sourceErr)
+	}
+	if engine, cleanup, engineErr := NewEngine(nil, toolPlans, NewInteractionBroker(), NewExecutionPlanMetadata()); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "provider") {
+		t.Fatalf("nil provider construction = %#v, %#v, %v", engine, cleanup, engineErr)
+	}
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, nil, NewInteractionBroker(), NewExecutionPlanMetadata()); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "plan source") {
+		t.Fatalf("nil tool source construction = %#v, %#v, %v", engine, cleanup, engineErr)
+	}
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, nil, NewExecutionPlanMetadata()); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "broker") {
+		t.Fatalf("nil broker construction = %#v, %#v, %v", engine, cleanup, engineErr)
+	}
+	invalidMetadata := NewExecutionPlanMetadata()
+	invalidMetadata.CompiledPlanIdentities = []string{"invalid"}
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, NewInteractionBroker(), invalidMetadata); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "compiled plan") {
+		t.Fatalf("invalid plan construction = %#v, %#v, %v", engine, cleanup, engineErr)
+	}
+	var nilProof *Proof
+	if _, runErr := nilProof.Run(t.Context()); runErr == nil || !strings.Contains(runErr.Error(), "not initialized") {
+		t.Fatalf("nil Proof.Run() error = %v", runErr)
+	}
+	if _, runErr := (&Proof{}).Run(t.Context()); runErr == nil || !strings.Contains(runErr.Error(), "not initialized") {
+		t.Fatalf("empty Proof.Run() error = %v", runErr)
+	}
+	if _, runErr := nilProof.RunCancellation(t.Context()); runErr == nil || !strings.Contains(runErr.Error(), "not initialized") {
+		t.Fatalf("nil Proof.RunCancellation() error = %v", runErr)
+	}
+	proof, cleanup := newTestProof(t, unavailableProvider{}, map[string]tool.Tool{}, &ResponsesFixture{})
+	dispatcher, dispatcherErr := NewToolDispatcher(map[string]tool.Tool{})
+	if dispatcherErr != nil {
+		t.Fatal(dispatcherErr)
+	}
+	if constructed, constructErr := NewProof(nil, dispatcher, &ResponsesFixture{}); constructed != nil || constructErr == nil || !strings.Contains(constructErr.Error(), "engine") {
+		t.Fatalf("nil engine proof = %#v, %v", constructed, constructErr)
+	}
+	if constructed, constructErr := NewProof(proof.engine, nil, &ResponsesFixture{}); constructed != nil || constructErr == nil || !strings.Contains(constructErr.Error(), "dispatcher") {
+		t.Fatalf("nil dispatcher proof = %#v, %v", constructed, constructErr)
+	}
+	if constructed, constructErr := NewProof(proof.engine, dispatcher, nil); constructed != nil || constructErr == nil || !strings.Contains(constructErr.Error(), "fixture") {
+		t.Fatalf("nil fixture proof = %#v, %v", constructed, constructErr)
+	}
+	if proof == nil {
+		t.Fatal("test proof is nil")
 	}
 	if _, err = proof.Run(nil); err == nil || !strings.Contains(err.Error(), "context") { //nolint:staticcheck // Boundary test proves nil is rejected before execution.
 		t.Fatalf("Proof.Run(nil) error = %v", err)
@@ -63,18 +100,15 @@ func TestCancellationPreparationAndWaitAreBounded(t *testing.T) {
 	}
 
 	waitFixture := &ResponsesFixture{}
-	proof, cleanup, err := NewProof(blockingProvider{}, map[string]tool.Tool{}, waitFixture)
-	if err != nil {
-		t.Fatal(err)
-	}
+	proof, cleanup := newTestProof(t, blockingProvider{}, map[string]tool.Tool{}, waitFixture)
 	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
 	defer cancel()
-	if _, err = proof.RunCancellation(ctx); !errors.Is(err, context.DeadlineExceeded) {
+	if _, err := proof.RunCancellation(ctx); !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("bounded Proof.RunCancellation() error = %v", err)
 	}
 	stopContext, stopCancel := context.WithTimeout(context.Background(), time.Second)
 	defer stopCancel()
-	if err = cleanup(stopContext); err != nil {
+	if err := cleanup(stopContext); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -85,14 +119,12 @@ func TestCancellationFinalizationRejectsUnexpectedTerminalState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	completedProof, completedCleanup, err := NewProof(
+	completedProof, completedCleanup := newTestProof(
+		t,
 		oneEventProvider{event: completedEvent},
 		map[string]tool.Tool{},
 		&ResponsesFixture{},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 	completedRun, completedSubscription := startPlainRun(t, completedProof)
 	if _, err = completedProof.finishCancellation(t.Context(), completedRun, completedSubscription); err == nil || !strings.Contains(err.Error(), "without cancellation") {
 		t.Fatalf("completed finishCancellation() error = %v", err)
@@ -101,16 +133,176 @@ func TestCancellationFinalizationRejectsUnexpectedTerminalState(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cancelledProof, cancelledCleanup, err := NewProof(blockingProvider{}, map[string]tool.Tool{}, &ResponsesFixture{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	cancelledProof, cancelledCleanup := newTestProof(t, blockingProvider{}, map[string]tool.Tool{}, &ResponsesFixture{})
 	cancelledRun, cancelledSubscription := startPlainRun(t, cancelledProof)
 	cancelledRun.Cancel()
 	if _, err = cancelledProof.finishCancellation(t.Context(), cancelledRun, cancelledSubscription); err == nil || !strings.Contains(err.Error(), "did not observe") {
 		t.Fatalf("unobserved finishCancellation() error = %v", err)
 	}
 	if err = cancelledCleanup(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func newTestProof(
+	t *testing.T,
+	provider model.Provider,
+	tools map[string]tool.Tool,
+	fixture *ResponsesFixture,
+) (*Proof, func(context.Context) error) {
+	t.Helper()
+	dispatcher, err := NewToolDispatcher(tools)
+	if err != nil {
+		t.Fatal(err)
+	}
+	toolPlans, err := NewToolPlanSource(dispatcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	engine, cleanup, err := NewEngine(
+		provider,
+		toolPlans,
+		NewInteractionBroker(),
+		NewExecutionPlanMetadata(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proof, err := NewProof(engine, dispatcher, fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return proof, cleanup
+}
+
+func TestGeneratedExecutionPlanIsExplicitAndSourceGuaranteed(t *testing.T) {
+	t.Parallel()
+	metadata := NewExecutionPlanMetadata()
+	if metadata.SnapshotCompatibilityIdentity != snapshotCompatibilityIdentity {
+		t.Fatalf("snapshot compatibility = %q", metadata.SnapshotCompatibilityIdentity)
+	}
+	if len(metadata.CompiledPlanIdentities) != 8 {
+		t.Fatalf("compiled identities = %v", metadata.CompiledPlanIdentities)
+	}
+	metadata.CompiledPlanIdentities[0] = "corrupted"
+	if NewExecutionPlanMetadata().CompiledPlanIdentities[0] == "corrupted" {
+		t.Fatal("execution plan metadata reused mutable backing storage")
+	}
+	dispatcher, err := NewToolDispatcher(map[string]tool.Tool{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source, err := NewToolPlanSource(dispatcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := source.LeaseCurrent(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if releaseErr := first.Release(); releaseErr != nil {
+			t.Error(releaseErr)
+		}
+	})
+	second, err := source.LeaseGeneration(t.Context(), first.ToolPlanID())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if releaseErr := second.Release(); releaseErr != nil {
+			t.Error(releaseErr)
+		}
+	})
+	if first == second || first.ToolPlanID() != second.ToolPlanID() {
+		t.Fatalf("static leases = %#v, %#v", first, second)
+	}
+	unknown, err := stage.NewPlanID("static:unknown")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lease, leaseErr := source.LeaseGeneration(t.Context(), unknown); lease != nil || leaseErr == nil || !strings.Contains(leaseErr.Error(), "unavailable") {
+		t.Fatalf("unknown static generation = %#v, %v", lease, leaseErr)
+	}
+}
+
+func TestGeneratedExecutionPlanResumesExactStaticSnapshot(t *testing.T) {
+	t.Parallel()
+	dispatcher, err := NewToolDispatcher(map[string]tool.Tool{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source, err := NewToolPlanSource(dispatcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	metadata := NewExecutionPlanMetadata()
+	lease, err := source.LeaseCurrent(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity, err := agent.NewPlanIdentity(
+		metadata.CompiledPlanIdentities,
+		metadata.SnapshotCompatibilityIdentity,
+		lease.ToolPlanID(),
+		lease.Definitions(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = lease.Release(); err != nil {
+		t.Fatal(err)
+	}
+	definition, err := agent.NewDefinition("snapshot-proof", "proof-model", 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	part, err := message.Text("resume the generated plan")
+	if err != nil {
+		t.Fatal(err)
+	}
+	initial, err := message.New("snapshot-input", message.RoleUser, part)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := agent.NewSnapshot(
+		"snapshot-run",
+		definition,
+		1,
+		[]message.Message{initial},
+		identity,
+		2,
+		agent.LifecycleSuspended,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	completed, err := model.Completed(model.NewUsage(1, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	engine, cleanup, err := NewEngine(
+		oneEventProvider{event: completed},
+		source,
+		NewInteractionBroker(),
+		metadata,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if cleanupErr := cleanup(context.Background()); cleanupErr != nil {
+			t.Error(cleanupErr)
+		}
+	})
+	run, err := engine.ResumeSnapshot(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if run.ID() != "snapshot-run" || run.ToolPlanID() != identity.ToolPlanID() {
+		t.Fatalf("resumed run = %q, tool plan %q", run.ID(), run.ToolPlanID())
+	}
+	if err = run.Wait(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 }

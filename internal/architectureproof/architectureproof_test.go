@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	architectureproof "github.com/spice-framework/spice-agent-coding/internal/architectureproof"
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/architectureproof"
 	"github.com/spice-framework/spice-agent/event"
 )
@@ -36,6 +37,18 @@ func TestGeneratedArchitectureProofExecutesProviderToolContinuation(t *testing.T
 	}
 	if !slices.Equal(report.Tools, []string{"read", "replace", "shell"}) {
 		t.Fatalf("generated named tools = %v", report.Tools)
+	}
+	metadata := architectureproof.NewExecutionPlanMetadata()
+	if !slices.Equal(report.CompiledPlanIdentities, metadata.CompiledPlanIdentities) ||
+		report.SnapshotCompatibilityIdentity != metadata.SnapshotCompatibilityIdentity ||
+		report.ToolPlanID == "" || report.PlanFingerprint == "" {
+		t.Fatalf(
+			"generated plan = compiled %v, compatibility %q, tool plan %q, fingerprint %q",
+			report.CompiledPlanIdentities,
+			report.SnapshotCompatibilityIdentity,
+			report.ToolPlanID,
+			report.PlanFingerprint,
+		)
 	}
 	for _, kind := range []event.Kind{
 		event.RunStarted,

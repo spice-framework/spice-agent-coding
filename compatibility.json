@@ -3,8 +3,8 @@
   "go": "1.26.5",
   "spice": "v0.1.0-preview.1.0.20260806200749-524424a04df0",
   "spice_toolchain": "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6",
-  "spice_agent": "v0.0.0-20260806204214-1f072842707a",
+  "spice_agent": "v0.0.0-20260806225954-af79fc7fe4ad",
   "spice_agent_tui": null,
-  "spice_agent_provider_openai": "v0.0.0-20260806210759-4beed3838dd2",
-  "spice_agent_tools_coding": "v0.0.0-20260806210553-17cbef3b93fa"
+  "spice_agent_provider_openai": "v0.0.0-20260806230257-a6962fe2dabc",
+  "spice_agent_tools_coding": "v0.0.0-20260806232406-25b93fb6e1b2"
 }
