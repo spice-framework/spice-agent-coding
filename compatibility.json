@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "go": "1.26.5",
+  "spice_agent_api": null,
+  "spice_core": null,
+  "spice_toolchain": null
+}

@@ -1,0 +1,120 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"testing"
+)
+
+func TestValidateCompatibility(t *testing.T) {
+	t.Parallel()
+	valid := `{"schema":1,"go":"1.26.5","spice_agent_api":null,"spice_core":null,"spice_toolchain":null}`
+	tests := []struct {
+		name, content, wantErr string
+	}{
+		{name: "valid", content: valid},
+		{name: "malformed", content: `{`, wantErr: "decode"},
+		{name: "unknown", content: strings.Replace(valid, `}`, `,"extra":true}`, 1), wantErr: "unknown field"},
+		{name: "trailing", content: valid + `{}`, wantErr: "trailing"},
+		{name: "wrong Go", content: strings.Replace(valid, "1.26.5", "1.26.4", 1), wantErr: "explicit null"},
+		{name: "premature API", content: strings.Replace(valid, `"spice_agent_api":null`, `"spice_agent_api":"v1"`, 1), wantErr: "explicit null"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			err := validateCompatibility([]byte(test.content))
+			if test.wantErr == "" && err != nil {
+				t.Fatalf("validateCompatibility() error = %v", err)
+			}
+			if test.wantErr != "" && (err == nil || !strings.Contains(err.Error(), test.wantErr)) {
+				t.Fatalf("validateCompatibility() error = %v, want containing %q", err, test.wantErr)
+			}
+		})
+	}
+}
+
+func TestIdentityAndPins(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeFile(t, root, "go.mod", "module "+modulePath+"\n\ngo 1.26.0\n\ntoolchain go1.26.5\n")
+	writeFile(t, root, "compatibility.json", `{"schema":1,"go":"1.26.5","spice_agent_api":null,"spice_core":null,"spice_toolchain":null}`)
+	writeFile(t, root, "tools/go.mod", strings.Join([]string{
+		"github.com/golangci/golangci-lint/v2 v2.12.2",
+		"github.com/securego/gosec/v2 v2.28.0",
+		"go.uber.org/nilaway v0.0.0-20260724203407-f4f8ac24c032",
+		"golang.org/x/tools v0.48.0", "golang.org/x/vuln v1.1.4", "mvdan.cc/gofumpt v0.10.0",
+	}, "\n"))
+	if err := checkIdentity(root); err != nil {
+		t.Fatalf("checkIdentity() error = %v", err)
+	}
+	writeFile(t, root, "go.mod", "module example.com/wrong\n")
+	if err := checkIdentity(root); err == nil || !strings.Contains(err.Error(), "canonical module") {
+		t.Fatalf("checkIdentity() error = %v, want identity diagnostic", err)
+	}
+}
+
+func TestFilesCoverageAndModeBoundaries(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeFile(t, root, "root.go", "package fixture")
+	writeFile(t, root, "internal/value.go", "package value")
+	writeFile(t, root, "tools/ignored.go", "package ignored")
+	files, err := goFiles(root)
+	if err != nil || len(files) != 2 || !slices.IsSorted(files) {
+		t.Fatalf("goFiles() = %v, %v", files, err)
+	}
+	digests, err := treeDigests(root)
+	if err != nil || len(digests) != 3 {
+		t.Fatalf("treeDigests() = %d, %v", len(digests), err)
+	}
+	missing, err := treeDigests(filepath.Join(root, "missing"))
+	if err != nil || len(missing) != 0 {
+		t.Fatalf("treeDigests(missing) = %v, %v", missing, err)
+	}
+	percentage, err := totalCoverage("total: (statements) 90.0%")
+	if err != nil || percentage != 90 {
+		t.Fatalf("totalCoverage() = %v, %v", percentage, err)
+	}
+	if _, err := totalCoverage("invalid"); err == nil {
+		t.Fatal("totalCoverage(invalid) error = nil")
+	}
+	if err := run(t.Context(), root, "unknown"); err == nil || !strings.Contains(err.Error(), "unknown mode") {
+		t.Fatalf("run(unknown) error = %v", err)
+	}
+}
+
+func TestEnvironmentAndCancellation(t *testing.T) {
+	t.Parallel()
+	offline := commandEnvironment(false, map[string]string{"GOFLAGS": "-mod=vendor"})
+	if !slices.Contains(offline, "GOPROXY=off") || !slices.Contains(offline, "GOWORK=off") ||
+		!slices.Contains(offline, "GOFLAGS=-mod=vendor") {
+		t.Fatalf("offline environment is not isolated")
+	}
+	for _, entry := range offline {
+		upper := strings.ToUpper(entry)
+		if strings.Contains(upper, "TOKEN=") || strings.Contains(upper, "SECRET=") {
+			t.Fatalf("credential-like environment was inherited: %s", entry)
+		}
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	err := command(ctx, t.TempDir(), nil, "go", "version")
+	if err == nil || !errors.Is(ctx.Err(), context.Canceled) {
+		t.Fatalf("command(cancelled) error = %v", err)
+	}
+}
+
+func writeFile(t *testing.T, root, name, content string) {
+	t.Helper()
+	path := filepath.Join(root, filepath.FromSlash(name))
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
