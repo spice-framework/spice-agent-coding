@@ -6,8 +6,9 @@ first executable slice is the generated
 adapter, explicitly activated coding-tool starter, and deterministic Agent
 kernel are assembled through ordinary Spice beans. The offline acceptance test
 executes a local TLS Responses endpoint, a compiled `read` call, provider
-continuation, and final event delivery without credentials or external network
-access. See [the architecture-proof evidence](docs/architecture-proof.md).
+continuation, final event delivery, and provider cancellation without
+credentials or external network access. See
+[the architecture-proof evidence](docs/architecture-proof.md).
 
 The distribution will also contain two inspectable, independently generated Spice
 applications: `spice-agentd`, which supports explicit daemon serve, and

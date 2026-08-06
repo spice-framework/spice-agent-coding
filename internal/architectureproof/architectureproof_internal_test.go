@@ -8,7 +8,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/spice-framework/spice-agent/agent"
+	"github.com/spice-framework/spice-agent/event"
 	"github.com/spice-framework/spice-agent/model"
 	"github.com/spice-framework/spice-agent/tool"
 )
@@ -28,6 +31,9 @@ func TestProofConstructionAndRunRejectInvalidState(t *testing.T) {
 	if _, err := (&Proof{}).Run(t.Context()); err == nil || !strings.Contains(err.Error(), "not initialized") {
 		t.Fatalf("empty Proof.Run() error = %v", err)
 	}
+	if _, err := nilProof.RunCancellation(t.Context()); err == nil || !strings.Contains(err.Error(), "not initialized") {
+		t.Fatalf("nil Proof.RunCancellation() error = %v", err)
+	}
 	proof, cleanup, err := NewProof(unavailableProvider{}, map[string]tool.Tool{}, &ResponsesFixture{})
 	if err != nil {
 		t.Fatal(err)
@@ -35,9 +41,99 @@ func TestProofConstructionAndRunRejectInvalidState(t *testing.T) {
 	if _, err = proof.Run(nil); err == nil || !strings.Contains(err.Error(), "context") { //nolint:staticcheck // Boundary test proves nil is rejected before execution.
 		t.Fatalf("Proof.Run(nil) error = %v", err)
 	}
+	if _, err = proof.RunCancellation(nil); err == nil || !strings.Contains(err.Error(), "context") { //nolint:staticcheck // Boundary test proves nil is rejected before execution.
+		t.Fatalf("Proof.RunCancellation(nil) error = %v", err)
+	}
 	if err = cleanup(context.Background()); err != nil {
 		t.Fatal(err)
 	}
+	if _, err = proof.RunCancellation(t.Context()); err == nil || !strings.Contains(err.Error(), "closed") {
+		t.Fatalf("closed Proof.RunCancellation() error = %v", err)
+	}
+}
+
+func TestCancellationPreparationAndWaitAreBounded(t *testing.T) {
+	t.Parallel()
+	fixture := &ResponsesFixture{}
+	if _, err := fixture.prepareCancellation(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixture.prepareCancellation(); err == nil || !strings.Contains(err.Error(), "already started") {
+		t.Fatalf("duplicate prepareCancellation() error = %v", err)
+	}
+
+	waitFixture := &ResponsesFixture{}
+	proof, cleanup, err := NewProof(blockingProvider{}, map[string]tool.Tool{}, waitFixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+	defer cancel()
+	if _, err = proof.RunCancellation(ctx); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("bounded Proof.RunCancellation() error = %v", err)
+	}
+	stopContext, stopCancel := context.WithTimeout(context.Background(), time.Second)
+	defer stopCancel()
+	if err = cleanup(stopContext); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCancellationFinalizationRejectsUnexpectedTerminalState(t *testing.T) {
+	t.Parallel()
+	completedEvent, err := model.Completed(model.NewUsage(1, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	completedProof, completedCleanup, err := NewProof(
+		oneEventProvider{event: completedEvent},
+		map[string]tool.Tool{},
+		&ResponsesFixture{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	completedRun, completedSubscription := startPlainRun(t, completedProof)
+	if _, err = completedProof.finishCancellation(t.Context(), completedRun, completedSubscription); err == nil || !strings.Contains(err.Error(), "without cancellation") {
+		t.Fatalf("completed finishCancellation() error = %v", err)
+	}
+	if err = completedCleanup(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	cancelledProof, cancelledCleanup, err := NewProof(blockingProvider{}, map[string]tool.Tool{}, &ResponsesFixture{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cancelledRun, cancelledSubscription := startPlainRun(t, cancelledProof)
+	cancelledRun.Cancel()
+	if _, err = cancelledProof.finishCancellation(t.Context(), cancelledRun, cancelledSubscription); err == nil || !strings.Contains(err.Error(), "did not observe") {
+		t.Fatalf("unobserved finishCancellation() error = %v", err)
+	}
+	if err = cancelledCleanup(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func startPlainRun(t *testing.T, proof *Proof) (*agent.Run, *event.Subscription) {
+	t.Helper()
+	input, err := architectureProofInput()
+	if err != nil {
+		t.Fatal(err)
+	}
+	definition, err := agent.NewDefinition("terminal-test", "proof-model", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := proof.engine.Start(t.Context(), definition, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	subscription, err := run.Subscribe(t.Context(), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return run, subscription
 }
 
 func TestResponsesFixtureRejectsMalformedProtocol(t *testing.T) {
@@ -110,6 +206,42 @@ type unavailableProvider struct{}
 func (unavailableProvider) Stream(context.Context, model.Request) (model.Stream, error) {
 	return nil, errors.New("unavailable")
 }
+
+type blockingProvider struct{}
+
+func (blockingProvider) Stream(context.Context, model.Request) (model.Stream, error) {
+	return blockingStream{}, nil
+}
+
+type blockingStream struct{}
+
+func (blockingStream) Recv(ctx context.Context) (model.StreamEvent, error) {
+	<-ctx.Done()
+	return model.StreamEvent{}, ctx.Err()
+}
+
+func (blockingStream) Close() error { return nil }
+
+type oneEventProvider struct{ event model.StreamEvent }
+
+func (provider oneEventProvider) Stream(context.Context, model.Request) (model.Stream, error) {
+	return &oneEventStream{event: provider.event}, nil
+}
+
+type oneEventStream struct {
+	event model.StreamEvent
+	done  bool
+}
+
+func (stream *oneEventStream) Recv(context.Context) (model.StreamEvent, error) {
+	if stream.done {
+		return model.StreamEvent{}, io.EOF
+	}
+	stream.done = true
+	return stream.event, nil
+}
+
+func (*oneEventStream) Close() error { return nil }
 
 type failingWriter struct{}
 

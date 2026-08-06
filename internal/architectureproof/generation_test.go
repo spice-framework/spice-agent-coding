@@ -87,7 +87,12 @@ func TestGeneratedArchitectureProofContainsInspectableDirectCalls(t *testing.T) 
 			t.Fatalf("generation manifest lacks %q", expected)
 		}
 	}
+	if bytes.Contains(providers, []byte(fixtureSecretForScan)) || bytes.Contains(manifest, []byte(fixtureSecretForScan)) {
+		t.Fatal("generated output or ownership manifest contains the provider fixture credential")
+	}
 }
+
+const fixtureSecretForScan = "architecture-proof-secret"
 
 func runSpice(t *testing.T, root string, arguments ...string) (string, string, error) {
 	t.Helper()

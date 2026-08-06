@@ -43,11 +43,11 @@
     },
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/proof_spice_gen.go",
-      "sha256": "sha256:8fe88602bb3eb496d8e0776f89b5a5db44823b1ed1a81f098779582b8d5163af",
+      "sha256": "sha256:cc36033f719a8e907a9fee0bbe238ebbc5be4e794d8f9051dbe711f7ec780950",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/architectureproof/proof.go",
-        "line": 41,
+        "line": 44,
         "column": 4,
         "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
       },
@@ -57,7 +57,7 @@
           "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof",
           "source": {
             "path": "internal/architectureproof/proof.go",
-            "line": 41,
+            "line": 44,
             "column": 4,
             "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
           },
@@ -72,11 +72,11 @@
     },
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/responses_spice_gen.go",
-      "sha256": "sha256:7db0de82a6a214c7b38e02b7a47224d8b92406e1054710eac252ecf9a5fee1fa",
+      "sha256": "sha256:50ac3f75df822793e2db6b83fe2f543b2bb6dc9076b05c69eb2d00af45a19138",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/architectureproof/responses.go",
-        "line": 38,
+        "line": 41,
         "column": 4,
         "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
       },
@@ -86,7 +86,7 @@
           "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider",
           "source": {
             "path": "internal/architectureproof/responses.go",
-            "line": 51,
+            "line": 54,
             "column": 4,
             "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
           },
@@ -102,7 +102,7 @@
           "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture",
           "source": {
             "path": "internal/architectureproof/responses.go",
-            "line": 38,
+            "line": 41,
             "column": 4,
             "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
           },
@@ -218,19 +218,19 @@
         },
         {
           "path": "internal/architectureproof/proof.go",
-          "line": 41,
+          "line": 44,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
         },
         {
           "path": "internal/architectureproof/responses.go",
-          "line": 38,
+          "line": 41,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
         },
         {
           "path": "internal/architectureproof/responses.go",
-          "line": 51,
+          "line": 54,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
         },
@@ -299,19 +299,19 @@
         },
         {
           "path": "internal/architectureproof/proof.go",
-          "line": 41,
+          "line": 44,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
         },
         {
           "path": "internal/architectureproof/responses.go",
-          "line": 38,
+          "line": 41,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
         },
         {
           "path": "internal/architectureproof/responses.go",
-          "line": 51,
+          "line": 54,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
         },
@@ -367,19 +367,19 @@
         },
         {
           "path": "internal/architectureproof/proof.go",
-          "line": 41,
+          "line": 44,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|8:NewProof"
         },
         {
           "path": "internal/architectureproof/responses.go",
-          "line": 38,
+          "line": 41,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
         },
         {
           "path": "internal/architectureproof/responses.go",
-          "line": 51,
+          "line": 54,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
         },

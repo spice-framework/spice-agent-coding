@@ -30,6 +30,9 @@ type ResponsesFixture struct {
 	authorized        bool
 	continuation      bool
 	protocolViolation string
+	cancelMode        bool
+	requestStarted    chan struct{}
+	providerCanceled  bool
 }
 
 // NewResponsesFixture creates a current-process TLS endpoint. No external
@@ -90,6 +93,12 @@ func (fixture *ResponsesFixture) serveHTTP(writer http.ResponseWriter, request *
 		fixture.fail(writer, "credential leaked into request body")
 		return
 	}
+	if fixture.cancelMode {
+		close(fixture.requestStarted)
+		<-request.Context().Done()
+		fixture.providerCanceled = true
+		return
+	}
 	writer.Header().Set("Content-Type", "text/event-stream")
 	switch fixture.requests {
 	case 1:
@@ -139,4 +148,21 @@ func (fixture *ResponsesFixture) snapshot() (int, bool, bool, string) {
 	fixture.mu.Lock()
 	defer fixture.mu.Unlock()
 	return fixture.requests, fixture.authorized, fixture.continuation, fixture.protocolViolation
+}
+
+func (fixture *ResponsesFixture) prepareCancellation() (<-chan struct{}, error) {
+	fixture.mu.Lock()
+	defer fixture.mu.Unlock()
+	if fixture.requests != 0 || fixture.cancelMode {
+		return nil, fmt.Errorf("responses fixture already started")
+	}
+	fixture.cancelMode = true
+	fixture.requestStarted = make(chan struct{})
+	return fixture.requestStarted, nil
+}
+
+func (fixture *ResponsesFixture) cancellationObserved() bool {
+	fixture.mu.Lock()
+	defer fixture.mu.Unlock()
+	return fixture.providerCanceled
 }

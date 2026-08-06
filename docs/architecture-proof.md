@@ -14,6 +14,9 @@ graph dispatches the real bounded coding tool; the kernel appends the result;
 and a second Responses request emits the final text. The fixture records only
 safe Boolean/protocol facts. The test credential is a fixed non-secret value
 and never enters an event, generated file, manifest, or retained request body.
+An independent generated-application run holds the real provider request open,
+cancels the caller-owned context, and requires exactly one model, turn, and run
+terminal outcome while the server observes request cancellation.
 
 ## Generated evidence
 
@@ -25,6 +28,8 @@ and never enters an event, generated file, manifest, or retained request body.
   the read, replace, and shell defaults as selected.
 - `spice generate --check` and `spice generate --diff` both require the
   committed output to be byte-current.
+- Acceptance scans emitted event payloads, generated providers, and the
+  ownership manifest for the fixture credential.
 
 ## Verification
 
