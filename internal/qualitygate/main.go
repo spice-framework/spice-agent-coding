@@ -35,7 +35,7 @@ func main() {
 }
 
 func execute() int {
-	mode := flag.String("mode", "verify", "verification mode: fast, check, fmt, or verify")
+	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, fmt, or verify")
 	flag.Parse()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
@@ -62,31 +62,35 @@ func run(ctx context.Context, root, mode string) error {
 		return fmt.Errorf("go version is %s; require exactly %s", runtime.Version(), requiredGoVersion)
 	}
 	identity := step{"repository identity", func() error { return checkIdentity(root) }}
-	dependencies := step{"dependency preparation", func() error { return prepareDependencies(ctx, root) }}
+	bootstrap := step{"explicit dependency bootstrap", func() error { return bootstrapDependencies(ctx, root, networkCommand) }}
 	formatting := step{"formatting", func() error { return format(ctx, root, false) }}
 	modules := step{"module and vendor", func() error { return checkModule(ctx, root) }}
 	vet := step{"go vet", func() error { return command(ctx, root, nil, "go", "vet", "./...") }}
 	test := step{"shuffled tests", func() error { return tests(ctx, root, false) }}
 	var steps []step
-	switch mode {
-	case "fast":
-		steps = []step{identity, test}
-	case "check":
-		steps = []step{identity, dependencies, formatting, modules, vet, test}
-	case "fmt":
-		steps = []step{identity, dependencies, {"formatting write", func() error { return format(ctx, root, true) }}}
-	case "verify":
-		steps = []step{
-			identity, dependencies, formatting, modules, vet,
-			{"lint and nil safety", func() error { return lint(ctx, root) }},
-			{"security", func() error { return security(ctx, root) }},
-			test,
-			{"race tests", func() error { return tests(ctx, root, true) }},
-			{"coverage", func() error { return coverage(ctx, root) }},
-			{"offline vendor", func() error { return offline(ctx, root) }},
+	if networkAllowed(mode) {
+		steps = []step{identity, bootstrap}
+	} else {
+		switch mode {
+		case "fast":
+			steps = []step{identity, test}
+		case "check":
+			steps = []step{identity, formatting, modules, vet, test}
+		case "fmt":
+			steps = []step{identity, {"formatting write", func() error { return format(ctx, root, true) }}}
+		case "verify":
+			steps = []step{
+				identity, formatting, modules, vet,
+				{"lint and nil safety", func() error { return lint(ctx, root) }},
+				{"security", func() error { return security(ctx, root) }},
+				test,
+				{"race tests", func() error { return tests(ctx, root, true) }},
+				{"coverage", func() error { return coverage(ctx, root) }},
+				{"offline vendor", func() error { return offline(ctx, root) }},
+			}
+		default:
+			return fmt.Errorf("unknown mode %q", mode)
 		}
-	default:
-		return fmt.Errorf("unknown mode %q", mode)
 	}
 	for _, current := range steps {
 		started := time.Now()
@@ -103,6 +107,8 @@ func run(ctx context.Context, root, mode string) error {
 	_, err := fmt.Fprintln(output, "==> all verification passed")
 	return err
 }
+
+func networkAllowed(mode string) bool { return mode == "tools-bootstrap" }
 
 func checkIdentity(root string) error {
 	content, err := os.ReadFile(filepath.Join(root, "go.mod")) // #nosec G304 -- root is repository-owned.
@@ -183,15 +189,76 @@ func validateToolPins(path string) error {
 	return nil
 }
 
-func prepareDependencies(ctx context.Context, root string) error {
-	for _, arguments := range [][]string{
-		{"mod", "download"}, {"-C", "tools", "mod", "download"}, {"-C", "tools", "mod", "tidy", "-diff"},
-	} {
-		if err := networkCommand(ctx, root, arguments...); err != nil {
+type bootstrapRunner func(context.Context, string, ...string) error
+
+type moduleGraph struct {
+	directory string
+	optional  bool
+}
+
+func bootstrapDependencies(ctx context.Context, root string, runner bootstrapRunner) (returnErr error) {
+	before, err := sourceTreeDigests(root)
+	if err != nil {
+		return fmt.Errorf("snapshot repository before bootstrap: %w", err)
+	}
+	defer func() {
+		after, snapshotErr := sourceTreeDigests(root)
+		if snapshotErr != nil {
+			returnErr = errors.Join(returnErr, fmt.Errorf("snapshot repository after bootstrap: %w", snapshotErr))
+			return
+		}
+		if !maps.Equal(before, after) {
+			returnErr = errors.Join(returnErr, errors.New("dependency bootstrap modified the repository"))
+		}
+	}()
+
+	graphs := []moduleGraph{{directory: root}, {directory: filepath.Join(root, "tools"), optional: true}}
+	for _, graph := range graphs {
+		if err := bootstrapModuleGraph(ctx, graph, runner); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func bootstrapModuleGraph(ctx context.Context, graph moduleGraph, runner bootstrapRunner) (returnErr error) {
+	moduleFile := filepath.Join(graph.directory, "go.mod")
+	moduleContent, err := os.ReadFile(moduleFile) // #nosec G304 -- repository-owned module graph.
+	if errors.Is(err, os.ErrNotExist) && graph.optional {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("read %s: %w", moduleFile, err)
+	}
+	temporary, err := os.MkdirTemp("", "spice-tools-bootstrap-*")
+	if err != nil {
+		return fmt.Errorf("create dependency bootstrap directory: %w", err)
+	}
+	defer func() { returnErr = errors.Join(returnErr, os.RemoveAll(temporary)) }()
+	temporaryRoot, err := os.OpenRoot(temporary)
+	if err != nil {
+		return fmt.Errorf("open dependency bootstrap directory: %w", err)
+	}
+	defer func() { returnErr = errors.Join(returnErr, temporaryRoot.Close()) }()
+
+	temporaryModule := filepath.Join(temporary, "graph.mod")
+	if writeErr := temporaryRoot.WriteFile("graph.mod", moduleContent, 0o600); writeErr != nil {
+		return fmt.Errorf("write temporary module file: %w", writeErr)
+	}
+	sumFile := filepath.Join(graph.directory, "go.sum")
+	sumContent, err := os.ReadFile(sumFile) // #nosec G304 -- repository-owned module graph.
+	if err == nil {
+		if writeErr := temporaryRoot.WriteFile("graph.sum", sumContent, 0o600); writeErr != nil {
+			return fmt.Errorf("write temporary checksum file: %w", writeErr)
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("read %s: %w", sumFile, err)
+	}
+	return runner(ctx, graph.directory, bootstrapDownloadArguments(temporaryModule)...)
+}
+
+func bootstrapDownloadArguments(moduleFile string) []string {
+	return []string{"mod", "download", "-modfile=" + moduleFile, "all"}
 }
 
 func format(ctx context.Context, root string, write bool) error {
@@ -272,14 +339,29 @@ func treeDigests(root string) (map[string][sha256.Size]byte, error) {
 	if _, err := os.Stat(root); errors.Is(err, os.ErrNotExist) {
 		return result, nil
 	}
+	return digests(root, false)
+}
+
+func sourceTreeDigests(root string) (map[string][sha256.Size]byte, error) {
+	return digests(root, true)
+}
+
+func digests(root string, excludeGit bool) (map[string][sha256.Size]byte, error) {
+	result := make(map[string][sha256.Size]byte)
 	opened, err := os.OpenRoot(root)
 	if err != nil {
 		return nil, err
 	}
 	defer opened.Close() //nolint:errcheck // Read-only close cannot affect verification.
 	err = fs.WalkDir(opened.FS(), ".", func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil || entry.IsDir() {
+		if walkErr != nil {
 			return walkErr
+		}
+		if entry.IsDir() {
+			if excludeGit && path == ".git" {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 		content, readErr := opened.ReadFile(path)
 		if readErr != nil {
@@ -492,7 +574,14 @@ func capture(ctx context.Context, directory, executable string, arguments ...str
 
 func commandEnvironment(network bool, overrides map[string]string) []string {
 	values := map[string]string{"GOFLAGS": "", "GOTOOLCHAIN": "local", "GOWORK": "off"}
-	if !network {
+	if network {
+		values["GOAUTH"] = "off"
+		values["GONOPROXY"] = ""
+		values["GONOSUMDB"] = ""
+		values["GOPRIVATE"] = ""
+		values["GOPROXY"] = "https://proxy.golang.org"
+		values["GOSUMDB"] = "sum.golang.org"
+	} else {
 		values["GOPROXY"] = "off"
 	}
 	maps.Copy(values, overrides)
@@ -505,9 +594,6 @@ func commandEnvironment(network bool, overrides map[string]string) []string {
 		upperName := strings.ToUpper(name)
 		if strings.Contains(upperName, "TOKEN") || strings.Contains(upperName, "SECRET") ||
 			strings.Contains(upperName, "PASSWORD") || strings.HasSuffix(upperName, "_KEY") {
-			continue
-		}
-		if network && upperName == "GOPROXY" {
 			continue
 		}
 		if _, replaced := values[upperName]; !replaced {

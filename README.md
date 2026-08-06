@@ -13,4 +13,7 @@ managed launcher cleans up only a daemon it starts. Coding tools still run with
 the selected user process's privileges; that security property is not a ban on
 the supported daemon process.
 
-Go 1.26.5 is exact. Use `make fast`, `make check`, and `make verify`.
+Go 1.26.5 is exact. On a fresh clone, run `make tools-bootstrap` once to
+populate the exact product and tools module graphs without changing tracked
+module files. All ordinary quality targets remain offline. Use `make fast`,
+`make check`, and `make verify`.
