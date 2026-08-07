@@ -31,6 +31,7 @@ import (
 const (
 	fixtureManifest = "spice-agent-distribution-fixture"
 	fixtureVersion  = "v1"
+	fixtureBlock    = "fixture.block"
 	fixtureTool     = "fixture.echo"
 )
 
@@ -111,10 +112,11 @@ func TestOfflineFixtureActivatesAndShutsDownThroughProductionHost(t *testing.T) 
 		t.Fatalf("lease fixture generation: %v", err)
 	}
 	definitions := lease.Definitions()
-	if len(definitions) != 1 || definitions[0].Name() != fixtureTool ||
-		definitions[0].Effect() != tool.EffectReadOnly ||
-		definitions[0].ReplaySafety() != tool.ReplaySafe ||
-		len(definitions[0].Capabilities()) != 0 {
+	if len(definitions) != 2 || definitions[0].Name() != fixtureBlock ||
+		definitions[1].Name() != fixtureTool ||
+		definitions[1].Effect() != tool.EffectReadOnly ||
+		definitions[1].ReplaySafety() != tool.ReplaySafe ||
+		len(definitions[1].Capabilities()) != 0 {
 		t.Fatalf("fixture definitions = %#v", definitions)
 	}
 	call, err := tool.NewCall("distribution-fixture-call", fixtureTool, []byte(`{"value":"offline"}`))
@@ -397,9 +399,9 @@ func probeGeneratedRuntimePlugin(ctx context.Context, components spicegen.Compon
 		resultErr = errors.Join(resultErr, lease.Release())
 	}()
 	definitions := lease.Definitions()
-	if len(definitions) != 4 || definitions[0].Name() != fixtureTool ||
-		definitions[1].Name() != "read" || definitions[2].Name() != "replace" ||
-		definitions[3].Name() != "shell" {
+	if len(definitions) != 5 || definitions[0].Name() != fixtureBlock ||
+		definitions[1].Name() != fixtureTool || definitions[2].Name() != "read" ||
+		definitions[3].Name() != "replace" || definitions[4].Name() != "shell" {
 		return fmt.Errorf("generated runtime plugin definitions = %#v", definitions)
 	}
 	call, err := tool.NewCall("generated-distribution-fixture-call", fixtureTool, []byte(`{"value":"generated"}`))

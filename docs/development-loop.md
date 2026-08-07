@@ -44,9 +44,32 @@ from diagnostics and generated state. Coding tools retain the current user's
 filesystem and process authority and are not sandboxed.
 
 The last-known-good, debounce, unique-candidate, graceful-stop, and bounded
-escalation implementation belongs to `spice-framework/toolchain`. This
-repository's acceptance boundary proves that both distribution targets use the
-required application-package layout and that their exact generated packages
-and command adapters build together. A complete fault-injection workflow that
-edits source while both real terminal processes are attached remains a Phase 5
-end-to-end acceptance item.
+escalation implementation belongs to `spice-framework/toolchain`. The
+distribution's `internal/devacceptance` test runs that real vendored command
+against a copied package-main Spice application. It proves that a failed
+annotation revision leaves the same PID and loopback health endpoint running,
+the next valid revision reconnects through a replacement process, a burst
+selects only its latest bytes, cancellation removes the endpoint, and source
+plus generated hashes return unchanged. Each candidate binds loopback port zero
+itself and atomically publishes its PID, random process identity, and selected
+address, avoiding both a check-then-bind port race and false identity from PID
+or port reuse. Timeout cleanup terminates the complete supervised
+process tree. This process-heavy workflow runs in `make check` and `make
+verify`; `make fast` retains the sub-30-second edit-loop budget by excluding
+only this package.
+
+`internal/architecturee2e` separately exercises the generated daemon component
+graph over authenticated local IPC. It holds the final provider response while
+ownership reconnects, then proves compiled and runtime-plugin tool events,
+production-budget replay, credential redaction, and generated reverse cleanup.
+It deliberately drives the generated components on a private endpoint rather
+than claiming coverage of the installed command and Bubble Tea processes.
+
+That acceptance intentionally freezes one production supervisor rather than
+inventing a distribution-owned coordinator. The remaining dual-target proof is
+an installed workflow with the real `spice-agentd` and `spice-agent`
+supervisors running simultaneously: fault one target, keep the other attached,
+then prove TUI reconnection after only the daemon is replaced. The existing
+commands expose the two required supervisors, but there is not yet a structured
+cross-process test seam for observing the real Bubble Tea session and daemon
+replacement in one hermetic test.

@@ -16,8 +16,10 @@ secrets are passed to the Go subprocess.
 Every child Go command uses the selected Go 1.26.5 binary from `runtime.GOROOT`,
 not an older `go` that may appear first on `PATH`.
 
-- `make fast` validates repository identity and runs shuffled tests.
-- `make check` adds formatting, module/vendor consistency, vet, and shuffled tests.
+- `make fast` validates repository identity and runs shuffled product tests while
+  excluding only the process-heavy real-CLI development acceptance.
+- `make check` adds formatting, module/vendor consistency, vet, and the complete
+  shuffled suite, including the real `spice dev` process workflow.
 - `make verify` adds lint, NilAway, gosec, govulncheck, race tests, coverage, and
   vendor-offline tests/builds. It compiles and executes committed Spice output
   while excluding canonical generated statements from the handwritten 85%

@@ -73,14 +73,15 @@ func run(ctx context.Context, root, mode string) error {
 	modules := step{"module and vendor", func() error { return checkModule(ctx, root) }}
 	generated := step{"generated applications", func() error { return checkGeneratedApplications(ctx, root) }}
 	vet := step{"go vet", func() error { return command(ctx, root, nil, "go", "vet", "./...") }}
-	test := step{"shuffled tests", func() error { return tests(ctx, root, false) }}
+	fastTest := step{"affected-loop tests", func() error { return tests(ctx, root, false, false) }}
+	test := step{"shuffled tests", func() error { return tests(ctx, root, false, true) }}
 	var steps []step
 	if networkAllowed(mode) {
 		steps = []step{identity, bootstrap}
 	} else {
 		switch mode {
 		case "fast":
-			steps = []step{identity, test}
+			steps = []step{identity, fastTest}
 		case "check":
 			steps = []step{identity, formatting, modules, generated, vet, test}
 		case "fmt":
@@ -91,7 +92,7 @@ func run(ctx context.Context, root, mode string) error {
 				{"lint and nil safety", func() error { return lint(ctx, root) }},
 				{"security", func() error { return security(ctx, root) }},
 				test,
-				{"race tests", func() error { return tests(ctx, root, true) }},
+				{"race tests", func() error { return tests(ctx, root, true, true) }},
 				{"coverage", func() error { return coverage(ctx, root) }},
 				{"offline vendor", func() error { return offline(ctx, root) }},
 			}
@@ -516,10 +517,15 @@ func productPackages(ctx context.Context, root string) ([]string, error) {
 	return result, nil
 }
 
-func tests(ctx context.Context, root string, race bool) error {
+func tests(ctx context.Context, root string, race, includeAcceptance bool) error {
 	packages, err := productPackages(ctx, root)
 	if err != nil {
 		return err
+	}
+	if !includeAcceptance {
+		packages = slices.DeleteFunc(packages, func(candidate string) bool {
+			return candidate == modulePath+"/internal/devacceptance"
+		})
 	}
 	arguments := []string{"test"}
 	if race {

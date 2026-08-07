@@ -13,19 +13,25 @@ import (
 
 	commonv1 "github.com/spice-framework/spice-agent/common/v1"
 	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
+	"github.com/spice-framework/spice-agent/tool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 const (
-	fixtureComponent = "spice-agent-distribution-fixture"
-	fixtureVersion   = "v1"
-	fixtureTool      = "fixture.echo"
+	fixtureComponent       = "spice-agent-distribution-fixture"
+	fixtureVersion         = "v1"
+	fixtureBlockTool       = "fixture.block"
+	fixtureEchoTool        = "fixture.echo"
+	fixtureConcurrentCalls = 1
 )
 
-var echoSchema = []byte(
-	`{"type":"object","properties":{"value":{"type":"string"}},` +
-		`"required":["value"],"additionalProperties":false}`,
+var (
+	blockSchema = []byte(`{"type":"object","additionalProperties":false}`)
+	echoSchema  = []byte(
+		`{"type":"object","properties":{"value":{"type":"string"}},` +
+			`"required":["value"],"additionalProperties":false}`,
+	)
 )
 
 type pluginService struct {
@@ -39,6 +45,7 @@ type pluginService struct {
 	draining    bool
 	closed      bool
 	active      uint64
+	admission   chan struct{}
 	zeroActive  chan struct{}
 	shutdown    func()
 }
@@ -51,7 +58,7 @@ func newPluginService(secret []byte, shutdown func()) (*pluginService, error) {
 	close(zeroActive)
 	return &pluginService{
 		secret: slices.Clone(secret), limits: fixtureLimits(),
-		zeroActive: zeroActive, shutdown: shutdown,
+		admission: make(chan struct{}, fixtureConcurrentCalls), zeroActive: zeroActive, shutdown: shutdown,
 	}, nil
 }
 
@@ -133,6 +140,13 @@ func (service *pluginService) Execute(
 	request *pluginv1.ExecuteRequest,
 	stream pluginv1.PluginService_ExecuteServer,
 ) error {
+	select {
+	case service.admission <- struct{}{}:
+		defer func() { <-service.admission }()
+	case <-stream.Context().Done():
+		return status.FromContextError(stream.Context().Err()).Err()
+	}
+
 	service.mu.Lock()
 	if !service.initialized || service.closed {
 		service.mu.Unlock()
@@ -152,13 +166,9 @@ func (service *pluginService) Execute(
 		service.mu.Unlock()
 		return status.Error(codes.InvalidArgument, "plugin call is invalid")
 	}
-	if call.Name() != fixtureTool {
+	if call.Name() != fixtureBlockTool && call.Name() != fixtureEchoTool {
 		service.mu.Unlock()
 		return status.Error(codes.NotFound, "plugin tool is unavailable")
-	}
-	if service.active >= uint64(limits.GetMaxConcurrentCalls()) {
-		service.mu.Unlock()
-		return status.Error(codes.ResourceExhausted, "plugin call concurrency is exhausted")
 	}
 	if service.active == 0 {
 		service.zeroActive = make(chan struct{})
@@ -167,6 +177,33 @@ func (service *pluginService) Execute(
 	service.mu.Unlock()
 	defer service.finishCall()
 
+	if call.Name() == fixtureBlockTool {
+		return executeBlock(call, stream)
+	}
+	return executeEcho(call, limits, stream)
+}
+
+func executeBlock(call tool.Call, stream pluginv1.PluginService_ExecuteServer) error {
+	if !bytes.Equal(call.Arguments(), []byte(`{}`)) {
+		return status.Error(codes.InvalidArgument, "plugin block arguments are invalid")
+	}
+	if err := stream.Send(&pluginv1.ExecuteResponse{
+		CallId: string(call.ID()), Sequence: 1,
+		Frame: &pluginv1.ExecuteResponse_Progress{
+			Progress: &pluginv1.Progress{Message: "block ready"},
+		},
+	}); err != nil {
+		return err
+	}
+	<-stream.Context().Done()
+	return status.FromContextError(stream.Context().Err()).Err()
+}
+
+func executeEcho(
+	call tool.Call,
+	limits *pluginv1.Limits,
+	stream pluginv1.PluginService_ExecuteServer,
+) error {
 	value, err := decodeEcho(call.Arguments())
 	if err != nil {
 		return status.Error(codes.InvalidArgument, "plugin echo arguments are invalid")
@@ -287,9 +324,9 @@ func decodeEcho(arguments []byte) (string, error) {
 
 func fixtureLimits() *pluginv1.Limits {
 	return &pluginv1.Limits{
-		MaxMessageBytes: 64 << 10, MaxTools: 1, MaxSchemaBytes: 4 << 10,
+		MaxMessageBytes: 64 << 10, MaxTools: 2, MaxSchemaBytes: 4 << 10,
 		MaxCallArgumentBytes: 4 << 10, MaxResultBytes: 4 << 10,
-		MaxProgressBytes: 256, MaxConcurrentCalls: 4,
+		MaxProgressBytes: 256, MaxConcurrentCalls: fixtureConcurrentCalls,
 	}
 }
 
@@ -303,13 +340,22 @@ func fixtureBuild() *pluginv1.BuildIdentity {
 func fixtureManifest() *pluginv1.Manifest {
 	return &pluginv1.Manifest{
 		Name: fixtureComponent, Version: fixtureVersion,
-		Tools: []*pluginv1.ToolDefinition{{
-			Name: fixtureTool, Description: "Echo one bounded string value.",
-			InputSchemaJson: slices.Clone(echoSchema),
-			Effect:          pluginv1.ToolEffect_TOOL_EFFECT_READ_ONLY,
-			ReplaySafety:    pluginv1.ReplaySafety_REPLAY_SAFETY_SAFE,
-			Capabilities:    &commonv1.CapabilitySet{},
-		}},
+		Tools: []*pluginv1.ToolDefinition{
+			{
+				Name: fixtureBlockTool, Description: "Block until the active RPC is canceled.",
+				InputSchemaJson: slices.Clone(blockSchema),
+				Effect:          pluginv1.ToolEffect_TOOL_EFFECT_READ_ONLY,
+				ReplaySafety:    pluginv1.ReplaySafety_REPLAY_SAFETY_SAFE,
+				Capabilities:    &commonv1.CapabilitySet{},
+			},
+			{
+				Name: fixtureEchoTool, Description: "Echo one bounded string value.",
+				InputSchemaJson: slices.Clone(echoSchema),
+				Effect:          pluginv1.ToolEffect_TOOL_EFFECT_READ_ONLY,
+				ReplaySafety:    pluginv1.ReplaySafety_REPLAY_SAFETY_SAFE,
+				Capabilities:    &commonv1.CapabilitySet{},
+			},
+		},
 	}
 }
 

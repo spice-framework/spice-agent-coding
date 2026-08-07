@@ -577,7 +577,7 @@ func constructApplicationDependencies(
 		if options.Overrides.DaemonEngine.Enabled() {
 			return options.Overrides.DaemonEngine.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructDaemonEngine_10b0c974(openAIModelProvider, runtimePluginToolPlanSource, daemonInteractionBroker, daemonIDSource)
+		return spiceDaemon.ConstructDaemonEngine_10b0c974(openAIModelProvider, runtimePluginToolPlanSource, daemonInteractionBroker, daemonIDSource, serverLimits)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean daemonEngine (*github.com/spice-framework/spice-agent/agent.Engine, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine): %w", err))

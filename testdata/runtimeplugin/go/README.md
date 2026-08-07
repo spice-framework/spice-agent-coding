@@ -8,8 +8,12 @@ The process reads one bounded private bootstrap record from standard input,
 listens on that current-user local endpoint, writes the exact protocol readiness
 record to standard output, and keeps standard output silent afterward. Its
 authenticated manifest is `spice-agent-distribution-fixture` version `v1` and
-contains one capability-free, read-only `fixture.echo` tool. Drain waits for
-admitted calls and Shutdown terminates the process after the response is sent.
+contains capability-free, read-only `fixture.echo` and `fixture.block` tools.
+The fixture negotiates one concurrent call. `fixture.block` acknowledges its
+admission through progress and then waits for RPC cancellation, allowing the
+acceptance suite to prove cancellation and concurrency-slot release without
+timing sleeps. Drain waits for admitted calls and Shutdown terminates the
+process after the response is sent.
 
 Repository acceptance builds the executable into a temporary directory with
 the committed vendor graph, network access disabled, `-trimpath`,
