@@ -1,3 +1,3 @@
-// Package terminal will compose the independently generated spice-agent TUI
-// and managed-launcher application after the terminal contract is adopted.
+// Package terminal owns the handwritten Spice composition for the generated
+// spice-agent terminal application.
 package terminal

@@ -29,6 +29,7 @@ const (
 	spiceVersion       = "v0.1.0-preview.1.0.20260806200749-524424a04df0"
 	toolchainVersion   = "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6"
 	agentVersion       = "v0.0.0-20260807151358-4a1c8124e63f"
+	agentTUIVersion    = "v0.0.0-20260807044421-a0d48242cd4f"
 	providerVersion    = "v0.0.0-20260806230257-a6962fe2dabc"
 	codingToolsVersion = "v0.0.0-20260807150540-eeacf58875c5"
 )
@@ -129,9 +130,11 @@ func checkIdentity(root string) error {
 		"github.com/spice-framework/spice " + spiceVersion,
 		"github.com/spice-framework/toolchain " + toolchainVersion,
 		"github.com/spice-framework/spice-agent " + agentVersion,
+		"github.com/spice-framework/spice-agent-tui " + agentTUIVersion,
 		"github.com/spice-framework/spice-agent-provider-openai " + providerVersion,
 		"github.com/spice-framework/spice-agent-tools-coding " + codingToolsVersion,
 		"github.com/spice-framework/spice-agent/cmd/spice-agent-annotations",
+		"github.com/spice-framework/spice-agent-tui/cmd/spice-agent-tui-annotations",
 		"github.com/spice-framework/toolchain/cmd/spice",
 		"github.com/spice-framework/toolchain/cmd/spice-annotation-core",
 	} {
@@ -185,6 +188,7 @@ func validateCompatibility(content []byte) error {
 		{name: "spice", got: value.Spice, want: spiceVersion},
 		{name: "spice_toolchain", got: value.SpiceToolchain, want: toolchainVersion},
 		{name: "spice_agent", got: value.SpiceAgent, want: agentVersion},
+		{name: "spice_agent_tui", got: value.SpiceAgentTUI, want: agentTUIVersion},
 		{name: "spice_agent_provider_openai", got: value.SpiceAgentProviderOpenAI, want: providerVersion},
 		{name: "spice_agent_tools_coding", got: value.SpiceAgentToolsCoding, want: codingToolsVersion},
 	}
@@ -192,9 +196,6 @@ func validateCompatibility(content []byte) error {
 		if selection.got == nil || *selection.got != selection.want {
 			return fmt.Errorf("compatibility metadata %s must select %s", selection.name, selection.want)
 		}
-	}
-	if value.SpiceAgentTUI != nil {
-		return errors.New("compatibility metadata must leave spice_agent_tui unselected until the terminal target exists")
 	}
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(content, &fields); err != nil {
@@ -380,30 +381,36 @@ func checkGeneratedApplications(ctx context.Context, root string) error {
 			return err
 		}
 	}
-	temporary, err := os.MkdirTemp("", "spice-agentd-build-*")
+	temporary, err := os.MkdirTemp("", "spice-agent-build-*")
 	if err != nil {
 		return err
 	}
 	defer removeTree(temporary)
-	executable := "spice-agentd"
-	if runtime.GOOS == "windows" {
-		executable += ".exe"
+	for _, executable := range []string{"spice-agentd", "spice-agent"} {
+		outputName := executable
+		if runtime.GOOS == "windows" {
+			outputName += ".exe"
+		}
+		if err = command(
+			ctx, root, nil, "go", "build", "-trimpath",
+			"-o", filepath.Join(temporary, outputName), "./cmd/"+executable,
+		); err != nil {
+			return err
+		}
 	}
-	return command(
-		ctx, root, nil, "go", "build", "-trimpath",
-		"-o", filepath.Join(temporary, executable), "./cmd/spice-agentd",
-	)
+	return nil
 }
 
 func generatedApplicationChecks() [][]string {
 	const spiceTool = "github.com/spice-framework/toolchain/cmd/spice"
-	result := make([][]string, 0, 4)
+	result := make([][]string, 0, 6)
 	for _, target := range []struct {
 		name   string
 		source string
 	}{
 		{name: "ArchitectureProof", source: "./internal/architectureproof"},
 		{name: "Daemon", source: "./internal/daemon"},
+		{name: "Terminal", source: "./internal/terminal"},
 	} {
 		for _, mode := range []string{"--check", "--diff"} {
 			result = append(result, []string{

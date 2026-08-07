@@ -4,7 +4,7 @@
   "spice": "v0.1.0-preview.1.0.20260806200749-524424a04df0",
   "spice_toolchain": "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6",
   "spice_agent": "v0.0.0-20260807151358-4a1c8124e63f",
-  "spice_agent_tui": null,
+  "spice_agent_tui": "v0.0.0-20260807044421-a0d48242cd4f",
   "spice_agent_provider_openai": "v0.0.0-20260806230257-a6962fe2dabc",
   "spice_agent_tools_coding": "v0.0.0-20260807150540-eeacf58875c5"
 }

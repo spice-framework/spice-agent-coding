@@ -16,8 +16,11 @@ This repository does not maintain a second phase numbering scheme.
       compatibility gates in the development catalog with the daemon/TUI slice.
 - [x] Route every compiled coding-tool process through the injected launcher
       and adopted containment registry, then prove the real managed daemon path.
-- [ ] Generate the TUI/managed-client target and complete Windows/Linux terminal
-      acceptance.
+- [x] Generate the TUI/managed-client target, including explicit attach,
+      managed attach-or-start, replay-safe session adaptation, and deterministic
+      graph verification.
+- [ ] Complete real-terminal Windows/Linux interaction acceptance and release
+      packaging at the phase boundary.
 
 The architecture-proof and daemon generated applications back the selected
 versions with executable product code. The distribution manifest and

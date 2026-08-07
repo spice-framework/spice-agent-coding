@@ -35,17 +35,19 @@ func TestExactGoExecutable(t *testing.T) {
 	}
 }
 
-func TestGeneratedApplicationChecksCoverBothTargetsAndModes(t *testing.T) {
+func TestGeneratedApplicationChecksCoverAllTargetsAndModes(t *testing.T) {
 	t.Parallel()
 	checks := generatedApplicationChecks()
-	if len(checks) != 4 {
-		t.Fatalf("generated checks = %d, want 4", len(checks))
+	if len(checks) != 6 {
+		t.Fatalf("generated checks = %d, want 6", len(checks))
 	}
 	want := []string{
 		"ArchitectureProof --check ./internal/architectureproof",
 		"ArchitectureProof --diff ./internal/architectureproof",
 		"Daemon --check ./internal/daemon",
 		"Daemon --diff ./internal/daemon",
+		"Terminal --check ./internal/terminal",
+		"Terminal --diff ./internal/terminal",
 	}
 	for index, arguments := range checks {
 		if len(arguments) != 8 || arguments[0] != "tool" || arguments[2] != "generate" ||
@@ -211,8 +213,8 @@ func TestValidateCompatibility(t *testing.T) {
 		{name: "trailing", content: valid + `{}`, wantErr: "trailing"},
 		{name: "wrong Go", content: strings.Replace(valid, "1.26.5", "1.26.4", 1), wantErr: "Go 1.26.5"},
 		{name: "wrong core", content: strings.Replace(valid, agentVersion, "v1.0.0", 1), wantErr: "spice_agent"},
-		{name: "premature TUI", content: strings.Replace(valid, `"spice_agent_tui":null`, `"spice_agent_tui":"v1"`, 1), wantErr: "unselected"},
-		{name: "missing selection", content: strings.Replace(valid, `,"spice_agent_tui":null`, "", 1), wantErr: "present"},
+		{name: "wrong TUI", content: strings.Replace(valid, agentTUIVersion, "v1.0.0", 1), wantErr: "spice_agent_tui"},
+		{name: "missing selection", content: strings.Replace(valid, `,"spice_agent_tui":"`+agentTUIVersion+`"`, "", 1), wantErr: "spice_agent_tui"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -235,12 +237,14 @@ func TestIdentityAndPins(t *testing.T) {
 		"module " + modulePath,
 		"go 1.26.0",
 		"toolchain go1.26.5",
+		"tool github.com/spice-framework/spice-agent-tui/cmd/spice-agent-tui-annotations",
 		"tool github.com/spice-framework/spice-agent/cmd/spice-agent-annotations",
 		"tool github.com/spice-framework/toolchain/cmd/spice",
 		"tool github.com/spice-framework/toolchain/cmd/spice-annotation-core",
 		"require github.com/spice-framework/spice " + spiceVersion,
 		"require github.com/spice-framework/toolchain " + toolchainVersion,
 		"require github.com/spice-framework/spice-agent " + agentVersion,
+		"require github.com/spice-framework/spice-agent-tui " + agentTUIVersion,
 		"require github.com/spice-framework/spice-agent-provider-openai " + providerVersion,
 		"require github.com/spice-framework/spice-agent-tools-coding " + codingToolsVersion,
 	}, "\n")+"\n")
@@ -264,7 +268,7 @@ func compatibilityFixture() string {
 	return `{"schema":1,"go":"1.26.5","spice":"` + spiceVersion +
 		`","spice_toolchain":"` + toolchainVersion +
 		`","spice_agent":"` + agentVersion +
-		`","spice_agent_tui":null,"spice_agent_provider_openai":"` + providerVersion +
+		`","spice_agent_tui":"` + agentTUIVersion + `","spice_agent_provider_openai":"` + providerVersion +
 		`","spice_agent_tools_coding":"` + codingToolsVersion + `"}`
 }
 

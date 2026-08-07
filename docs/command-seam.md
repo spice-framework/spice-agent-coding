@@ -1,9 +1,8 @@
 # Distribution command seam
 
 The daemon and terminal command packages establish the argument and process
-boundary before the local transport and generated product applications land.
-They deliberately do not construct a daemon, client, transport, or Spice
-application.
+boundary outside the generated product applications. They deliberately do not
+construct a daemon, client, transport, or Spice application themselves.
 
 ## Commands
 
@@ -55,10 +54,11 @@ A runner failure or panic produces the same fixed failure message. Output is
 also checked for errors and short writes, so the command cannot report usage or
 success after failing to emit its required diagnostic or warning.
 
-## Composition follow-up
+## Generated composition
 
-The generated daemon runner will own service construction, foreground waiting,
-and graceful shutdown. The generated terminal runner will own explicit attach,
-managed attach-or-start, and cleanup of only a daemon child it starts. The
-current architecture-proof target remains unchanged until both generated
-product graphs and the local protocol are executable.
+The generated daemon runner owns service construction, foreground waiting, and
+graceful shutdown. The generated terminal runner owns explicit attach, managed
+attach-or-start, the TUI shell lifecycle, and cleanup of only a daemon candidate
+it starts. `--check` constructs and reverses the same graph without publishing,
+connecting, or launching a child. The command seams remain independently
+unit-testable and reveal neither endpoint values nor internal failures.

@@ -24,10 +24,11 @@ supported process whose lease and cleanup belong to that launcher instance.
 Each target independently owns dependency construction, configuration,
 cancellation, observability, rollback, and cleanup for its boundary.
 
-`internal/distribution` owns packaging. `internal/daemon` owns the handwritten
-daemon composition source, while `internal/spicegen/daemon` and
-`.spice/daemon.manifest.json` are generator-owned. `internal/terminal` will
-compose the separately versioned TUI client.
+`internal/distribution` owns packaging. `internal/daemon` and
+`internal/terminal` own the handwritten compositions. Their generated packages
+live under `internal/spicegen/daemon` and `internal/spicegen/terminal`; exact
+ownership and source mappings live in `.spice/daemon.manifest.json` and
+`.spice/terminal.manifest.json`.
 
 Explicit serve and attach are supported lifecycle modes. Internal packages are
 not alternative entrypoints, and neither generated target may bypass the other
@@ -59,6 +60,18 @@ birth identity. This is lifecycle containment, not a sandbox; Unix cannot
 universally observe an adversarial fork-and-detach between snapshots. See
 [the daemon target](docs/daemon-target.md).
 
+`cmd/spice-agent` adapts `internal/terminalcommand` to the separately generated
+terminal application. The graph explicitly selects the local endpoint store,
+managed discovery and startup lock, daemon starter, one exact client connector,
+the protocol-1.3 initialization request, UI-neutral session adapter, and the
+TUI repository's fallback renderer/theme/key-binding/shell beans. Managed mode
+attaches to a compatible daemon or serializes one owned sibling-daemon start;
+explicit mode never starts a daemon. Construction performs no discovery,
+connection, or process start, so `--check` can build and reverse the complete
+graph safely. The session owns event/interaction streams, publishes monotonic
+bounded updates, never retries mutations, and resumes event streams only from
+the last published sequence. See [the terminal target](docs/terminal-target.md).
+
 `internal/architectureproof` is a real generated application used to freeze the
 SDK composition boundary before daemon and terminal commands are added. It
 proves a normal provider replacing a fallback provider, three explicit
@@ -78,7 +91,6 @@ and source mappings live in `.spice/architectureproof.manifest.json`.
 ## Compatibility
 
 `compatibility.json` records Go 1.26.5 plus the exact immutable Spice,
-toolchain, Agent, OpenAI provider, and coding-tools selections exercised by the
-architecture proof and generated daemon. The TUI remains explicitly null until
-the terminal target adopts it. Replacing any selection requires executable
-compatibility tests.
+toolchain, Agent, OpenAI provider, coding-tools, and TUI selections exercised by
+the architecture proof and both generated product targets. Replacing any
+selection requires executable compatibility tests.
