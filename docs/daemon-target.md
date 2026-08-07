@@ -38,6 +38,15 @@ runs. The generated Host deliberately retains the zero `RestartPolicy`, so its
 health reports a zero restart limit and no recovery worker is enabled before a
 later distribution slice explicitly owns activation and recovery policy.
 
+`testdata/runtimeplugin/go` is the independent process fixture for the next
+activation slice. The repository builds it offline into a temporary directory,
+pins its computed SHA-256 through `pluginhost.Executable`, and activates it with
+the same contained launcher and current-user endpoint factory injected into the
+daemon. Acceptance leases the resulting immutable generation, dispatches its
+capability-free `fixture.echo` tool, and then requires clean Drain, Shutdown,
+and process containment. The fixture is test evidence only: no executable,
+digest, discovery rule, or daemon activation configuration is committed.
+
 ## Lifecycle and publication
 
 Construction opens protected current-user state but does not bind or publish a
