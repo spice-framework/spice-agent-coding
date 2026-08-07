@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/terminal"
+	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent"
 	"github.com/spice-framework/spice-agent-coding/internal/terminalcommand"
 	agenttui "github.com/spice-framework/spice-agent-tui"
 	spiceconfig "github.com/spice-framework/spice/config"

@@ -6,11 +6,6 @@ import (
 	_ "github.com/spice-framework/spice-agent/plugin/host/autoconfigure"
 )
 
-// @import { Application } from "github.com/spice-framework/spice/annotation/core"
-
-// Daemon declares the complete daemon graph. Spice analyzes the exact
-// Runtime dependency and never executes this body during generation.
-//
-// @Application
-func Daemon(*Runtime) {
-}
+// This file selects the daemon's explicit auto-configuration modules. The
+// package-main @Application marker lives in cmd/spice-agentd so Spice can
+// supervise the real executable package during development.

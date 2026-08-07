@@ -18,7 +18,7 @@ func NewApplication(ctx context.Context, observers ...spicelifecycle.Observer) (
 
 func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) (*Application, error) {
 	if ctx == nil {
-		return nil, fmt.Errorf("construct application daemon: context is nil")
+		return nil, fmt.Errorf("construct application spice_agentd: context is nil")
 	}
 	application := &Application{coordinator: spicelifecycle.NewCoordinator()}
 	observers := append([]spicelifecycle.Observer(nil), options.Observers...)
@@ -29,7 +29,7 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 	}
 	configurationSchema, err := ConfigurationSchema()
 	if err != nil {
-		return nil, fmt.Errorf("construct configuration schema for application daemon: %w", err)
+		return nil, fmt.Errorf("construct configuration schema for application spice_agentd: %w", err)
 	}
 	configurationSnapshot, err := spiceconfig.Resolve(
 		ctx,
@@ -41,14 +41,14 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		options.Sources...,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("resolve configuration for application daemon: %w", err)
+		return nil, fmt.Errorf("resolve configuration for application spice_agentd: %w", err)
 	}
 	application.shutdownTimeout, err = configurationSnapshot.Duration("spice.shutdown-timeout")
 	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode shutdown timeout for application daemon: %w", err))
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode shutdown timeout for application spice_agentd: %w", err))
 	}
 	if application.shutdownTimeout <= 0 {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode shutdown timeout for application daemon: duration must be positive"))
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode shutdown timeout for application spice_agentd: duration must be positive"))
 	}
 	dependencies, err := constructApplicationDependencies(ctx, application, options, configurationSnapshot)
 	if err != nil {

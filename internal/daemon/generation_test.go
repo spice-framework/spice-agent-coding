@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/daemon"
+	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd"
 	pluginhost "github.com/spice-framework/spice-agent/plugin/host"
 	agentprocess "github.com/spice-framework/spice-agent/process"
 	spicebean "github.com/spice-framework/spice/bean"
@@ -28,9 +28,17 @@ const (
 
 func TestDaemonGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 	root := repositoryRoot(t)
+	for _, retired := range []string{
+		filepath.Join(root, ".spice", "daemon.manifest.json"),
+		filepath.Join(root, "internal", "spicegen", "daemon"),
+	} {
+		if _, err := os.Stat(retired); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("retired daemon generation path %q still exists: %v", retired, err)
+		}
+	}
 	for _, arguments := range [][]string{
-		{"generate", "--check", "--target", "Daemon", ".", "./internal/daemon"},
-		{"generate", "--diff", "--target", "Daemon", ".", "./internal/daemon"},
+		{"generate", "--check", "--target", "spice-agentd", "./cmd/spice-agentd"},
+		{"generate", "--diff", "--target", "spice-agentd", "./cmd/spice-agentd"},
 	} {
 		stdout, stderr, err := runSpice(t, root, arguments...)
 		if err != nil || stderr != "" || !strings.Contains(stdout, "generation is current") {
@@ -135,7 +143,7 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(t *testing.T) {
 	t.Parallel()
 	root := repositoryRoot(t)
-	providers, err := os.ReadFile(filepath.Join(root, "internal", "spicegen", "daemon", "spice_providers_gen.go"))
+	providers, err := os.ReadFile(filepath.Join(root, "internal", "spicegen", "spice_agentd", "spice_providers_gen.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,12 +182,16 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 			t.Fatalf("generated provider file contains forbidden %q", forbidden)
 		}
 	}
-	manifest, err := os.ReadFile(filepath.Join(root, ".spice", "daemon.manifest.json"))
+	manifest, err := os.ReadFile(filepath.Join(root, ".spice", "spice_agentd.manifest.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, expected := range []string{
-		`"layout": "generated-package"`, `"role": "source-unit"`,
+		`"id": "spice_agentd"`,
+		`"layout": "application-package"`,
+		`"entrypoint_package": "github.com/spice-framework/spice-agent-coding/cmd/spice-agentd"`,
+		`"bridge_dir": "cmd/spice-agentd"`, `"role": "source-unit"`,
+		"cmd/spice-agentd/application.go",
 		"internal/daemon/root.go", "internal/daemon/process.go",
 		"NewRootRegistry", "NewProcessLauncher", "NewExecutableResolver", "NewRuntime",
 		"NewRuntimePluginHostIdentity",

@@ -1,15 +1,7 @@
 package terminal
 
-import (
-	agenttui "github.com/spice-framework/spice-agent-tui"
-	_ "github.com/spice-framework/spice-agent-tui/autoconfigure"
-)
+import _ "github.com/spice-framework/spice-agent-tui/autoconfigure"
 
-// @import { Application } from "github.com/spice-framework/spice/annotation/core"
-
-// Terminal declares the complete generated terminal graph. Spice inspects the
-// exact Shell dependency and never executes the marker body.
-//
-// @Application
-func Terminal(agenttui.Shell) {
-}
+// This file selects the terminal's explicit auto-configuration module. The
+// package-main @Application marker lives in cmd/spice-agent so Spice can
+// supervise the real executable package during development.

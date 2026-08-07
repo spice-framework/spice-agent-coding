@@ -1,3 +1,5 @@
+//go:build !spice_generate
+
 package main
 
 import (
@@ -7,7 +9,7 @@ import (
 	"time"
 
 	"github.com/spice-framework/spice-agent-coding/internal/daemoncommand"
-	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/daemon"
+	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd"
 )
 
 type daemonApplication interface {

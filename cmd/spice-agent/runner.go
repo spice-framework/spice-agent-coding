@@ -1,3 +1,5 @@
+//go:build !spice_generate
+
 package main
 
 import (
@@ -7,7 +9,7 @@ import (
 	"slices"
 	"time"
 
-	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/terminal"
+	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent"
 	"github.com/spice-framework/spice-agent-coding/internal/terminal"
 	"github.com/spice-framework/spice-agent-coding/internal/terminalcommand"
 	agenttui "github.com/spice-framework/spice-agent-tui"

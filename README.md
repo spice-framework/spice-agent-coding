@@ -54,6 +54,20 @@ directly. Change the corresponding handwritten composition and run:
 
 ```text
 go tool github.com/spice-framework/toolchain/cmd/spice generate --target ArchitectureProof . ./internal/architectureproof
-go tool github.com/spice-framework/toolchain/cmd/spice generate --target Daemon . ./internal/daemon
-go tool github.com/spice-framework/toolchain/cmd/spice generate --target Terminal . ./internal/terminal
+go tool github.com/spice-framework/toolchain/cmd/spice generate --target spice-agentd ./cmd/spice-agentd
+go tool github.com/spice-framework/toolchain/cmd/spice generate --target spice-agent ./cmd/spice-agent
 ```
+
+The daemon and terminal development supervisors are intentionally separate:
+
+```text
+make dev-daemon
+make dev-terminal
+```
+
+Run them in separate terminals. Each command uses `spice dev`, keeps its own
+last-known-good process alive when analysis, generation, or build fails, and
+gracefully replaces only that process after a valid change. Target-local
+source paths are excluded from the other watcher; shared module or composition
+changes correctly invalidate both applications.
+See [the development-loop contract](docs/development-loop.md).

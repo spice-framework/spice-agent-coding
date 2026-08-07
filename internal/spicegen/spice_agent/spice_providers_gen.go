@@ -9,8 +9,8 @@ import (
 	fmt "fmt"
 
 	daemonprocess "github.com/spice-framework/spice-agent-coding/internal/daemonprocess"
-	spiceTerminal "github.com/spice-framework/spice-agent-coding/internal/spicegen/terminal/sources/internal_/terminal"
-	spiceAutoconfigure "github.com/spice-framework/spice-agent-coding/internal/spicegen/terminal/sources/vendor_/github.com/spice-framework/spice-agent-tui/autoconfigure"
+	spiceTerminal "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent/sources/internal_/terminal"
+	spiceAutoconfigure "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent/sources/vendor_/github.com/spice-framework/spice-agent-tui/autoconfigure"
 	terminal "github.com/spice-framework/spice-agent-coding/internal/terminal"
 	tuisession "github.com/spice-framework/spice-agent-coding/internal/tuisession"
 	agenttui "github.com/spice-framework/spice-agent-tui"

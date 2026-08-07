@@ -44,10 +44,10 @@ func TestGeneratedApplicationChecksCoverAllTargetsAndModes(t *testing.T) {
 	want := []string{
 		"ArchitectureProof --check ./internal/architectureproof",
 		"ArchitectureProof --diff ./internal/architectureproof",
-		"Daemon --check ./internal/daemon",
-		"Daemon --diff ./internal/daemon",
-		"Terminal --check ./internal/terminal",
-		"Terminal --diff ./internal/terminal",
+		"spice-agentd --check ./cmd/spice-agentd",
+		"spice-agentd --diff ./cmd/spice-agentd",
+		"spice-agent --check ./cmd/spice-agent",
+		"spice-agent --diff ./cmd/spice-agent",
 	}
 	for index, arguments := range checks {
 		if len(arguments) != 8 || arguments[0] != "tool" || arguments[2] != "generate" ||

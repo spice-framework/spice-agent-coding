@@ -37,9 +37,9 @@ launcher and root registry.
 
 `internal/distribution` owns packaging. `internal/daemon` and
 `internal/terminal` own the handwritten compositions. Their generated packages
-live under `internal/spicegen/daemon` and `internal/spicegen/terminal`; exact
-ownership and source mappings live in `.spice/daemon.manifest.json` and
-`.spice/terminal.manifest.json`.
+live under `internal/spicegen/spice_agentd` and
+`internal/spicegen/spice_agent`; exact ownership and source mappings live in
+`.spice/spice_agentd.manifest.json` and `.spice/spice_agent.manifest.json`.
 
 Explicit serve and attach are supported lifecycle modes. Internal packages are
 not alternative entrypoints, and neither generated target may bypass the other
@@ -56,7 +56,8 @@ generated packages. Detailed runner errors, raw arguments, and endpoint values
 are never reflected through the public command diagnostics. See
 [the command seam](docs/command-seam.md).
 
-`cmd/spice-agentd` adapts `internal/daemoncommand` to the generated daemon
+`cmd/spice-agentd` is the package-main generation bridge and adapts
+`internal/daemoncommand` to the generated daemon
 application. Construction opens protected state without binding or publishing.
 Start binds current-user local IPC, enters the gRPC accept loop, and only then
 publishes authenticated endpoint metadata. Shutdown withdraws that exact
@@ -72,7 +73,8 @@ not a sandbox; Unix cannot universally observe an adversarial fork-and-detach
 between snapshots. See
 [the daemon target](docs/daemon-target.md).
 
-`cmd/spice-agent` adapts `internal/terminalcommand` to the separately generated
+`cmd/spice-agent` is the package-main generation bridge and adapts
+`internal/terminalcommand` to the separately generated
 terminal application. The graph explicitly selects the local endpoint store,
 managed discovery and startup lock, daemon starter, one exact client connector,
 the protocol-1.3 initialization request, UI-neutral session adapter, and the
@@ -83,6 +85,12 @@ connection, or process start, so `--check` can build and reverse the complete
 graph safely. The session owns event/interaction streams, publishes monotonic
 bounded updates, never retries mutations, and resumes event streams only from
 the last published sequence. See [the terminal target](docs/terminal-target.md).
+
+Both command packages use the Spice application-package layout required by
+`spice dev`. Repository-owned `dev-daemon` and `dev-terminal` targets start
+independent last-known-good supervisors and exclude only source owned solely by
+the other product target. Shared-source changes remain visible to both. See
+[the development-loop contract](docs/development-loop.md).
 
 `internal/architectureproof` is a real generated application used to freeze the
 SDK composition boundary before daemon and terminal commands are added. It

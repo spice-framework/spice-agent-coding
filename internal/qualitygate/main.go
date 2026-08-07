@@ -376,8 +376,9 @@ func checkModule(ctx context.Context, root string) error {
 }
 
 func checkGeneratedApplications(ctx context.Context, root string) error {
+	offlineVendor := map[string]string{"GOFLAGS": "-mod=vendor"}
 	for _, arguments := range generatedApplicationChecks() {
-		if err := command(ctx, root, nil, "go", arguments...); err != nil {
+		if err := command(ctx, root, offlineVendor, "go", arguments...); err != nil {
 			return err
 		}
 	}
@@ -386,14 +387,20 @@ func checkGeneratedApplications(ctx context.Context, root string) error {
 		return err
 	}
 	defer removeTree(temporary)
-	for _, executable := range []string{"spice-agentd", "spice-agent"} {
-		outputName := executable
+	for _, executable := range []struct {
+		name       string
+		packageDir string
+	}{
+		{name: "spice-agentd", packageDir: "spice-agentd"},
+		{name: "spice-agent", packageDir: "spice-agent"},
+	} {
+		outputName := executable.name
 		if runtime.GOOS == "windows" {
 			outputName += ".exe"
 		}
 		if err = command(
-			ctx, root, nil, "go", "build", "-trimpath",
-			"-o", filepath.Join(temporary, outputName), "./cmd/"+executable,
+			ctx, root, offlineVendor, "go", "build", "-trimpath",
+			"-o", filepath.Join(temporary, outputName), "./cmd/"+executable.packageDir,
 		); err != nil {
 			return err
 		}
@@ -409,8 +416,8 @@ func generatedApplicationChecks() [][]string {
 		source string
 	}{
 		{name: "ArchitectureProof", source: "./internal/architectureproof"},
-		{name: "Daemon", source: "./internal/daemon"},
-		{name: "Terminal", source: "./internal/terminal"},
+		{name: "spice-agentd", source: "./cmd/spice-agentd"},
+		{name: "spice-agent", source: "./cmd/spice-agent"},
 	} {
 		for _, mode := range []string{"--check", "--diff"} {
 			result = append(result, []string{

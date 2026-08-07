@@ -10,7 +10,7 @@ import (
 	time "time"
 
 	daemonprocess "github.com/spice-framework/spice-agent-coding/internal/daemonprocess"
-	spiceTerminal "github.com/spice-framework/spice-agent-coding/internal/spicegen/terminal/sources/internal_/terminal"
+	spiceentrypoint "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent/sources/cmd/spice-agent"
 	terminal "github.com/spice-framework/spice-agent-coding/internal/terminal"
 	tuisession "github.com/spice-framework/spice-agent-coding/internal/tuisession"
 	agenttui "github.com/spice-framework/spice-agent-tui"
@@ -23,7 +23,7 @@ import (
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
 )
 
-const TargetID = spiceTerminal.ApplicationTargetTerminal_8be179f5
+const TargetID = spiceentrypoint.ApplicationTargetSpiceAgent_89bc7a6d
 
 const (
 	ExitSuccess = 0

@@ -1,11 +1,27 @@
 # Generated terminal target
 
-`cmd/spice-agent` is an independently generated Spice application, not a thin
+`cmd/spice-agent` is the package-main generation bridge for the independently
+generated `spice-agent` application, not a thin
 handwritten service locator. Its source composition is under
 `internal/terminal`; generated direct calls and typed components are under
-`internal/spicegen/terminal`. `.spice/terminal.manifest.json` records exact
+`internal/spicegen/spice_agent`. `.spice/spice_agent.manifest.json` records exact
 ownership and maps every generated source unit back to its handwritten bean or
 the TUI starter auto-configuration.
+
+Regenerate it from its real executable package:
+
+```text
+go tool github.com/spice-framework/toolchain/cmd/spice generate --target spice-agent ./cmd/spice-agent
+```
+
+`cmd/spice-agent/application.go` is the valid-Go, analysis-only package-main
+marker; normal builds select the terminal command adapter in that same
+package. The resulting `application-package` layout is directly runnable by
+`spice dev` while preserving managed attach-or-start behavior.
+The shipped binary and source selector are `spice-agent`; the portable
+manifest target ID and generated package suffix are `spice_agent`. The
+underscore is only compiler-owned import-path normalization and does not rename
+the user-facing command.
 
 ## Modes and ownership
 

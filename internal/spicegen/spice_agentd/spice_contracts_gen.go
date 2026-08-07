@@ -11,7 +11,7 @@ import (
 
 	daemon "github.com/spice-framework/spice-agent-coding/internal/daemon"
 	daemonprocess "github.com/spice-framework/spice-agent-coding/internal/daemonprocess"
-	spiceDaemon "github.com/spice-framework/spice-agent-coding/internal/spicegen/daemon/sources/internal_/daemon"
+	spiceentrypoint "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd/sources/cmd/spice-agentd"
 	openaiprovider "github.com/spice-framework/spice-agent-provider-openai"
 	coding "github.com/spice-framework/spice-agent-tools-coding"
 	agent "github.com/spice-framework/spice-agent/agent"
@@ -31,7 +31,7 @@ import (
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
 )
 
-const TargetID = spiceDaemon.ApplicationTargetDaemon_7041e896
+const TargetID = spiceentrypoint.ApplicationTargetSpiceAgentd_d556aede
 
 const (
 	ExitSuccess = 0

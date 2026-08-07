@@ -3,6 +3,7 @@ package terminal_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -12,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/terminal"
+	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent"
 	agenttui "github.com/spice-framework/spice-agent-tui"
 	spicebean "github.com/spice-framework/spice/bean"
 	spiceconfig "github.com/spice-framework/spice/config"
@@ -22,9 +23,17 @@ const terminalSpiceTool = "github.com/spice-framework/toolchain/cmd/spice"
 
 func TestTerminalGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 	root := terminalRepositoryRoot(t)
+	for _, retired := range []string{
+		filepath.Join(root, ".spice", "terminal.manifest.json"),
+		filepath.Join(root, "internal", "spicegen", "terminal"),
+	} {
+		if _, err := os.Stat(retired); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("retired terminal generation path %q still exists: %v", retired, err)
+		}
+	}
 	for _, arguments := range [][]string{
-		{"generate", "--check", "--target", "Terminal", ".", "./internal/terminal"},
-		{"generate", "--diff", "--target", "Terminal", ".", "./internal/terminal"},
+		{"generate", "--check", "--target", "spice-agent", "./cmd/spice-agent"},
+		{"generate", "--diff", "--target", "spice-agent", "./cmd/spice-agent"},
 	} {
 		stdout, stderr, err := runTerminalSpice(t, root, arguments...)
 		if err != nil || stderr != "" || !strings.Contains(stdout, "generation is current") {
@@ -103,7 +112,7 @@ func TestGeneratedTerminalConstructsInspectableGraphWithoutConnecting(t *testing
 
 func TestGeneratedTerminalIsDirectAndSourceMapped(t *testing.T) {
 	root := terminalRepositoryRoot(t)
-	providers, err := os.ReadFile(filepath.Join(root, "internal", "spicegen", "terminal", "spice_providers_gen.go"))
+	providers, err := os.ReadFile(filepath.Join(root, "internal", "spicegen", "spice_agent", "spice_providers_gen.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,13 +130,16 @@ func TestGeneratedTerminalIsDirectAndSourceMapped(t *testing.T) {
 			t.Fatalf("generated provider file contains forbidden %q", forbidden)
 		}
 	}
-	manifest, err := os.ReadFile(filepath.Join(root, ".spice", "terminal.manifest.json"))
+	manifest, err := os.ReadFile(filepath.Join(root, ".spice", "spice_agent.manifest.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, expected := range []string{
-		`"layout": "generated-package"`, `"role": "source-unit"`,
-		"internal/terminal/application.go", "internal/terminal/connection.go",
+		`"id": "spice_agent"`,
+		`"layout": "application-package"`,
+		`"entrypoint_package": "github.com/spice-framework/spice-agent-coding/cmd/spice-agent"`,
+		`"bridge_dir": "cmd/spice-agent"`, `"role": "source-unit"`,
+		"cmd/spice-agent/application.go", "internal/terminal/connection.go",
 		"internal/terminal/endpoint.go", "internal/terminal/properties.go",
 		"internal/terminal/session.go",
 		"github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",

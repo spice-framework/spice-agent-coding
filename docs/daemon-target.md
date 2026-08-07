@@ -2,13 +2,22 @@
 
 `spice-agentd` is an ordinary generated Spice application. The handwritten
 composition lives in `internal/daemon`; the generated, inspectable dependency
-graph lives in `internal/spicegen/daemon`; and
-`.spice/daemon.manifest.json` records ownership and source mappings. Generated
+graph lives in `internal/spicegen/spice_agentd`; and
+`.spice/spice_agentd.manifest.json` records ownership and source mappings. Generated
 files and the manifest must only be changed by:
 
 ```text
-go tool github.com/spice-framework/toolchain/cmd/spice generate --target Daemon . ./internal/daemon
+go tool github.com/spice-framework/toolchain/cmd/spice generate --target spice-agentd ./cmd/spice-agentd
 ```
+
+`cmd/spice-agentd/application.go` is the valid-Go, analysis-only package-main marker;
+the normal build selects the command adapter in the same package. This makes
+the target an `application-package` that `spice dev` can build and supervise
+without replacing the distribution's explicit serve/check command contract.
+The shipped binary and source selector are `spice-agentd`; the portable
+manifest target ID and generated package suffix are `spice_agentd`. The
+underscore is only compiler-owned import-path normalization and does not rename
+the user-facing command.
 
 The graph directly constructs typed configuration, the OpenAI provider, the
 three compiled coding tools, the runtime-plugin Host, the deterministic engine,
