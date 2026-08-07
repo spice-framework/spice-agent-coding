@@ -35,6 +35,14 @@ applies to coding tools: they execute with the selected user process's authority
 and are not sandboxed. It does not describe or prohibit the daemon process
 topology.
 
+`internal/daemoncommand` and `internal/terminalcommand` freeze the
+transport-neutral CLI boundary ahead of those generated targets. They parse
+only the documented grammar into immutable values and invoke injected runners
+with caller-owned contexts. They do not import daemon, client, gRPC, IPC, or
+generated packages. Detailed runner errors, raw arguments, and endpoint values
+are never reflected through the public command diagnostics. See
+[the command seam](docs/command-seam.md).
+
 `internal/architectureproof` is a real generated application used to freeze the
 SDK composition boundary before daemon and terminal commands are added. It
 proves a normal provider replacing a fallback provider, three explicit

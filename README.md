@@ -20,6 +20,13 @@ managed launcher cleans up only a daemon it starts. Coding tools still run with
 the selected user process's privileges; that security property is not a ban on
 the supported daemon process.
 
+The transport-neutral argument contract is implemented and tested in
+`internal/daemoncommand` and `internal/terminalcommand`. It provides strict
+serve, attach, managed, help, and check modes through injected runners without
+inventing the not-yet-adopted daemon/client transport APIs. It also establishes
+fixed secret-safe diagnostics and the mandatory bare-privilege warning. See
+[the command seam](docs/command-seam.md).
+
 Go 1.26.5 is exact. On a fresh clone, run `make tools-bootstrap` once to
 populate the exact product and tools module graphs without changing tracked
 module files. All ordinary quality targets remain offline. Use `make fast`,
