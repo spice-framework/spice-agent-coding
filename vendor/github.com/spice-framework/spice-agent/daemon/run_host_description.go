@@ -71,14 +71,15 @@ func (host *RunHost) Describe(ctx context.Context) (RunHostDescription, error) {
 	return description, nil
 }
 
-// snapshotDescription holds the host lock across all mutable readiness fields.
-// Definitions and limits are immutable after construction, so this is the one
-// synchronization boundary needed for a coherent public description.
+// snapshotDescription captures all mutable host readiness fields at one lock
+// boundary, then samples immutable passive health sources without holding the
+// host mutex. Sources therefore cannot extend the lifecycle critical section.
 func (host *RunHost) snapshotDescription() (RunHostDescription, error) {
 	host.mu.Lock()
-	health, err := host.healthAssumingLocked()
+	healthSnapshot := host.healthSnapshotAssumingLocked()
 	definitions := host.definitions
 	host.mu.Unlock()
+	health, err := healthSnapshot.health(host.healthSources)
 	if err != nil {
 		return RunHostDescription{}, ErrRunHostUnavailable
 	}

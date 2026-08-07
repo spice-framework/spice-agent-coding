@@ -37,6 +37,7 @@ func NewEngine(
 	provider model.Provider,
 	toolPlans stage.ToolPlanSource,
 	broker interaction.Broker,
+	ids agent.IDSource,
 ) (*agent.Engine, error) {
 	options := agent.DefaultEngineOptions()
 	options.MetadataNamespaces = []string{"github.com/spice-framework/spice-agent-provider-openai"}
@@ -56,7 +57,7 @@ func NewEngine(
 		provider,
 		toolPlans,
 		broker,
-		&agent.AtomicIDSource{},
+		ids,
 		time.Now,
 		nil,
 		nil,

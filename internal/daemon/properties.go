@@ -2,12 +2,12 @@ package daemon
 
 import "time"
 
-// @import { Configuration } from "github.com/spice-framework/spice/annotation/core"
+// @import { ConfigurationProperties } from "github.com/spice-framework/spice/annotation/core"
 
 // Properties is the complete typed daemon configuration surface. Secrets are
 // redacted by Spice configuration metadata and never copied into diagnostics.
 //
-// @Configuration(prefix="agent")
+// @ConfigurationProperties(prefix="agent")
 type Properties struct {
 	APIKey                string        `spice:"openai.api-key,required,secret,env=OPENAI_API_KEY"`
 	BaseURL               string        `spice:"openai.base-url,default=https://api.openai.com/v1,env=OPENAI_BASE_URL"`

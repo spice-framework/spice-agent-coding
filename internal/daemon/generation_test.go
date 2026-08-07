@@ -61,8 +61,12 @@ func TestDaemonGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 		`"name": "shell"`,
 		`"name": "runtimePluginCompiledDispatcher"`,
 		`"name": "runtimePluginEndpointFactory"`,
+		`"name": "runtimePluginRestartPolicy"`,
 		`"name": "runtimePluginHost"`,
 		`"name": "runtimePluginToolPlanSource"`,
+		`"name": "runtimePluginPlan"`,
+		`"name": "runtimePluginActivation"`,
+		`"name": "runtimePluginHealthSource"`,
 		`"module": "github.com/spice-framework/spice-agent"`,
 		`"name": "daemonRuntime"`,
 	} {
@@ -107,7 +111,8 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 		components.Read == nil || components.Replace == nil || components.Shell == nil ||
 		components.RuntimePluginHostIdentity == nil || components.RuntimePluginEndpointFactory == nil ||
 		components.RuntimePluginCompiledDispatcher == nil || components.RuntimePluginHost == nil ||
-		components.RuntimePluginToolPlanSource == nil {
+		components.RuntimePluginToolPlanSource == nil || components.RuntimePluginActivation == nil ||
+		components.RuntimePluginHealthSource == nil {
 		t.Fatal("generated daemon graph is incomplete")
 	}
 	sourceHost, ok := components.RuntimePluginToolPlanSource.(*pluginhost.Host)
@@ -141,6 +146,19 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 	if components.Properties.Model != daemonTestModel || components.OpenAIConfig.APIKey != daemonTestSecret {
 		t.Fatal("generated typed configuration was not injected")
 	}
+	if err = components.RuntimePluginRestartPolicy.Validate(); err != nil ||
+		components.RuntimePluginRestartPolicy.Enabled() {
+		t.Fatalf("generated disabled runtime plugin restart policy is invalid: %v", err)
+	}
+	if err = components.RuntimePluginPlan.Validate(); err != nil || components.RuntimePluginPlan.Enabled() {
+		t.Fatalf("generated disabled runtime plugin plan is invalid: %v", err)
+	}
+	properties := components.RuntimePluginProperties
+	if properties.ID != "runtime-tool" || properties.StartupTimeout != 10*time.Second ||
+		properties.CallTimeout != 2*time.Minute || properties.DrainTimeout != 10*time.Second ||
+		properties.ShutdownTimeout != 10*time.Second || properties.ContainmentTimeout != 5*time.Second {
+		t.Fatalf("generated runtime plugin defaults = %#v", properties)
+	}
 	stopContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err = application.Stop(stopContext); err != nil {
@@ -148,6 +166,39 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 	}
 	if pluginLaunches.Load() != 0 {
 		t.Fatalf("runtime plugin launches after generated cleanup = %d", pluginLaunches.Load())
+	}
+}
+
+func TestGeneratedDaemonRejectsPartialRuntimePluginConfigurationWithoutLaunch(t *testing.T) {
+	t.Parallel()
+	var pluginLaunches atomic.Int32
+	launcher := agentprocess.LauncherFunc(func(context.Context, agentprocess.Spec) (agentprocess.Process, error) {
+		pluginLaunches.Add(1)
+		return nil, errors.New("partial configuration must not launch a runtime plugin")
+	})
+	values, err := spiceconfig.NewMapSource("test", map[string]string{
+		"agent.openai.api-key":          daemonTestSecret,
+		"agent.model":                   daemonTestModel,
+		"agent.workspace":               t.TempDir(),
+		"agent.runtime-plugin.required": "true",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	application, err := spicegen.NewApplicationWithOptions(
+		context.Background(),
+		spicegen.ApplicationOptions{
+			Sources: []spiceconfig.Source{values},
+			Overrides: spicegen.BeanOverrides{
+				ProcessLauncher: spicebean.Replace[agentprocess.Launcher](launcher),
+			},
+		},
+	)
+	if err == nil || application != nil {
+		t.Fatalf("partial runtime plugin construction = %p, %v; want nil, error", application, err)
+	}
+	if pluginLaunches.Load() != 0 {
+		t.Fatalf("partial runtime plugin configuration launched %d processes", pluginLaunches.Load())
 	}
 }
 
@@ -164,22 +215,34 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 	shellTool := bytes.Index(providers, []byte("ConstructShell"))
 	runtimeHost := bytes.Index(providers, []byte("ConstructRuntimePluginHost_"))
 	runtimePlanSource := bytes.Index(providers, []byte("ConstructRuntimePluginToolPlanSource_"))
+	runtimePlan := bytes.Index(providers, []byte("ConstructRuntimePluginPlan"))
+	runtimeRestart := bytes.Index(providers, []byte("ConstructRuntimePluginRestartPolicy"))
+	runtimeActivation := bytes.Index(providers, []byte("ConstructRuntimePluginActivation"))
+	runtimeHealth := bytes.Index(providers, []byte("ConstructRuntimePluginHealthSource"))
 	if registry < 0 || launcher <= registry || codingConfig <= registry || shellTool <= launcher ||
-		runtimeHost <= shellTool || runtimePlanSource <= runtimeHost {
+		runtimePlan <= shellTool || runtimeRestart <= runtimePlan || runtimeHost <= runtimeRestart ||
+		runtimePlanSource <= runtimeHost ||
+		runtimeActivation <= runtimeHost || runtimeHealth <= runtimeActivation {
 		t.Fatalf(
-			"generated containment order registry=%d launcher=%d coding=%d shell=%d host=%d plan=%d",
+			"generated containment order registry=%d launcher=%d coding=%d shell=%d config-plan=%d restart=%d host=%d source=%d activation=%d health=%d",
 			registry,
 			launcher,
 			codingConfig,
 			shellTool,
+			runtimePlan,
+			runtimeRestart,
 			runtimeHost,
 			runtimePlanSource,
+			runtimeActivation,
+			runtimeHealth,
 		)
 	}
 	for _, expected := range []string{
 		"ConstructDaemonRuntime", "ConstructGrpcServer", "ConstructRunHost",
 		"ConstructProcessLauncher", "ConstructProcessResolver",
 		"ConstructRuntimePluginHost_", "ConstructRuntimePluginToolPlanSource_",
+		"ConstructRuntimePluginRestartPolicy", "ConstructRuntimePluginPlan",
+		"ConstructRuntimePluginActivation", "ConstructRuntimePluginHealthSource",
 		`map[string]tool.Tool{"read": read, "replace": replace, "shell": shell}`,
 	} {
 		if !bytes.Contains(providers, []byte(expected)) {
@@ -205,7 +268,8 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 		"cmd/spice-agentd/application.go",
 		"internal/daemon/root.go", "internal/daemon/process.go",
 		"NewRootRegistry", "NewProcessLauncher", "NewExecutableResolver", "NewRuntime",
-		"NewRuntimePluginHostIdentity",
+		"NewRuntimePluginHostIdentity", "NewRuntimePluginRestartPolicy",
+		"NewRuntimePluginPlan", "NewRuntimePluginActivation", "NewRuntimePluginHealthSource",
 		"github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
 		"github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
 	} {
@@ -215,6 +279,39 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 	}
 	if bytes.Contains(manifest, []byte(daemonTestSecret)) {
 		t.Fatal("generation manifest contains a configuration secret")
+	}
+	configuration, err := os.ReadFile(filepath.Join(root, "internal", "spicegen", "spice_agentd", "spice_configuration_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{
+		"agent.runtime-plugin.required", "agent.runtime-plugin.id",
+		"agent.runtime-plugin.path", "agent.runtime-plugin.sha256",
+		"agent.runtime-plugin.manifest-name", "agent.runtime-plugin.manifest-version",
+		"agent.runtime-plugin.working-directory",
+		"agent.runtime-plugin.capabilities.filesystem-read",
+		"agent.runtime-plugin.capabilities.filesystem-write",
+		"agent.runtime-plugin.capabilities.process-execute",
+		"agent.runtime-plugin.capabilities.network-access",
+		"agent.runtime-plugin.capabilities.secrets-read",
+		"agent.runtime-plugin.capabilities.environment-read",
+		"agent.runtime-plugin.capabilities.environment-write",
+		"agent.runtime-plugin.timeouts.startup", "agent.runtime-plugin.timeouts.call",
+		"agent.runtime-plugin.timeouts.drain", "agent.runtime-plugin.timeouts.shutdown",
+		"agent.runtime-plugin.timeouts.containment",
+	} {
+		if !bytes.Contains(configuration, []byte(key)) {
+			t.Fatalf("generated configuration lacks public key %q", key)
+		}
+	}
+	lifecycle, err := os.ReadFile(filepath.Join(root, "internal", "spicegen", "spice_agentd", "spice_features_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	activationStart := bytes.Index(lifecycle, []byte("runtimePluginActivation.Start"))
+	runtimeStart := bytes.Index(lifecycle, []byte("daemonRuntime.Start"))
+	if activationStart < 0 || runtimeStart <= activationStart {
+		t.Fatalf("generated lifecycle order activation=%d runtime=%d", activationStart, runtimeStart)
 	}
 }
 

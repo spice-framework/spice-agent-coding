@@ -30,10 +30,17 @@ replace, and shell beans first, snapshots them into the fallback compiled
 dispatcher, and then constructs one exact `pluginhost.Host`. That same pointer
 is adapted to `stage.ToolPlanSource` for the engine; there is no parallel
 registry or compiled `RuntimeGraph`. Host construction performs no plugin
-discovery or launch. This distribution currently injects the Host's zero
-restart policy, so automatic recovery is disabled until runtime activation is
-delivered with an explicit application-owned policy. Future runtime-plugin activation can only publish a new
-immutable tool generation through this generated host, while generated reverse
+discovery or launch. A distribution-owned exact `RestartPolicy` bean replaces
+the core fallback with disabled recovery when configuration is disabled and a
+bounded production policy when it is enabled. One typed, explicitly configured executable may be
+activated by a generated lifecycle bean before transport publication; disabled
+configuration starts no process. Required failure prevents publication,
+optional failure preserves compiled tools with bounded fixed-code health, and
+success publishes a new immutable tool generation through this generated host.
+The distribution's exact Host bean also supplies cancellation-independent,
+budget-bounded generated cleanup so startup rollback cannot strand a plugin
+process after activation.
+Generated reverse
 cleanup drains its leases before releasing the shared contained process
 launcher and root registry.
 

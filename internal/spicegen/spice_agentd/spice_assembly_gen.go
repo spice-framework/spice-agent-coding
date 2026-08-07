@@ -56,6 +56,7 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 	}
 	_ = dependencies
 	application.components = Components{
+		DaemonIDSource:                  dependencies.daemonIDSource,
 		PendingHub:                      dependencies.pendingHub,
 		ServerBuild:                     dependencies.serverBuild,
 		DaemonRootRegistry:              dependencies.daemonRootRegistry,
@@ -81,9 +82,14 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		Shell:                           dependencies.shell,
 		Replace:                         dependencies.replace,
 		RuntimePluginCompiledDispatcher: dependencies.runtimePluginCompiledDispatcher,
-		RuntimePluginHost:               dependencies.runtimePluginHost,
-		RuntimePluginToolPlanSource:     dependencies.runtimePluginToolPlanSource,
 		OpenAIModelProvider:             dependencies.openAIModelProvider,
+		RuntimePluginProperties:         dependencies.runtimePluginProperties,
+		RuntimePluginPlan:               dependencies.runtimePluginPlan,
+		RuntimePluginRestartPolicy:      dependencies.runtimePluginRestartPolicy,
+		RuntimePluginHost:               dependencies.runtimePluginHost,
+		RuntimePluginActivation:         dependencies.runtimePluginActivation,
+		RuntimePluginHealthSource:       dependencies.runtimePluginHealthSource,
+		RuntimePluginToolPlanSource:     dependencies.runtimePluginToolPlanSource,
 		DaemonEngine:                    dependencies.daemonEngine,
 		RunHost:                         dependencies.runHost,
 		GrpcServer:                      dependencies.grpcServer,

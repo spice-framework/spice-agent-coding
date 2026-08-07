@@ -39,8 +39,8 @@ func ConstructDaemonInteractionBroker_bf812f17(dependency0 *daemon.PendingHub) (
 
 // ConstructDaemonEngine_10b0c974 performs the direct construction selected for bean "daemonEngine".
 // Spice source identity: spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine.
-func ConstructDaemonEngine_10b0c974(dependency0 model.Provider, dependency1 stage.ToolPlanSource, dependency2 interaction.Broker) (*agent.Engine, spicelifecycle.Cleanup, error) {
-	value, err := daemon2.NewEngine(dependency0, dependency1, dependency2)
+func ConstructDaemonEngine_10b0c974(dependency0 model.Provider, dependency1 stage.ToolPlanSource, dependency2 interaction.Broker, dependency3 agent.IDSource) (*agent.Engine, spicelifecycle.Cleanup, error) {
+	value, err := daemon2.NewEngine(dependency0, dependency1, dependency2, dependency3)
 	if err != nil {
 		var zero *agent.Engine
 		return zero, nil, fmt.Errorf("construct bean daemonEngine (*github.com/spice-framework/spice-agent/agent.Engine, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine): %w", err)

@@ -105,6 +105,7 @@ type RunHostConfig struct {
 	Ledger            *Ledger
 	Pending           *PendingHub
 	Definitions       DefinitionSet
+	HealthSources     []HealthSource
 	Limits            client.Limits
 	TerminalRuns      int
 	TerminalBytes     int
@@ -216,13 +217,14 @@ type RunHost struct {
 	root       context.Context //nolint:containedctx // daemon lifetime is owned here.
 	cancelRoot context.CancelCauseFunc
 
-	engine      *agent.Engine
-	authority   hostAuthority
-	sessions    *SessionStore
-	ledger      *Ledger
-	pending     *PendingHub
-	definitions DefinitionSet
-	limits      client.Limits
+	engine        *agent.Engine
+	authority     hostAuthority
+	sessions      *SessionStore
+	ledger        *Ledger
+	pending       *PendingHub
+	definitions   DefinitionSet
+	healthSources []HealthSource
+	limits        client.Limits
 
 	transitionTimeout time.Duration
 	terminalMaxRuns   int
@@ -263,6 +265,10 @@ func newRunHost(config RunHostConfig, authority hostAuthority) (*RunHost, error)
 		config.Ledger == nil || config.Pending == nil {
 		return nil, errors.New("run host requires root, engine, authority, sessions, ledger, and pending hub")
 	}
+	healthSources, sourceErr := cloneHealthSources(config.HealthSources)
+	if sourceErr != nil {
+		return nil, sourceErr
+	}
 	if err := config.Root.Err(); err != nil {
 		return nil, errors.New("run host root is already canceled")
 	}
@@ -291,7 +297,8 @@ func newRunHost(config RunHostConfig, authority hostAuthority) (*RunHost, error)
 		root: root, cancelRoot: cancel,
 		engine: config.Engine, authority: authority, sessions: config.Sessions,
 		ledger: config.Ledger, pending: config.Pending, definitions: definitions,
-		limits: config.Limits, transitionTimeout: timeout,
+		healthSources: healthSources,
+		limits:        config.Limits, transitionTimeout: timeout,
 		terminalMaxRuns: config.TerminalRuns, terminalMaxBytes: config.TerminalBytes,
 		active: make(map[string]*hostedRun), terminal: make(map[string]*terminalRun),
 		reservations: make(map[string]string), owners: make(map[string]string),
@@ -477,6 +484,14 @@ func (host *RunHost) owns(clientID, runID string) bool {
 }
 
 func (host *RunHost) degrade(reason string) {
+	switch reason {
+	case degradedAuthorityUncertain, degradedAuthorityMissing,
+		degradedTerminalSnapshot, degradedLifecycleCleanup:
+	default:
+		// This private path is deliberately closed over fixed public-safe
+		// reasons. Never let arbitrary dependency text enter client health.
+		reason = degradedLifecycleCleanup
+	}
 	host.mu.Lock()
 	host.degraded[reason] = struct{}{}
 	host.mu.Unlock()
@@ -493,6 +508,9 @@ func publicRunHostError(err error) error {
 	}
 	if hostCapacity, ok := errors.AsType[*RunHostCapacityError](err); ok {
 		return hostCapacity
+	}
+	if identityCapacity, ok := errors.AsType[*agent.RunIdentityCapacityError](err); ok {
+		return newRunHostCapacity("run identities", identityCapacity.Limit(), identityCapacity.Observed())
 	}
 	return publicRunHostOwnerError(err)
 }

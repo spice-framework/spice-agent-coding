@@ -132,7 +132,8 @@ func TestRuntimeCleansUpWhenPublicationIsCancelled(t *testing.T) {
 
 func testRuntime(listener *testListener, server *testServer, publication *testPublication) *Runtime {
 	runtime := &Runtime{
-		server: server, serveDone: make(chan struct{}),
+		server: server, activation: readyRuntimePluginActivation(),
+		serveDone: make(chan struct{}),
 	}
 	runtime.services = runtimeServices{
 		listen: func(string) (net.Listener, error) { return listener, nil },
@@ -145,6 +146,10 @@ func testRuntime(listener *testListener, server *testServer, publication *testPu
 		},
 	}
 	return runtime
+}
+
+func readyRuntimePluginActivation() *RuntimePluginActivation {
+	return &RuntimePluginActivation{state: runtimePluginActivationReady}
 }
 
 type orderedLog struct {

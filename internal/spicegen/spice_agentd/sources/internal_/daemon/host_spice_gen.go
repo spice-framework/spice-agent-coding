@@ -13,7 +13,7 @@
 // Source: internal/daemon/host.go:118
 // Source: internal/daemon/host.go:134
 // Source: internal/daemon/host.go:150
-// Source: internal/daemon/host.go:179
+// Source: internal/daemon/host.go:181
 
 package spicegen
 
@@ -32,8 +32,8 @@ import (
 
 // ConstructRunHost_4a91e2b0 performs the direct construction selected for bean "runHost".
 // Spice source identity: spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRunHost.
-func ConstructRunHost_4a91e2b0(dependency0 *daemon.Root, dependency1 *agent.Engine, dependency2 *daemon2.RunAuthority, dependency3 *daemon2.SessionStore, dependency4 *daemon2.Ledger, dependency5 *daemon2.PendingHub, dependency6 daemon2.DefinitionSet, dependency7 client.Limits) (*daemon2.RunHost, spicelifecycle.Cleanup, error) {
-	value, cleanup, err := daemon.NewRunHost(dependency0, dependency1, dependency2, dependency3, dependency4, dependency5, dependency6, dependency7)
+func ConstructRunHost_4a91e2b0(dependency0 *daemon.Root, dependency1 *agent.Engine, dependency2 *daemon2.RunAuthority, dependency3 *daemon2.SessionStore, dependency4 *daemon2.Ledger, dependency5 *daemon2.PendingHub, dependency6 daemon2.DefinitionSet, dependency7 []daemon2.HealthSource, dependency8 client.Limits) (*daemon2.RunHost, spicelifecycle.Cleanup, error) {
+	value, cleanup, err := daemon.NewRunHost(dependency0, dependency1, dependency2, dependency3, dependency4, dependency5, dependency6, dependency7, dependency8)
 	if err != nil {
 		var zero *daemon2.RunHost
 		return zero, nil, fmt.Errorf("construct bean runHost (*github.com/spice-framework/spice-agent/daemon.RunHost, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRunHost): %w", err)

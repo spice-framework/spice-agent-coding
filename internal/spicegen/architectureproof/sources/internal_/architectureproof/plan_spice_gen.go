@@ -59,8 +59,8 @@ func ConstructArchitectureProofExecutionPlan_98e864a9() (architectureproof.Execu
 
 // ConstructArchitectureProofEngine_d50c6257 performs the direct construction selected for bean "architectureProofEngine".
 // Spice source identity: spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine.
-func ConstructArchitectureProofEngine_d50c6257(dependency0 model.Provider, dependency1 stage.ToolPlanSource, dependency2 interaction.Broker, dependency3 architectureproof.ExecutionPlanMetadata) (*agent.Engine, spicelifecycle.Cleanup, error) {
-	value, cleanup, err := architectureproof.NewEngine(dependency0, dependency1, dependency2, dependency3)
+func ConstructArchitectureProofEngine_d50c6257(dependency0 model.Provider, dependency1 stage.ToolPlanSource, dependency2 interaction.Broker, dependency3 architectureproof.ExecutionPlanMetadata, dependency4 agent.IDSource) (*agent.Engine, spicelifecycle.Cleanup, error) {
+	value, cleanup, err := architectureproof.NewEngine(dependency0, dependency1, dependency2, dependency3, dependency4)
 	if err != nil {
 		var zero *agent.Engine
 		return zero, nil, fmt.Errorf("construct bean architectureProofEngine (*github.com/spice-framework/spice-agent/agent.Engine, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine): %w", err)

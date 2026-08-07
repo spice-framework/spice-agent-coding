@@ -48,12 +48,13 @@ type runtimeServices struct {
 // Runtime owns listener publication and graceful transport draining. The
 // generated application invokes its lifecycle hooks in ordinary Go.
 type Runtime struct {
-	scope    endpoint.UserScope
-	token    endpoint.Token
-	build    client.Build
-	protocol client.ProtocolVersion
-	server   runtimeServer
-	services runtimeServices
+	scope      endpoint.UserScope
+	token      endpoint.Token
+	build      client.Build
+	protocol   client.ProtocolVersion
+	server     runtimeServer
+	activation *RuntimePluginActivation
+	services   runtimeServices
 
 	lifecycle   sync.Mutex
 	mu          sync.Mutex
@@ -75,9 +76,10 @@ func NewRuntime(
 	build client.Build,
 	protocol client.ProtocolVersion,
 	server *grpcserver.Server,
+	activation *RuntimePluginActivation,
 ) (*Runtime, error) {
-	if store == nil || server == nil {
-		return nil, errors.New("daemon runtime requires endpoint store and gRPC server")
+	if store == nil || server == nil || activation == nil {
+		return nil, errors.New("daemon runtime requires endpoint store, gRPC server, and runtime plugin activation")
 	}
 	if err := scope.Validate(); err != nil {
 		return nil, fmt.Errorf("validate endpoint scope: %w", err)
@@ -93,7 +95,8 @@ func NewRuntime(
 	}
 	runtime := &Runtime{
 		scope: scope, token: token, build: build,
-		protocol: protocol, server: server, serveDone: make(chan struct{}),
+		protocol: protocol, server: server, activation: activation,
+		serveDone: make(chan struct{}),
 	}
 	runtime.services = runtimeServices{
 		listen: localipc.Listen,
@@ -115,6 +118,9 @@ func (runtime *Runtime) Start(ctx context.Context) error {
 	}
 	runtime.lifecycle.Lock()
 	defer runtime.lifecycle.Unlock()
+	if err := runtime.activation.PublicationReady(); err != nil {
+		return err
+	}
 	runtime.mu.Lock()
 	if runtime.state != runtimeNew {
 		runtime.mu.Unlock()
@@ -134,23 +140,7 @@ func (runtime *Runtime) Start(ctx context.Context) error {
 		serveResult <- runtime.server.Serve(ready)
 		close(serveResult)
 	}()
-	select {
-	case <-ctx.Done():
-		err = context.Cause(ctx)
-	case err = <-serveResult:
-		if err == nil {
-			err = errors.New("gRPC server stopped before endpoint publication")
-		}
-	case <-ready.ready:
-		select {
-		case serveErr := <-serveResult:
-			err = normalizedServeError(serveErr)
-			if err == nil {
-				err = errors.New("gRPC server stopped before endpoint publication")
-			}
-		default:
-		}
-	}
+	err = waitForPublicationReadiness(ctx, ready.ready, serveResult)
 	if err != nil {
 		cleanupErr := stopUnpublished(runtime.server, listener, serveResult)
 		runtime.resetAfterStartFailure()
@@ -177,6 +167,32 @@ func (runtime *Runtime) Start(ctx context.Context) error {
 	runtime.mu.Unlock()
 	go runtime.observeServe(serveResult)
 	return nil
+}
+
+func waitForPublicationReadiness(
+	ctx context.Context,
+	ready <-chan struct{},
+	serveResult <-chan error,
+) error {
+	select {
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	case err := <-serveResult:
+		if err == nil {
+			return errors.New("gRPC server stopped before endpoint publication")
+		}
+		return err
+	case <-ready:
+		select {
+		case err := <-serveResult:
+			if err = normalizedServeError(err); err == nil {
+				return errors.New("gRPC server stopped before endpoint publication")
+			}
+			return err
+		default:
+			return nil
+		}
+	}
 }
 
 // Done closes if the transport exits after successful publication. It lets the

@@ -34,18 +34,18 @@ func TestProofConstructionAndRunRejectInvalidState(t *testing.T) {
 	if source, sourceErr := NewToolPlanSource(nil); source != nil || sourceErr == nil || !strings.Contains(sourceErr.Error(), "source") {
 		t.Fatalf("nil dispatcher source = %#v, %v", source, sourceErr)
 	}
-	if engine, cleanup, engineErr := NewEngine(nil, toolPlans, NewInteractionBroker(), NewExecutionPlanMetadata()); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "provider") {
+	if engine, cleanup, engineErr := NewEngine(nil, toolPlans, NewInteractionBroker(), NewExecutionPlanMetadata(), &agent.AtomicIDSource{}); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "provider") {
 		t.Fatalf("nil provider construction = %#v, %#v, %v", engine, cleanup, engineErr)
 	}
-	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, nil, NewInteractionBroker(), NewExecutionPlanMetadata()); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "plan source") {
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, nil, NewInteractionBroker(), NewExecutionPlanMetadata(), &agent.AtomicIDSource{}); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "plan source") {
 		t.Fatalf("nil tool source construction = %#v, %#v, %v", engine, cleanup, engineErr)
 	}
-	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, nil, NewExecutionPlanMetadata()); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "broker") {
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, nil, NewExecutionPlanMetadata(), &agent.AtomicIDSource{}); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "broker") {
 		t.Fatalf("nil broker construction = %#v, %#v, %v", engine, cleanup, engineErr)
 	}
 	invalidMetadata := NewExecutionPlanMetadata()
 	invalidMetadata.CompiledPlanIdentities = []string{"invalid"}
-	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, NewInteractionBroker(), invalidMetadata); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "compiled plan") {
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, NewInteractionBroker(), invalidMetadata, &agent.AtomicIDSource{}); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "compiled plan") {
 		t.Fatalf("invalid plan construction = %#v, %#v, %v", engine, cleanup, engineErr)
 	}
 	var nilProof *Proof
@@ -164,6 +164,7 @@ func newTestProof(
 		toolPlans,
 		NewInteractionBroker(),
 		NewExecutionPlanMetadata(),
+		&agent.AtomicIDSource{},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -286,6 +287,7 @@ func TestGeneratedExecutionPlanResumesExactStaticSnapshot(t *testing.T) {
 		source,
 		NewInteractionBroker(),
 		metadata,
+		&agent.AtomicIDSource{},
 	)
 	if err != nil {
 		t.Fatal(err)

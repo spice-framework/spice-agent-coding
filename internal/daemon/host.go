@@ -156,6 +156,7 @@ func NewRunHost(
 	ledger *agentdaemon.Ledger,
 	pending *agentdaemon.PendingHub,
 	definitions agentdaemon.DefinitionSet,
+	healthSources []agentdaemon.HealthSource,
 	limits client.Limits,
 ) (*agentdaemon.RunHost, lifecycle.Cleanup, error) {
 	ctx, err := rootContext(root)
@@ -164,7 +165,8 @@ func NewRunHost(
 	}
 	host, err := agentdaemon.NewRunHost(agentdaemon.RunHostConfig{
 		Root: ctx, Engine: engine, Authority: authority, Sessions: sessions,
-		Ledger: ledger, Pending: pending, Definitions: definitions, Limits: limits,
+		Ledger: ledger, Pending: pending, Definitions: definitions,
+		HealthSources: healthSources, Limits: limits,
 		TerminalRuns: 1024, TerminalBytes: 64 << 20,
 	})
 	if err != nil {

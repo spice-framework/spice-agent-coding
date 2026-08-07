@@ -89,6 +89,7 @@ type preparedExecution struct {
 	lease          *stage.ToolPlanLease
 	log            *event.Log
 	runID          string
+	identityToken  uint64
 	definition     Definition
 	history        []message.Message
 	completedTurns uint32
@@ -141,19 +142,20 @@ func (engine *Engine) PrepareStart(setupCtx context.Context, definition Definiti
 	if err = snapshotToken("run ID", runID, 96); err != nil {
 		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
 	}
-	log, err := event.NewLog(runID, engine.logLimits)
+	identityToken, err := engine.reserveRunIdentity(runID, preparedStartKind)
 	if err != nil {
 		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
 	}
-	if err = setupCtx.Err(); err != nil {
-		return nil, rollbackPreparedResources(engine, log, lease, err)
+	log, err := event.NewLog(runID, engine.logLimits)
+	if err != nil {
+		return nil, rollbackPreparedResources(engine, runID, identityToken, nil, lease, err)
 	}
-	if err = engine.validatePreparedRunAvailability(runID, preparedStartKind); err != nil {
-		return nil, rollbackPreparedResources(engine, log, lease, err)
+	if err = setupCtx.Err(); err != nil {
+		return nil, rollbackPreparedResources(engine, runID, identityToken, log, lease, err)
 	}
 	return &PreparedStart{execution: &preparedExecution{
 		state: preparedExecutionReady, kind: preparedStartKind,
-		engine: engine, lease: lease, log: log, runID: runID,
+		engine: engine, lease: lease, log: log, runID: runID, identityToken: identityToken,
 		definition: definition, history: []message.Message{input.message.Clone()},
 		planIdentity: planIdentity, firstTurn: 1, emitRunStart: true,
 		seenInteractions: make(map[interaction.ID]struct{}),
@@ -180,9 +182,6 @@ func (engine *Engine) PrepareResumeSnapshot(setupCtx context.Context, snapshot S
 	if snapshot.status != LifecycleSuspended {
 		return nil, &UnsafeSnapshotError{Status: snapshot.status}
 	}
-	if err := engine.validatePreparedRunAvailability(snapshot.runID, preparedResumeKind); err != nil {
-		return nil, err
-	}
 	if engine.snapshotCompatibility == "" {
 		return nil, errors.New("agent engine snapshot import requires an explicit generated compatibility identity")
 	}
@@ -190,36 +189,36 @@ func (engine *Engine) PrepareResumeSnapshot(setupCtx context.Context, snapshot S
 		!slices.Equal(snapshot.planIdentity.CompiledIdentities(), engine.compiledPlan) {
 		return nil, errors.New("agent snapshot compiled compatibility does not match the constructed engine")
 	}
+	identityToken, err := engine.reserveRunIdentity(snapshot.runID, preparedResumeKind)
+	if err != nil {
+		return nil, err
+	}
 	lease, err := leaseToolPlanGeneration(
 		setupCtx, engine.toolPlans, snapshot.planIdentity.ToolPlanID(), engine.finalizationTimeout,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, engine.abortRunIdentityReservation(snapshot.runID, identityToken))
 	}
 	planIdentity, err := newPlanIdentity(engine.compiledPlan, engine.snapshotCompatibility, lease)
 	if err != nil {
-		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
+		return nil, rollbackPreparedResources(engine, snapshot.runID, identityToken, nil, lease, err)
 	}
 	if !snapshot.planIdentity.equal(planIdentity) {
-		return nil, releaseLeaseOnRollback(
-			lease,
+		return nil, rollbackPreparedResources(
+			engine, snapshot.runID, identityToken, nil, lease,
 			errors.New("agent snapshot plan identity does not match the leased engine plan"),
-			engine.finalizationTimeout,
 		)
 	}
 	log, err := event.NewLogAfter(snapshot.runID, snapshot.lastSequence, engine.logLimits)
 	if err != nil {
-		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
+		return nil, rollbackPreparedResources(engine, snapshot.runID, identityToken, nil, lease, err)
 	}
 	if err = setupCtx.Err(); err != nil {
-		return nil, rollbackPreparedResources(engine, log, lease, err)
-	}
-	if err = engine.validatePreparedRunAvailability(snapshot.runID, preparedResumeKind); err != nil {
-		return nil, rollbackPreparedResources(engine, log, lease, err)
+		return nil, rollbackPreparedResources(engine, snapshot.runID, identityToken, log, lease, err)
 	}
 	return &PreparedResume{execution: &preparedExecution{
 		state: preparedExecutionReady, kind: preparedResumeKind,
-		engine: engine, lease: lease, log: log, runID: snapshot.runID,
+		engine: engine, lease: lease, log: log, runID: snapshot.runID, identityToken: identityToken,
 		definition: snapshot.definition, history: cloneHistory(snapshot.history),
 		completedTurns: snapshot.completedTurns, lastSequence: snapshot.lastSequence,
 		planIdentity: planIdentity, status: runStatusRunning, started: true,
@@ -229,21 +228,13 @@ func (engine *Engine) PrepareResumeSnapshot(setupCtx context.Context, snapshot S
 	}}, nil
 }
 
-func rollbackPreparedResources(engine *Engine, log *event.Log, lease *stage.ToolPlanLease, cause error) error {
-	log.Close()
-	return releaseLeaseOnRollback(lease, cause, engine.finalizationTimeout)
-}
-
-func (engine *Engine) validatePreparedRunAvailability(runID string, kind preparedExecutionKind) error {
-	engine.mu.Lock()
-	defer engine.mu.Unlock()
-	if engine.closed {
-		return errors.New("agent engine is closed")
+func rollbackPreparedResources(engine *Engine, runID string, token uint64, log *event.Log, lease *stage.ToolPlanLease, cause error) error {
+	if log != nil {
+		log.Close()
 	}
-	if _, duplicate := engine.seen[runID]; duplicate {
-		return preparedDuplicateError(kind, runID)
-	}
-	return nil
+	releaseErr := releaseLeaseOnRollback(lease, cause, engine.finalizationTimeout)
+	identityErr := engine.abortRunIdentityReservation(runID, token)
+	return errors.Join(releaseErr, identityErr)
 }
 
 func preparedDuplicateError(kind preparedExecutionKind, runID string) error {
@@ -339,6 +330,10 @@ func (prepared *preparedExecution) commitPaused(runRootCtx context.Context, acti
 		activeInteractions: make(map[interaction.ID]struct{}),
 		seenInteractions:   maps.Clone(prepared.seenInteractions),
 		messageIDs:         maps.Clone(prepared.messageIDs),
+		identityToken:      prepared.identityToken,
+	}
+	run.identityRetirement = &RunIdentityRetirement{
+		engine: prepared.engine, runID: prepared.runID, token: prepared.identityToken,
 	}
 	run.emitter = &runEmitter{engine: prepared.engine, run: run, next: prepared.lastSequence + 1}
 
@@ -348,16 +343,17 @@ func (prepared *preparedExecution) commitPaused(runRootCtx context.Context, acti
 		cancel()
 		return nil, prepared.abortLocked(errors.New("agent engine is closed"))
 	}
-	if _, duplicate := prepared.engine.seen[prepared.runID]; duplicate {
-		prepared.engine.mu.Unlock()
-		cancel()
-		return nil, prepared.abortLocked(preparedDuplicateError(prepared.kind, prepared.runID))
+	if activateImmediately {
+		if err := prepared.engine.identities.transition(prepared.runID, prepared.identityToken, runIdentityReserved, runIdentityActive); err != nil {
+			prepared.engine.mu.Unlock()
+			cancel()
+			return nil, prepared.abortLocked(err)
+		}
 	}
 	if len(prepared.engine.active) == 0 {
 		prepared.engine.drained = make(chan struct{})
 	}
 	prepared.engine.active[prepared.runID] = run
-	prepared.engine.seen[prepared.runID] = struct{}{}
 	prepared.state = preparedExecutionCommitted
 	prepared.log = nil
 	prepared.lease = nil
@@ -399,6 +395,9 @@ func (prepared *PreparedRun) Activate() (*Run, error) {
 	case preparedRunAborted:
 		return nil, ErrPreparedRunAborted
 	default:
+		if err := prepared.execute.engine.activateRunIdentity(prepared.run.ID(), prepared.run.identityToken); err != nil {
+			return nil, err
+		}
 		prepared.state = preparedRunActivated
 		close(prepared.decision)
 		return prepared.run, nil
@@ -469,7 +468,7 @@ func (prepared *PreparedRun) finalizeAbort() {
 	if err != nil {
 		err = fmt.Errorf("release tool plan %q from inert run: %w", prepared.run.ToolPlanID(), err)
 	}
-	prepared.run.complete(err)
+	prepared.run.completeInert(err)
 }
 
 func (prepared *PreparedRun) wait(ctx context.Context) error {
@@ -533,5 +532,7 @@ func (prepared *preparedExecution) abortLocked(cause error) error {
 		}
 		prepared.lease = nil
 	}
+	identityErr := prepared.engine.abortRunIdentityReservation(prepared.runID, prepared.identityToken)
+	prepared.cleanupErr = errors.Join(prepared.cleanupErr, identityErr)
 	return errors.Join(cause, prepared.cleanupErr)
 }

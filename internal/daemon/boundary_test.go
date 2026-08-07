@@ -30,7 +30,7 @@ func TestHostConstructorsRejectInvalidOwnedDependencies(t *testing.T) {
 	if _, err := NewDefinitionSet(Properties{}); err == nil {
 		t.Fatal("NewDefinitionSet() accepted an empty model")
 	}
-	if _, _, err := NewRunHost(nil, nil, nil, nil, nil, nil, agentdaemon.DefinitionSet{}, client.Limits{}); err == nil {
+	if _, _, err := NewRunHost(nil, nil, nil, nil, nil, nil, agentdaemon.DefinitionSet{}, nil, client.Limits{}); err == nil {
 		t.Fatal("NewRunHost() accepted a nil root")
 	}
 	if _, err := NewGRPCServer(nil, endpoint.Token{}, nil, nil, client.Build{}); err == nil {
@@ -82,33 +82,36 @@ func TestNewRuntimeValidatesEveryPublicIdentityAndBuildsMetadata(t *testing.T) {
 	}
 	store := &endpoint.Store{}
 	server := &grpcserver.Server{}
+	activation := readyRuntimePluginActivation()
 
 	for _, test := range []struct {
-		name     string
-		scope    endpoint.UserScope
-		store    *endpoint.Store
-		token    endpoint.Token
-		build    client.Build
-		protocol client.ProtocolVersion
-		server   *grpcserver.Server
+		name       string
+		scope      endpoint.UserScope
+		store      *endpoint.Store
+		token      endpoint.Token
+		build      client.Build
+		protocol   client.ProtocolVersion
+		server     *grpcserver.Server
+		activation *RuntimePluginActivation
 	}{
-		{name: "nil store", scope: scope, token: token, build: build, protocol: protocol, server: server},
-		{name: "nil server", scope: scope, store: store, token: token, build: build, protocol: protocol},
-		{name: "scope", store: store, token: token, build: build, protocol: protocol, server: server},
-		{name: "token", scope: scope, store: store, build: build, protocol: protocol, server: server},
-		{name: "build", scope: scope, store: store, token: token, protocol: protocol, server: server},
-		{name: "protocol", scope: scope, store: store, token: token, build: build, server: server},
+		{name: "nil store", scope: scope, token: token, build: build, protocol: protocol, server: server, activation: activation},
+		{name: "nil server", scope: scope, store: store, token: token, build: build, protocol: protocol, activation: activation},
+		{name: "nil activation", scope: scope, store: store, token: token, build: build, protocol: protocol, server: server},
+		{name: "scope", store: store, token: token, build: build, protocol: protocol, server: server, activation: activation},
+		{name: "token", scope: scope, store: store, build: build, protocol: protocol, server: server, activation: activation},
+		{name: "build", scope: scope, store: store, token: token, protocol: protocol, server: server, activation: activation},
+		{name: "protocol", scope: scope, store: store, token: token, build: build, server: server, activation: activation},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if _, constructErr := NewRuntime(
-				test.scope, test.store, test.token, test.build, test.protocol, test.server,
+				test.scope, test.store, test.token, test.build, test.protocol, test.server, test.activation,
 			); constructErr == nil {
 				t.Fatal("NewRuntime() accepted an invalid dependency")
 			}
 		})
 	}
 
-	runtime, err := NewRuntime(scope, store, token, build, protocol, server)
+	runtime, err := NewRuntime(scope, store, token, build, protocol, server, activation)
 	if err != nil {
 		t.Fatalf("NewRuntime() error = %v", err)
 	}
@@ -190,7 +193,8 @@ func TestRuntimeStartFailuresRetainNoPublication(t *testing.T) {
 	t.Parallel()
 	listenFailure := errors.New("listen failed")
 	runtime := &Runtime{
-		server: &testServer{log: &orderedLog{}}, serveDone: make(chan struct{}),
+		server: &testServer{log: &orderedLog{}}, activation: readyRuntimePluginActivation(),
+		serveDone: make(chan struct{}),
 		services: runtimeServices{
 			listen: func(string) (net.Listener, error) { return nil, listenFailure },
 		},
@@ -225,7 +229,10 @@ func TestRuntimeStartFailuresRetainNoPublication(t *testing.T) {
 func TestRuntimeRejectsServerExitBeforePublication(t *testing.T) {
 	t.Parallel()
 	server := immediateServer{}
-	runtime := &Runtime{server: server, serveDone: make(chan struct{})}
+	runtime := &Runtime{
+		server: server, activation: readyRuntimePluginActivation(),
+		serveDone: make(chan struct{}),
+	}
 	runtime.services = runtimeServices{
 		listen: func(string) (net.Listener, error) { return idleListener{}, nil },
 		metadata: func() (endpoint.Metadata, error) {

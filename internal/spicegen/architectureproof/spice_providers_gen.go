@@ -23,6 +23,7 @@ import (
 )
 
 type applicationDependencies struct {
+	architectureProofIDSource          agent.IDSource
 	codingConfig                       coding.Config
 	read                               tool.Tool
 	replace                            tool.Tool
@@ -49,6 +50,21 @@ func constructApplicationDependencies(
 	_ = application
 	_ = options
 	_ = configurationSnapshot
+	architectureProofIDSource, architectureProofIDSourceCleanup, err := func() (agent.IDSource, spicelifecycle.Cleanup, error) {
+		if options.Overrides.ArchitectureProofIDSource.Enabled() {
+			return options.Overrides.ArchitectureProofIDSource.Acquire(ctx)
+		}
+		return spiceArchitectureproof.ConstructArchitectureProofIDSource_a4ffe4a0()
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean architectureProofIDSource (github.com/spice-framework/spice-agent/agent.IDSource, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource): %w", err))
+	}
+	if architectureProofIDSourceCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource", architectureProofIDSourceCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean architectureProofIDSource (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource): %w", err))
+		}
+	}
+	_ = architectureProofIDSource
 	codingConfig, codingConfigCleanup, err := func() (coding.Config, spicelifecycle.Cleanup, error) {
 		if options.Overrides.CodingConfig.Enabled() {
 			return options.Overrides.CodingConfig.Acquire(ctx)
@@ -125,8 +141,8 @@ func constructApplicationDependencies(
 	}
 	_ = responsesFixture
 	architectureProofOpenai, architectureProofOpenaiCleanup, err := func() (model.Provider, spicelifecycle.Cleanup, error) {
-		if options.Overrides.Provider5.Enabled() {
-			return options.Overrides.Provider5.Acquire(ctx)
+		if options.Overrides.Provider6.Enabled() {
+			return options.Overrides.Provider6.Acquire(ctx)
 		}
 		return spiceArchitectureproof.ConstructArchitectureProofOpenai_7e4ddfc0(responsesFixture)
 	}()
@@ -233,7 +249,7 @@ func constructApplicationDependencies(
 		if options.Overrides.ArchitectureProofEngine.Enabled() {
 			return options.Overrides.ArchitectureProofEngine.Acquire(ctx)
 		}
-		return spiceArchitectureproof.ConstructArchitectureProofEngine_d50c6257(architectureProofOpenai, architectureProofToolPlanSource, architectureProofInteractionBroker, architectureProofExecutionPlan)
+		return spiceArchitectureproof.ConstructArchitectureProofEngine_d50c6257(architectureProofOpenai, architectureProofToolPlanSource, architectureProofInteractionBroker, architectureProofExecutionPlan, architectureProofIDSource)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean architectureProofEngine (*github.com/spice-framework/spice-agent/agent.Engine, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine): %w", err))
@@ -260,6 +276,7 @@ func constructApplicationDependencies(
 	}
 	_ = proof
 	return &applicationDependencies{
+		architectureProofIDSource:          architectureProofIDSource,
 		codingConfig:                       codingConfig,
 		read:                               read,
 		replace:                            replace,

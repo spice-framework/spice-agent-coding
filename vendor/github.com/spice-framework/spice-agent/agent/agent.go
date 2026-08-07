@@ -29,6 +29,8 @@ const defaultFinalizationTimeout = 2 * time.Second
 type EngineOptions struct {
 	LogLimits           event.LogLimits
 	FinalizationTimeout time.Duration
+	// RunIdentityLimits bounds exact prepared, active, and terminal identities.
+	RunIdentityLimits RunIdentityLimits
 	// MetadataNamespaces explicitly permits safe provider metadata in events.
 	MetadataNamespaces []string
 	// CompiledPlanIdentities names every executable generated provider, stage,
@@ -44,6 +46,7 @@ type EngineOptions struct {
 func DefaultEngineOptions() EngineOptions {
 	return EngineOptions{
 		LogLimits: event.DefaultLogLimits(), FinalizationTimeout: defaultFinalizationTimeout,
+		RunIdentityLimits:      DefaultRunIdentityLimits(),
 		CompiledPlanIdentities: []string{"broker:injected", "provider:injected", "stage:kernel"},
 	}
 }
@@ -160,11 +163,11 @@ type Engine struct {
 	compiledPlan          []string
 	snapshotCompatibility string
 
-	mu      sync.Mutex
-	closed  bool
-	active  map[string]*Run
-	seen    map[string]struct{}
-	drained chan struct{}
+	mu         sync.Mutex
+	closed     bool
+	active     map[string]*Run
+	identities *runIdentityLedger
+	drained    chan struct{}
 }
 
 // NewEngine constructs the kernel with default bounded replay limits.
@@ -226,33 +229,14 @@ func NewEngineWithToolPlanSourceAndInteractionBroker(
 	bestEffort []*event.BestEffortObserver,
 	options EngineOptions,
 ) (*Engine, error) {
-	if provider == nil {
-		return nil, errors.New("agent engine requires a model provider")
-	}
-	if toolPlans == nil {
-		return nil, errors.New("agent engine requires a tool plan source")
-	}
-	if broker == nil {
-		return nil, errors.New("agent engine requires an interaction broker")
-	}
-	if ids == nil {
-		return nil, errors.New("agent engine requires an ID source")
-	}
-	if clock == nil {
-		return nil, errors.New("agent engine requires a clock")
-	}
-	for index, observer := range observers {
-		if observer == nil {
-			return nil, fmt.Errorf("agent observer %d is nil", index)
-		}
-	}
-	for index, observer := range bestEffort {
-		if observer == nil {
-			return nil, fmt.Errorf("agent best-effort observer %d is nil", index)
-		}
+	if err := validateEngineInputs(provider, toolPlans, broker, ids, clock, observers, bestEffort); err != nil {
+		return nil, err
 	}
 	if options.FinalizationTimeout <= 0 || options.FinalizationTimeout > 30*time.Second {
 		return nil, errors.New("agent finalization timeout must be between zero and 30 seconds")
+	}
+	if err := options.RunIdentityLimits.Validate(); err != nil {
+		return nil, err
 	}
 	metadataNamespaces := make(map[string]struct{}, len(options.MetadataNamespaces))
 	for index, namespace := range options.MetadataNamespaces {
@@ -286,8 +270,45 @@ func NewEngineWithToolPlanSourceAndInteractionBroker(
 		broker:                broker,
 		compiledPlan:          compiledPlan,
 		snapshotCompatibility: options.SnapshotCompatibilityIdentity,
-		active:                make(map[string]*Run), seen: make(map[string]struct{}), drained: drained,
+		active:                make(map[string]*Run), identities: newRunIdentityLedger(options.RunIdentityLimits), drained: drained,
 	}, nil
+}
+
+func validateEngineInputs(
+	provider model.Provider,
+	toolPlans stage.ToolPlanSource,
+	broker interaction.Broker,
+	ids IDSource,
+	clock func() time.Time,
+	observers []event.Observer,
+	bestEffort []*event.BestEffortObserver,
+) error {
+	if provider == nil {
+		return errors.New("agent engine requires a model provider")
+	}
+	if toolPlans == nil {
+		return errors.New("agent engine requires a tool plan source")
+	}
+	if broker == nil {
+		return errors.New("agent engine requires an interaction broker")
+	}
+	if ids == nil {
+		return errors.New("agent engine requires an ID source")
+	}
+	if clock == nil {
+		return errors.New("agent engine requires a clock")
+	}
+	for index, observer := range observers {
+		if observer == nil {
+			return fmt.Errorf("agent observer %d is nil", index)
+		}
+	}
+	for index, observer := range bestEffort {
+		if observer == nil {
+			return fmt.Errorf("agent best-effort observer %d is nil", index)
+		}
+	}
+	return nil
 }
 
 // Run is one asynchronous execution backed by an authoritative replay log.
@@ -323,9 +344,21 @@ type Run struct {
 	seenInteractions   map[interaction.ID]struct{}
 	interactionWG      sync.WaitGroup
 	messageIDs         map[message.ID]struct{}
+	identityToken      uint64
+	identityRetirement *RunIdentityRetirement
 }
 
 func (run *Run) ID() string { return run.id }
+
+// TerminalIdentityRetirement returns the opaque capability for this exact run
+// generation. Retire it only after durable authority prevents every old
+// snapshot from becoming importable again.
+func (run *Run) TerminalIdentityRetirement() *RunIdentityRetirement {
+	if run == nil {
+		return nil
+	}
+	return run.identityRetirement
+}
 
 // PlanIdentity returns the immutable compiled and leased execution identity.
 func (run *Run) PlanIdentity() PlanIdentity {
@@ -1217,23 +1250,54 @@ func (run *Run) recordTerminal(kind event.Kind, history []message.Message) {
 
 func (run *Run) complete(err error) {
 	run.finalize.Do(func() {
+		identityErr := run.engine.completeRunIdentity(run.id, run.identityToken)
 		run.mu.Lock()
-		run.err = err
+		run.err = errors.Join(err, identityErr)
 		run.mu.Unlock()
 		run.log.Close()
 		close(run.done)
 		run.cancel()
-		run.engine.release(run.id)
 	})
 }
 
-func (engine *Engine) release(runID string) {
+func (run *Run) completeInert(err error) {
+	run.finalize.Do(func() {
+		identityErr := run.engine.abortRegisteredRunIdentity(run.id, run.identityToken)
+		run.mu.Lock()
+		run.err = errors.Join(err, identityErr)
+		run.mu.Unlock()
+		run.log.Close()
+		close(run.done)
+		run.cancel()
+	})
+}
+
+func (engine *Engine) completeRunIdentity(runID string, token uint64) error {
 	engine.mu.Lock()
+	err := engine.identities.transition(runID, token, runIdentityActive, runIdentityTombstone)
 	delete(engine.active, runID)
 	if len(engine.active) == 0 {
 		close(engine.drained)
 	}
 	engine.mu.Unlock()
+	return err
+}
+
+func (engine *Engine) activateRunIdentity(runID string, token uint64) error {
+	engine.mu.Lock()
+	defer engine.mu.Unlock()
+	return engine.identities.transition(runID, token, runIdentityReserved, runIdentityActive)
+}
+
+func (engine *Engine) abortRegisteredRunIdentity(runID string, token uint64) error {
+	engine.mu.Lock()
+	err := engine.identities.abort(runID, token)
+	delete(engine.active, runID)
+	if len(engine.active) == 0 {
+		close(engine.drained)
+	}
+	engine.mu.Unlock()
+	return err
 }
 
 type runEmitter struct {

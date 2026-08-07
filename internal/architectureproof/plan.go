@@ -15,7 +15,7 @@ import (
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
 
 const (
-	agentModuleSelection    = "v0.0.0-20260807193825-af8a393912a4"
+	agentModuleSelection    = "v0.0.0-20260807202054-caf82692c80d"
 	providerModuleSelection = "v0.0.0-20260806230257-a6962fe2dabc"
 	toolsModuleSelection    = "v0.0.0-20260807150540-eeacf58875c5"
 
@@ -101,6 +101,7 @@ func NewEngine(
 	toolPlans stage.ToolPlanSource,
 	broker interaction.Broker,
 	metadata ExecutionPlanMetadata,
+	ids agent.IDSource,
 ) (*agent.Engine, lifecycle.Cleanup, error) {
 	options := agent.DefaultEngineOptions()
 	options.MetadataNamespaces = []string{"github.com/spice-framework/spice-agent-provider-openai"}
@@ -110,7 +111,7 @@ func NewEngine(
 		provider,
 		toolPlans,
 		broker,
-		&agent.AtomicIDSource{},
+		ids,
 		time.Now,
 		nil,
 		nil,

@@ -42,6 +42,8 @@ const (
 // Components is a typed snapshot of constructed singleton beans.
 // It performs no reflection or string-based lookup.
 type Components struct {
+	// DaemonIDSource is bean "daemonIDSource".
+	DaemonIDSource agent.IDSource
 	// PendingHub is bean "pendingHub".
 	PendingHub *daemon2.PendingHub
 	// ServerBuild is bean "serverBuild".
@@ -92,12 +94,22 @@ type Components struct {
 	Replace tool.Tool
 	// RuntimePluginCompiledDispatcher is bean "runtimePluginCompiledDispatcher".
 	RuntimePluginCompiledDispatcher stage.ToolDispatcher
-	// RuntimePluginHost is bean "runtimePluginHost".
-	RuntimePluginHost *pluginhost.Host
-	// RuntimePluginToolPlanSource is bean "runtimePluginToolPlanSource".
-	RuntimePluginToolPlanSource stage.ToolPlanSource
 	// OpenAIModelProvider is bean "openAIModelProvider".
 	OpenAIModelProvider model.Provider
+	// RuntimePluginProperties is bean "RuntimePluginProperties".
+	RuntimePluginProperties daemon.RuntimePluginProperties
+	// RuntimePluginPlan is bean "runtimePluginPlan".
+	RuntimePluginPlan daemon.RuntimePluginPlan
+	// RuntimePluginRestartPolicy is bean "runtimePluginRestartPolicy".
+	RuntimePluginRestartPolicy pluginhost.RestartPolicy
+	// RuntimePluginHost is bean "runtimePluginHost".
+	RuntimePluginHost *pluginhost.Host
+	// RuntimePluginActivation is bean "runtimePluginActivation".
+	RuntimePluginActivation *daemon.RuntimePluginActivation
+	// RuntimePluginHealthSource is bean "runtimePluginHealthSource".
+	RuntimePluginHealthSource daemon2.HealthSource
+	// RuntimePluginToolPlanSource is bean "runtimePluginToolPlanSource".
+	RuntimePluginToolPlanSource stage.ToolPlanSource
 	// DaemonEngine is bean "daemonEngine".
 	DaemonEngine *agent.Engine
 	// RunHost is bean "runHost".
@@ -111,6 +123,8 @@ type Components struct {
 // BeanOverrides provides compile-time-typed singleton replacements.
 // Replacements use the normal generated cleanup and rollback path.
 type BeanOverrides struct {
+	// DaemonIDSource replaces bean "daemonIDSource".
+	DaemonIDSource spicebean.Override[agent.IDSource]
 	// PendingHub replaces bean "pendingHub".
 	PendingHub spicebean.Override[*daemon2.PendingHub]
 	// ServerBuild replaces bean "serverBuild".
@@ -159,12 +173,20 @@ type BeanOverrides struct {
 	Replace spicebean.Override[tool.Tool]
 	// RuntimePluginCompiledDispatcher replaces bean "runtimePluginCompiledDispatcher".
 	RuntimePluginCompiledDispatcher spicebean.Override[stage.ToolDispatcher]
-	// RuntimePluginHost replaces bean "runtimePluginHost".
-	RuntimePluginHost spicebean.Override[*pluginhost.Host]
-	// RuntimePluginToolPlanSource replaces bean "runtimePluginToolPlanSource".
-	RuntimePluginToolPlanSource spicebean.Override[stage.ToolPlanSource]
 	// OpenAIModelProvider replaces bean "openAIModelProvider".
 	OpenAIModelProvider spicebean.Override[model.Provider]
+	// RuntimePluginPlan replaces bean "runtimePluginPlan".
+	RuntimePluginPlan spicebean.Override[daemon.RuntimePluginPlan]
+	// RuntimePluginRestartPolicy replaces bean "runtimePluginRestartPolicy".
+	RuntimePluginRestartPolicy spicebean.Override[pluginhost.RestartPolicy]
+	// RuntimePluginHost replaces bean "runtimePluginHost".
+	RuntimePluginHost spicebean.Override[*pluginhost.Host]
+	// RuntimePluginActivation replaces bean "runtimePluginActivation".
+	RuntimePluginActivation spicebean.Override[*daemon.RuntimePluginActivation]
+	// RuntimePluginHealthSource replaces bean "runtimePluginHealthSource".
+	RuntimePluginHealthSource spicebean.Override[daemon2.HealthSource]
+	// RuntimePluginToolPlanSource replaces bean "runtimePluginToolPlanSource".
+	RuntimePluginToolPlanSource spicebean.Override[stage.ToolPlanSource]
 	// DaemonEngine replaces bean "daemonEngine".
 	DaemonEngine spicebean.Override[*agent.Engine]
 	// RunHost replaces bean "runHost".
@@ -195,6 +217,9 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 			return BeanOverrides{}, fmt.Errorf("compose bean overrides: layer %q repeats layer %d", layer.Name, previous)
 		}
 		seen[layer.Name] = index
+		if layer.Overrides.DaemonIDSource.Enabled() {
+			result.DaemonIDSource = layer.Overrides.DaemonIDSource
+		}
 		if layer.Overrides.PendingHub.Enabled() {
 			result.PendingHub = layer.Overrides.PendingHub
 		}
@@ -267,14 +292,26 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.RuntimePluginCompiledDispatcher.Enabled() {
 			result.RuntimePluginCompiledDispatcher = layer.Overrides.RuntimePluginCompiledDispatcher
 		}
+		if layer.Overrides.OpenAIModelProvider.Enabled() {
+			result.OpenAIModelProvider = layer.Overrides.OpenAIModelProvider
+		}
+		if layer.Overrides.RuntimePluginPlan.Enabled() {
+			result.RuntimePluginPlan = layer.Overrides.RuntimePluginPlan
+		}
+		if layer.Overrides.RuntimePluginRestartPolicy.Enabled() {
+			result.RuntimePluginRestartPolicy = layer.Overrides.RuntimePluginRestartPolicy
+		}
 		if layer.Overrides.RuntimePluginHost.Enabled() {
 			result.RuntimePluginHost = layer.Overrides.RuntimePluginHost
 		}
+		if layer.Overrides.RuntimePluginActivation.Enabled() {
+			result.RuntimePluginActivation = layer.Overrides.RuntimePluginActivation
+		}
+		if layer.Overrides.RuntimePluginHealthSource.Enabled() {
+			result.RuntimePluginHealthSource = layer.Overrides.RuntimePluginHealthSource
+		}
 		if layer.Overrides.RuntimePluginToolPlanSource.Enabled() {
 			result.RuntimePluginToolPlanSource = layer.Overrides.RuntimePluginToolPlanSource
-		}
-		if layer.Overrides.OpenAIModelProvider.Enabled() {
-			result.OpenAIModelProvider = layer.Overrides.OpenAIModelProvider
 		}
 		if layer.Overrides.DaemonEngine.Enabled() {
 			result.DaemonEngine = layer.Overrides.DaemonEngine

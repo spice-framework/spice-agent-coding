@@ -19,6 +19,7 @@ import (
 	managementannotation "github.com/spice-framework/spice/annotation/management"
 	modulithannotation "github.com/spice-framework/spice/annotation/modulith"
 	observabilityannotation "github.com/spice-framework/spice/annotation/observability"
+	retryannotation "github.com/spice-framework/spice/annotation/retry"
 	scheduleannotation "github.com/spice-framework/spice/annotation/schedule"
 	"github.com/spice-framework/spice/annotation/sdk"
 	"github.com/spice-framework/spice/annotation/sdk/protocol"
@@ -43,6 +44,7 @@ var descriptorPackages = []string{
 	descriptorModulePath + "/annotation/management",
 	descriptorModulePath + "/annotation/modulith",
 	descriptorModulePath + "/annotation/observability",
+	descriptorModulePath + "/annotation/retry",
 	descriptorModulePath + "/annotation/schedule",
 	descriptorModulePath + "/annotation/security",
 	descriptorModulePath + "/annotation/web",
@@ -190,6 +192,11 @@ func handlerRegistrations() []handlerRegistration {
 			coreannotation.Service,
 		),
 		newHandlerRegistration(
+			sdk.Symbol{Package: descriptorModulePath + "/annotation/core", Name: "Component"},
+			sdk.ContributionStereotype,
+			coreannotation.Component,
+		),
+		newHandlerRegistration(
 			sdk.Symbol{Package: descriptorModulePath + "/annotation/core", Name: "Repository"},
 			sdk.ContributionStereotype,
 			coreannotation.Repository,
@@ -246,8 +253,18 @@ func handlerRegistrations() []handlerRegistration {
 		),
 		newHandlerRegistration(
 			sdk.Symbol{Package: descriptorModulePath + "/annotation/core", Name: "Configuration"},
-			sdk.ContributionConfiguration,
+			sdk.ContributionStereotype,
 			coreannotation.Configuration,
+		),
+		newHandlerRegistration(
+			sdk.Symbol{Package: descriptorModulePath + "/annotation/core", Name: "ConfigurationProperties"},
+			sdk.ContributionConfiguration,
+			coreannotation.ConfigurationProperties,
+		),
+		newHandlerRegistration(
+			sdk.Symbol{Package: descriptorModulePath + "/annotation/core", Name: "Enum"},
+			sdk.ContributionEnum,
+			coreannotation.Enum,
 		),
 		newHandlerRegistration(
 			sdk.Symbol{Package: descriptorModulePath + "/annotation/web", Name: "Controller"},
@@ -319,6 +336,16 @@ func handlerRegistrations() []handlerRegistration {
 			sdk.Symbol{Package: descriptorModulePath + "/annotation/security", Name: "Authorize"},
 			sdk.ContributionAuthorization,
 			securityannotation.Authorize,
+		),
+		newHandlerRegistration(
+			sdk.Symbol{Package: descriptorModulePath + "/annotation/retry", Name: "Retryable"},
+			sdk.ContributionRetry,
+			retryannotation.Retryable,
+		),
+		newHandlerRegistration(
+			sdk.Symbol{Package: descriptorModulePath + "/annotation/observability", Name: "Observed"},
+			sdk.ContributionObservation,
+			observabilityannotation.Observed,
 		),
 		newHandlerRegistration(
 			sdk.Symbol{Package: descriptorModulePath + "/annotation/management", Name: "Enable"},

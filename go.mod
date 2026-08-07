@@ -12,8 +12,8 @@ tool (
 )
 
 require (
-	github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0
-	github.com/spice-framework/spice-agent v0.0.0-20260807193825-af8a393912a4
+	github.com/spice-framework/spice v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0
+	github.com/spice-framework/spice-agent v0.0.0-20260807202054-caf82692c80d
 	github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc
 	github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260807150540-eeacf58875c5
 	github.com/spice-framework/spice-agent-tui v0.0.0-20260807191321-a9c2bc36bc67
@@ -37,7 +37,7 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/openai/openai-go/v3 v3.50.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6 // indirect
+	github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260807044408-6598abca8196 // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect

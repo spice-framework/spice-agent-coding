@@ -21,6 +21,11 @@ func configureGeneratedLifecycle(
 	_ = dependencies
 	application.hooks = []spicelifecycle.Hook{
 		{
+			ID:     "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewRuntimePluginActivation",
+			Module: "",
+			Start:  dependencies.runtimePluginActivation.Start,
+		},
+		{
 			ID:     "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime",
 			Module: "",
 			Start:  dependencies.daemonRuntime.Start,

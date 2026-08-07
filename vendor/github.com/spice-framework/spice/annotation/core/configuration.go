@@ -7,35 +7,49 @@ import (
 	"github.com/spice-framework/spice/annotation/sdk"
 )
 
-// Configuration marks a struct as generated typed configuration.
+// Configuration declares a constructible factory bean that owns @Bean methods.
 //
-// Field metadata remains on ordinary Go struct tags. Spice derives stable
-// keys, defaults, required values, secret redaction, validation, and generated
-// metadata without reflecting over the application at runtime. Prefix is
-// optional and must be dot-separated identifiers.
+// A configuration type is constructed through the same direct compile-time
+// constructor selection as Service and Component. Annotated methods are then
+// invoked directly on that instance. Use @ConfigurationProperties for typed
+// external configuration values.
 //
-//	// @import { Configuration } from "github.com/spice-framework/spice/annotation/core"
-//	// @Configuration(prefix="orders")
-//	type Settings struct {
-//		Limit int `spice:"limit,default=100"`
-//	}
+//	// @import { Bean, Configuration } from "github.com/spice-framework/spice/annotation/core"
+//	// @Configuration
+//	type DatabaseConfiguration struct{}
+//
+//	// @Bean
+//	func (*DatabaseConfiguration) Database(properties DatabaseProperties) (*sql.DB, error)
 func Configuration() sdk.Definition {
 	return sdk.Definition{
 		Name:    "core.Configuration",
-		Summary: "Declares a generated typed configuration struct.",
+		Summary: "Declares a constructible configuration and bean factory type.",
 		Targets: []sdk.Target{sdk.TargetType},
-		Arguments: []sdk.Argument{{
-			Name:        "prefix",
-			Kinds:       []sdk.Kind{sdk.KindString},
-			Description: "Optional dot-separated property-key prefix.",
-		}},
+		Arguments: []sdk.Argument{
+			{
+				Name:        "constructor",
+				Kinds:       []sdk.Kind{sdk.KindIdentifier},
+				Description: "Optional same-package constructor function.",
+			},
+			{
+				Name:        "name",
+				Kinds:       []sdk.Kind{sdk.KindString},
+				Description: "Optional unique bean name.",
+			},
+			{
+				Name:             "aliases",
+				Kinds:            []sdk.Kind{sdk.KindList},
+				ListElementKinds: []sdk.Kind{sdk.KindString},
+				Description:      "Optional unique alternate bean names.",
+			},
+		},
 		Examples: []sdk.Example{{
-			Title: "Configuration",
-			Code:  "// @Configuration(prefix=\"orders\")\ntype Settings struct{}",
+			Title: "Configuration factory",
+			Code:  "// @Configuration\ntype DatabaseConfiguration struct{}\n\n// @Bean\nfunc (*DatabaseConfiguration) Database(properties DatabaseProperties) (*sql.DB, error)",
 		}},
 		Compatibility: sdk.Compatibility{
-			Since:        "0.1.0",
-			MinimumSpice: "0.1.0",
+			Since:        "0.2.0",
+			MinimumSpice: "0.2.0",
 		},
 		Implementation: sdk.Implementation{
 			Tool:     coretool.Path,
@@ -45,7 +59,7 @@ func Configuration() sdk.Definition {
 	}
 }
 
-// ConfigurationHandler contributes typed configuration semantics.
+// ConfigurationHandler contributes configuration-factory construction metadata.
 func ConfigurationHandler(
 	_ context.Context,
 	invocation sdk.Invocation,
@@ -56,18 +70,32 @@ func ConfigurationHandler(
 	); err != nil {
 		return sdk.Result{}, err
 	}
-	arguments, err := sdk.BindArguments(invocation, "", "prefix")
+	arguments, err := sdk.BindArguments(
+		invocation,
+		"",
+		"constructor",
+		"name",
+		"aliases",
+	)
 	if err != nil {
 		return sdk.Result{}, err
 	}
-	prefix, err := arguments.String("prefix", false)
+	constructor, err := arguments.Identifier("constructor", false)
+	if err != nil {
+		return sdk.Result{}, err
+	}
+	name, aliases, err := sdk.BeanIdentity(arguments)
 	if err != nil {
 		return sdk.Result{}, err
 	}
 	return sdk.OneContribution(sdk.Contribution{
-		Kind: sdk.ContributionConfiguration,
-		Configuration: &sdk.ConfigurationContribution{
-			Prefix: prefix,
+		Kind: sdk.ContributionStereotype,
+		Stereotype: &sdk.StereotypeContribution{
+			Role:        "configuration",
+			Construct:   true,
+			Constructor: constructor,
+			Name:        name,
+			Aliases:     aliases,
 		},
 	})
 }

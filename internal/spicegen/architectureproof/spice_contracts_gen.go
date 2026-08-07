@@ -34,6 +34,8 @@ const (
 // Components is a typed snapshot of constructed singleton beans.
 // It performs no reflection or string-based lookup.
 type Components struct {
+	// ArchitectureProofIDSource is bean "architectureProofIDSource".
+	ArchitectureProofIDSource agent.IDSource
 	// CodingConfig is bean "codingConfig".
 	CodingConfig coding.Config
 	// Read is bean "read".
@@ -44,8 +46,8 @@ type Components struct {
 	ProcessLauncher process.Launcher
 	// ResponsesFixture is bean "responsesFixture".
 	ResponsesFixture *architectureproof.ResponsesFixture
-	// Provider5 is bean "architecture-proof-openai".
-	Provider5 model.Provider
+	// Provider6 is bean "architecture-proof-openai".
+	Provider6 model.Provider
 	// ArchitectureProofInteractionBroker is bean "architectureProofInteractionBroker".
 	ArchitectureProofInteractionBroker interaction.Broker
 	// ProcessResolver is bean "processResolver".
@@ -67,6 +69,8 @@ type Components struct {
 // BeanOverrides provides compile-time-typed singleton replacements.
 // Replacements use the normal generated cleanup and rollback path.
 type BeanOverrides struct {
+	// ArchitectureProofIDSource replaces bean "architectureProofIDSource".
+	ArchitectureProofIDSource spicebean.Override[agent.IDSource]
 	// CodingConfig replaces bean "codingConfig".
 	CodingConfig spicebean.Override[coding.Config]
 	// Read replaces bean "read".
@@ -77,8 +81,8 @@ type BeanOverrides struct {
 	ProcessLauncher spicebean.Override[process.Launcher]
 	// ResponsesFixture replaces bean "responsesFixture".
 	ResponsesFixture spicebean.Override[*architectureproof.ResponsesFixture]
-	// Provider5 replaces bean "architecture-proof-openai".
-	Provider5 spicebean.Override[model.Provider]
+	// Provider6 replaces bean "architecture-proof-openai".
+	Provider6 spicebean.Override[model.Provider]
 	// ArchitectureProofInteractionBroker replaces bean "architectureProofInteractionBroker".
 	ArchitectureProofInteractionBroker spicebean.Override[interaction.Broker]
 	// ProcessResolver replaces bean "processResolver".
@@ -117,6 +121,9 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 			return BeanOverrides{}, fmt.Errorf("compose bean overrides: layer %q repeats layer %d", layer.Name, previous)
 		}
 		seen[layer.Name] = index
+		if layer.Overrides.ArchitectureProofIDSource.Enabled() {
+			result.ArchitectureProofIDSource = layer.Overrides.ArchitectureProofIDSource
+		}
 		if layer.Overrides.CodingConfig.Enabled() {
 			result.CodingConfig = layer.Overrides.CodingConfig
 		}
@@ -132,8 +139,8 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.ResponsesFixture.Enabled() {
 			result.ResponsesFixture = layer.Overrides.ResponsesFixture
 		}
-		if layer.Overrides.Provider5.Enabled() {
-			result.Provider5 = layer.Overrides.Provider5
+		if layer.Overrides.Provider6.Enabled() {
+			result.Provider6 = layer.Overrides.Provider6
 		}
 		if layer.Overrides.ArchitectureProofInteractionBroker.Enabled() {
 			result.ArchitectureProofInteractionBroker = layer.Overrides.ArchitectureProofInteractionBroker

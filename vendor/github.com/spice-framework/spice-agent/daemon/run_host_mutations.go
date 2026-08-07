@@ -119,6 +119,13 @@ func (host *RunHost) prepareStart(ctx context.Context, request client.StartReque
 }
 
 func (host *RunHost) preparationFailure(err error) Outcome {
+	if errors.Is(err, agent.ErrRunIdentityCapacity) {
+		if isIsolatedRunIdentityCapacity(err) {
+			return abandonRunHostOutcome(publicRunHostError(err))
+		}
+		host.degrade(degradedLifecycleCleanup)
+		return failureRunHostOutcome(ErrRunHostUncertain)
+	}
 	if isIsolatedContextTermination(err) {
 		return abandonRunHostOutcome(err)
 	}
@@ -127,6 +134,20 @@ func (host *RunHost) preparationFailure(err error) Outcome {
 		return failureRunHostOutcome(ErrRunHostUncertain)
 	}
 	return failureRunHostOutcome(publicRunHostError(err))
+}
+
+func isIsolatedRunIdentityCapacity(err error) bool {
+	for err != nil {
+		if _, wrapsMany := err.(interface{ Unwrap() []error }); wrapsMany {
+			return false
+		}
+		wrapped, wraps := err.(interface{ Unwrap() error })
+		if !wraps {
+			return errors.Is(err, agent.ErrRunIdentityCapacity)
+		}
+		err = wrapped.Unwrap()
+	}
+	return false
 }
 
 func bindingFailureOutcome(err error) Outcome {

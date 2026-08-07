@@ -1,5 +1,13 @@
 # Generated daemon target
 
+The distribution pins the Spice runtime at
+`v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0`, the matching toolchain at
+`v0.1.0-preview.1.0.20260807044408-6598abca8196`, and Agent core at
+`v0.0.0-20260807202054-caf82692c80d`. This coordinated pin supplies the
+canonical `@ConfigurationProperties` contract, hyphenated property-prefix
+segments, exact generated health-source injection, and plan-dependent runtime
+plugin recovery policy used by this target.
+
 `spice-agentd` is an ordinary generated Spice application. The handwritten
 composition lives in `internal/daemon`; the generated, inspectable dependency
 graph lives in `internal/spicegen/spice_agentd`; and
@@ -31,20 +39,41 @@ injects the named `read`, `replace`, and `shell` beans into an immutable
 compiled dispatcher, constructs exactly one `*pluginhost.Host`, and exposes
 that exact pointer as the engine's `stage.ToolPlanSource`. The daemon's existing
 validated `client.Build` is explicitly adapted to the Protobuf host identity
-used during a future plugin handshake. Construction does not inspect plugin
-configuration, open a plugin endpoint, or launch a process; runtime activation
-is an explicit Host operation and only changes immutable generations for future
-runs. The generated Host deliberately retains the zero `RestartPolicy`, so its
-health reports a zero restart limit and no recovery worker is enabled before a
-later distribution slice explicitly owns activation and recovery policy.
+used during plugin handshakes. Construction validates at most one explicitly
+configured executable but does not inspect the filesystem, open a plugin
+endpoint, or launch a process. The distribution contributes the exact
+`RestartPolicy` bean. It selects disabled recovery for a disabled plan and
+replaces core auto-configuration's fallback with the bounded three-attempt
+production policy only for an enabled plan.
 
-`testdata/runtimeplugin/go` is the independent process fixture for the next
-activation slice. The repository builds it offline into a temporary directory,
+Generated lifecycle invokes `RuntimePluginActivation.Start` before
+`Runtime.Start`. Required activation failure returns one fixed error and stops
+startup before a listener is opened or endpoint metadata is published. Optional
+failure retains the compiled read, replace, and shell generation, permits local
+service startup, and contributes only the fixed `dependency_degraded` health
+reason. A successful activation atomically publishes the Host's immutable
+runtime-tool generation for future run leases. Runtime also checks the
+activation publication gate directly, so hook-order regressions fail closed.
+Caller cancellation and deadlines remain discoverable through `errors.Is` and
+never become availability failures. The distribution owns the exact Host bean
+and gives its generated cleanup a fresh bounded context derived from the
+configured drain, shutdown, and containment budgets. Consequently, cancellation
+between successful plugin activation and daemon publication still contains the
+child process and releases its private endpoint before launcher cleanup.
+
+The health adapter implements the daemon's exact passive `HealthSource`
+interface and samples only already-owned activation and Host state. It maps
+degraded, recovering, and unavailable states to the bounded framework reason
+codes and cannot expose executable paths, digests, endpoints, manifest values,
+environment, stderr, or plugin-controlled text.
+
+`testdata/runtimeplugin/go` is the independent process fixture for the current
+activation contract. The repository builds it offline into a temporary directory,
 pins its computed SHA-256 through `pluginhost.Executable`, and activates it with
 the same contained launcher and current-user endpoint factory injected into the
 daemon. Acceptance leases the resulting immutable generation, dispatches its
 capability-free `fixture.echo` tool, and then requires clean Drain, Shutdown,
-and process containment. The fixture is test evidence only: no executable,
+and process containment through the distribution activation lifecycle. The fixture is test evidence only: no executable,
 digest, discovery rule, or daemon activation configuration is committed.
 
 ## Lifecycle and publication
@@ -95,8 +124,32 @@ claiming cleanup.
 
 The generated schema accepts `OPENAI_API_KEY`, `OPENAI_BASE_URL`,
 `OPENAI_ORGANIZATION`, `OPENAI_PROJECT`, `OPENAI_TIMEOUT`,
-`OPENAI_MAX_RETRIES`, `OPENAI_MODEL`, `SPICE_AGENT_WORKSPACE`,
-and `SPICE_AGENT_RUN_AUTHORITY_DIRECTORY`. The API key
+`OPENAI_MAX_RETRIES`, `OPENAI_MODEL`, `SPICE_AGENT_WORKSPACE`, and
+`SPICE_AGENT_RUN_AUTHORITY_DIRECTORY`. Runtime-plugin configuration uses:
+
+- `SPICE_AGENT_RUNTIME_PLUGIN_REQUIRED`;
+- `SPICE_AGENT_RUNTIME_PLUGIN_ID`, `PATH`, `SHA256`, `MANIFEST_NAME`,
+  `MANIFEST_VERSION`, and `WORKING_DIRECTORY`;
+- exact capability booleans `FILESYSTEM_READ`, `FILESYSTEM_WRITE`,
+  `PROCESS_EXECUTE`, `NETWORK_ACCESS`, `SECRETS_READ`, `ENVIRONMENT_READ`, and
+  `ENVIRONMENT_WRITE` under the same prefix;
+- bounded `STARTUP_TIMEOUT`, `CALL_TIMEOUT`, `DRAIN_TIMEOUT`,
+  `SHUTDOWN_TIMEOUT`, and `CONTAINMENT_TIMEOUT` values.
+
+The corresponding typed keys are rooted at `agent.runtime-plugin`. The complete
+zero value disables plugins. Generated configuration defaults the ID to
+`runtime-tool` and the startup/call/drain/shutdown/containment timeouts to
+`10s`, `2m`, `10s`, `10s`, and `5s`; those defaults alone also remain disabled.
+Any other nonzero value opts in and must supply a path, digest, and complete
+manifest identity. The working directory deterministically defaults to the
+executable's parent. Explicit paths and working directories must be absolute
+and canonical, SHA-256 must be exact lowercase hexadecimal,
+the child environment is always empty, protocol limits are distribution-fixed,
+and enabled capabilities are emitted in canonical order. No directory scan,
+manifest registry, ambient environment inheritance, or executable discovery is
+performed.
+
+The API key
 is required and secret-redacted. Credentials never enter command diagnostics,
 generated files, or the ownership manifest. A non-empty run-authority directory
 must be absolute and satisfy the platform's current-user ownership and secure
