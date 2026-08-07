@@ -22,6 +22,7 @@ import (
 	grpcserver "github.com/spice-framework/spice-agent/daemon/grpcserver"
 	interaction "github.com/spice-framework/spice-agent/interaction"
 	model "github.com/spice-framework/spice-agent/model"
+	process "github.com/spice-framework/spice-agent/process"
 	stage "github.com/spice-framework/spice-agent/stage"
 	tool "github.com/spice-framework/spice-agent/tool"
 	spiceconfig "github.com/spice-framework/spice/config"
@@ -35,8 +36,10 @@ type applicationDependencies struct {
 	endpointScope           endpoint.UserScope
 	endpointStore           *endpoint.Store
 	endpointToken           endpoint.Token
+	processLauncher         process.Launcher
 	serverProtocol          client.ProtocolVersion
 	daemonInteractionBroker interaction.Broker
+	processResolver         process.ExecutableResolver
 	daemonRoot              *daemon.Root
 	sessionStore            *daemon2.SessionStore
 	operationLedger         *daemon2.Ledger
@@ -158,6 +161,21 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = endpointToken
+	processLauncher, processLauncherCleanup, err := func() (process.Launcher, spicelifecycle.Cleanup, error) {
+		if options.Overrides.ProcessLauncher.Enabled() {
+			return options.Overrides.ProcessLauncher.Acquire(ctx)
+		}
+		return spiceDaemon.ConstructProcessLauncher_6dd45eb0(daemonRootRegistry)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean processLauncher (github.com/spice-framework/spice-agent/process.Launcher, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher): %w", err))
+	}
+	if processLauncherCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher", processLauncherCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean processLauncher (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher): %w", err))
+		}
+	}
+	_ = processLauncher
 	serverProtocol, serverProtocolCleanup, err := func() (client.ProtocolVersion, spicelifecycle.Cleanup, error) {
 		if options.Overrides.ServerProtocol.Enabled() {
 			return options.Overrides.ServerProtocol.Acquire(ctx)
@@ -188,6 +206,21 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = daemonInteractionBroker
+	processResolver, processResolverCleanup, err := func() (process.ExecutableResolver, spicelifecycle.Cleanup, error) {
+		if options.Overrides.ProcessResolver.Enabled() {
+			return options.Overrides.ProcessResolver.Acquire(ctx)
+		}
+		return spiceDaemon.ConstructProcessResolver_4d5da368()
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean processResolver (github.com/spice-framework/spice-agent/process.ExecutableResolver, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver): %w", err))
+	}
+	if processResolverCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver", processResolverCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean processResolver (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver): %w", err))
+		}
+	}
+	_ = processResolver
 	daemonRoot, daemonRootCleanup, err := func() (*daemon.Root, spicelifecycle.Cleanup, error) {
 		if options.Overrides.DaemonRoot.Enabled() {
 			return options.Overrides.DaemonRoot.Acquire(ctx)
@@ -332,7 +365,7 @@ func constructApplicationDependencies(
 		if options.Overrides.Shell.Enabled() {
 			return options.Overrides.Shell.Acquire(ctx)
 		}
-		return spiceAutoconfigure2.ConstructShell_a48b269f(codingConfig)
+		return spiceAutoconfigure2.ConstructShell_a48b269f(codingConfig, processResolver, processLauncher)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean shell (github.com/spice-framework/spice-agent/tool.Tool, source spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell): %w", err))
@@ -470,8 +503,10 @@ func constructApplicationDependencies(
 		endpointScope:           endpointScope,
 		endpointStore:           endpointStore,
 		endpointToken:           endpointToken,
+		processLauncher:         processLauncher,
 		serverProtocol:          serverProtocol,
 		daemonInteractionBroker: daemonInteractionBroker,
+		processResolver:         processResolver,
 		daemonRoot:              daemonRoot,
 		sessionStore:            sessionStore,
 		operationLedger:         operationLedger,

@@ -2,24 +2,20 @@
 
 package daemonprocess
 
-import "golang.org/x/sys/unix"
+import "github.com/spice-framework/spice-agent-coding/internal/processcontainment"
 
 func processSnapshot() ([]processRecord, error) {
-	processes, err := unix.SysctlKinfoProcSlice("kern.proc.all")
+	processes, err := processcontainment.Snapshot()
 	if err != nil {
 		return nil, err
 	}
 	records := make([]processRecord, 0, len(processes))
 	for _, process := range processes {
-		pid := int(process.Proc.P_pid)
-		if pid <= 0 {
-			continue
-		}
 		records = append(records, processRecord{
-			pid: pid, ppid: int(process.Eproc.Ppid), pgid: int(process.Eproc.Pgid),
+			pid: process.PID, ppid: process.ParentID, pgid: process.GroupID,
 			identity: processIdentity{
-				startedSeconds: process.Proc.P_starttime.Sec,
-				startedPart:    uint64(process.Proc.P_starttime.Usec),
+				startedSeconds: process.Identity.StartedSeconds,
+				startedPart:    process.Identity.StartedPart,
 			},
 		})
 	}

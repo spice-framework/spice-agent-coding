@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -164,6 +165,19 @@ func TestProcessBoundaryFormattingAndBuffers(t *testing.T) {
 		t.Fatal("nil containment error has a cause")
 	}
 	registry := inactiveRootRegistry{}
+	if err := registry.Register(nil); err == nil {
+		t.Fatal("inactive registry accepted nil process")
+	}
+	current, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = registry.Register(current); err != nil {
+		t.Fatal(err)
+	}
+	if err = current.Release(); err != nil {
+		t.Fatal(err)
+	}
 	if err := registry.Close(); err != nil {
 		t.Fatal(err)
 	}

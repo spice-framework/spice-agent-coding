@@ -14,7 +14,7 @@ This repository does not maintain a second phase numbering scheme.
       lifecycle ownership, and deterministic generation verification.
 - [ ] Publish the distribution starter manifest and register release-target
       compatibility gates in the development catalog with the daemon/TUI slice.
-- [ ] Route every compiled coding-tool process through the injected launcher
+- [x] Route every compiled coding-tool process through the injected launcher
       and adopted containment registry, then prove the real managed daemon path.
 - [ ] Generate the TUI/managed-client target and complete Windows/Linux terminal
       acceptance.

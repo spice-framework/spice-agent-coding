@@ -16,12 +16,12 @@ github.com/openai/openai-go/v3 v3.50.0 h1:CXn+C8a10oQiI5CMyMbCiykhITVhVxhdHX8j3C
 github.com/openai/openai-go/v3 v3.50.0/go.mod h1:Ogjo0gDct+Jm7yCqaCjLGQGygeV8xNfNHV1/yKvCji0=
 github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0 h1:aEtIUj0tLvvgwKtOs1nOyAtxGumJIhcd5HdnrVJZ1hQ=
 github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0/go.mod h1:dBZV5UZcbY6pzhfGNtvAwQIJ8YsFna+jf1SAlmukJfk=
-github.com/spice-framework/spice-agent v0.0.0-20260807141124-852f79b1d092 h1:1jI/Mth5JhorWZmnkkxe444Gm81nxFsZ9C/pTKiOokw=
-github.com/spice-framework/spice-agent v0.0.0-20260807141124-852f79b1d092/go.mod h1:qI/F8V3cJoVZxBCLpblc0prcWtvXDHuR/KTvq+gTDaM=
+github.com/spice-framework/spice-agent v0.0.0-20260807151358-4a1c8124e63f h1:njy3OYZfBCuFlZOv4rkzcLODvuS2AbsbMtZ0VKCM7v0=
+github.com/spice-framework/spice-agent v0.0.0-20260807151358-4a1c8124e63f/go.mod h1:qI/F8V3cJoVZxBCLpblc0prcWtvXDHuR/KTvq+gTDaM=
 github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc h1:YsEndeTOHdyDQF+54nwjC/tg4XdNaz9W8u4rTCmcKhw=
 github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc/go.mod h1:XePA5p8ER5AkOEQi8IFuOI8zyB7UDRtTVK6z0cZIHYw=
-github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806232406-25b93fb6e1b2 h1:0AYTKWqHYnu0O86W7Udlt1XjGYkmznogMLg0bGdcte8=
-github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806232406-25b93fb6e1b2/go.mod h1:L9FYbkq17Tga4jy+ezA240QkOf2GZPYGMdffMk9cooo=
+github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260807150540-eeacf58875c5 h1:Mu0gL+c2yt5DNNMCfpSihzauphRh0vPCOMbLSc0XwTs=
+github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260807150540-eeacf58875c5/go.mod h1:inAVEqI6druxt2eTQL+hD1qE0TmqxGQu4QvnXMy+1gU=
 github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6 h1:paTYw/o/6OsbNAvOWvjicOOqWyyt2Nd3vWdoPq8+BjA=
 github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6/go.mod h1:5qwAMEFRzVhJTTD96xwQXMYFlUYwBWlwNNeOhZqqPeg=
 github.com/tidwall/gjson v1.14.2/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=

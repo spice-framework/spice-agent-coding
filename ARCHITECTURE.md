@@ -50,10 +50,14 @@ Start binds current-user local IPC, enters the gRPC accept loop, and only then
 publishes authenticated endpoint metadata. Shutdown withdraws that exact
 publication before stopping admission, closing the listener, draining the host,
 and reversing generated ownership. A generated root-registry bean is adopted
-before the daemon root and coding-tool beans. This proves lifecycle order but
-does not yet intercept tool process starts; the public injected launcher SPI and
-coding-tool integration remain required before Unix descendant containment is
-accepted. See [the daemon target](docs/daemon-target.md).
+before the daemon root and coding-tool beans. The graph injects a
+distribution-owned executable resolver and process launcher into the shell
+tool. Windows creates a suspended child, assigns it to a kill-on-close Job, then
+resumes it. Unix establishes a new process group, registers the direct child
+with the adopted root, and tracks observed descendants by PID and immutable
+birth identity. This is lifecycle containment, not a sandbox; Unix cannot
+universally observe an adversarial fork-and-detach between snapshots. See
+[the daemon target](docs/daemon-target.md).
 
 `internal/architectureproof` is a real generated application used to freeze the
 SDK composition boundary before daemon and terminal commands are added. It

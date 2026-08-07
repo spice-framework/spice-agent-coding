@@ -21,6 +21,7 @@ import (
 	grpcserver "github.com/spice-framework/spice-agent/daemon/grpcserver"
 	interaction "github.com/spice-framework/spice-agent/interaction"
 	model "github.com/spice-framework/spice-agent/model"
+	process "github.com/spice-framework/spice-agent/process"
 	stage "github.com/spice-framework/spice-agent/stage"
 	tool "github.com/spice-framework/spice-agent/tool"
 	spicebean "github.com/spice-framework/spice/bean"
@@ -51,10 +52,14 @@ type Components struct {
 	EndpointStore *endpoint.Store
 	// EndpointToken is bean "endpointToken".
 	EndpointToken endpoint.Token
+	// ProcessLauncher is bean "processLauncher".
+	ProcessLauncher process.Launcher
 	// ServerProtocol is bean "serverProtocol".
 	ServerProtocol client.ProtocolVersion
 	// DaemonInteractionBroker is bean "daemonInteractionBroker".
 	DaemonInteractionBroker interaction.Broker
+	// ProcessResolver is bean "processResolver".
+	ProcessResolver process.ExecutableResolver
 	// DaemonRoot is bean "daemonRoot".
 	DaemonRoot *daemon.Root
 	// SessionStore is bean "sessionStore".
@@ -110,10 +115,14 @@ type BeanOverrides struct {
 	EndpointStore spicebean.Override[*endpoint.Store]
 	// EndpointToken replaces bean "endpointToken".
 	EndpointToken spicebean.Override[endpoint.Token]
+	// ProcessLauncher replaces bean "processLauncher".
+	ProcessLauncher spicebean.Override[process.Launcher]
 	// ServerProtocol replaces bean "serverProtocol".
 	ServerProtocol spicebean.Override[client.ProtocolVersion]
 	// DaemonInteractionBroker replaces bean "daemonInteractionBroker".
 	DaemonInteractionBroker spicebean.Override[interaction.Broker]
+	// ProcessResolver replaces bean "processResolver".
+	ProcessResolver spicebean.Override[process.ExecutableResolver]
 	// DaemonRoot replaces bean "daemonRoot".
 	DaemonRoot spicebean.Override[*daemon.Root]
 	// SessionStore replaces bean "sessionStore".
@@ -190,11 +199,17 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.EndpointToken.Enabled() {
 			result.EndpointToken = layer.Overrides.EndpointToken
 		}
+		if layer.Overrides.ProcessLauncher.Enabled() {
+			result.ProcessLauncher = layer.Overrides.ProcessLauncher
+		}
 		if layer.Overrides.ServerProtocol.Enabled() {
 			result.ServerProtocol = layer.Overrides.ServerProtocol
 		}
 		if layer.Overrides.DaemonInteractionBroker.Enabled() {
 			result.DaemonInteractionBroker = layer.Overrides.DaemonInteractionBroker
+		}
+		if layer.Overrides.ProcessResolver.Enabled() {
+			result.ProcessResolver = layer.Overrides.ProcessResolver
 		}
 		if layer.Overrides.DaemonRoot.Enabled() {
 			result.DaemonRoot = layer.Overrides.DaemonRoot

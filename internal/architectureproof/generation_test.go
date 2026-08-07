@@ -41,6 +41,8 @@ func TestArchitectureProofGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 		`"name": "read"`,
 		`"name": "replace"`,
 		`"name": "shell"`,
+		`"name": "processLauncher"`,
+		`"name": "processResolver"`,
 	} {
 		if !strings.Contains(stdout, expected) {
 			t.Fatalf("bean explanation lacks %q: %s", expected, stdout)
@@ -58,7 +60,8 @@ func TestGeneratedArchitectureProofContainsInspectableDirectCalls(t *testing.T) 
 		t.Fatal(err)
 	}
 	for _, expected := range []string{
-		"ConstructCodingConfig", "ConstructArchitectureProofOpenai", "ConstructArchitectureProofToolDispatcher",
+		"ConstructCodingConfig", "ConstructProcessLauncher", "ConstructProcessResolver",
+		"ConstructArchitectureProofOpenai", "ConstructArchitectureProofToolDispatcher",
 		"ConstructArchitectureProofToolPlanSource", "ConstructArchitectureProofInteractionBroker",
 		"ConstructArchitectureProofExecutionPlan", "ConstructArchitectureProofEngine", "ConstructProof",
 		`map[string]tool.Tool{"read": read, "replace": replace, "shell": shell}`,
@@ -84,8 +87,11 @@ func TestGeneratedArchitectureProofContainsInspectableDirectCalls(t *testing.T) 
 		`"kind": "provider-construction"`,
 		"github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
 		"internal/architectureproof/proof.go",
+		"internal/architectureproof/process.go",
 		"internal/architectureproof/plan.go",
 		"NewExecutionPlanMetadata",
+		"NewProcessLauncher",
+		"NewExecutableResolver",
 		"NewToolPlanSource",
 		"NewEngine",
 	} {

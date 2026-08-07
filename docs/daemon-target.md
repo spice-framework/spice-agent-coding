@@ -39,12 +39,23 @@ configuration depend on this bean, which proves adoption precedes construction
 of the compiled coding tools. Generated reverse cleanup keeps the registry open
 until those beans and the daemon root have been released.
 
-This ordering is not a launcher interception mechanism. The current coding-tool
-process launcher does not yet accept the adopted registry, so nested child
-registration is a mandatory Phase 4 follow-up. Phase 4 containment acceptance
-must not be claimed until a typed launcher SPI routes every coding-tool process
-start through the registry without an ordinary `exec.Cmd.Start` registration
-race.
+The generated graph now constructs `processResolver` and `processLauncher`
+beans and injects them into the compiled shell tool. On Windows the launcher
+creates a suspended child with explicit inherited stream handles, assigns its
+process tree to a kill-on-close Job, and only then resumes the child. On Unix it
+starts a new process group, immediately registers the direct child with the
+adopted root registry, and retains observed child identities using PID plus
+process birth data. Root outcome and containment/resource completion remain
+separate, so the shell tool cannot report successful cleanup while descendants
+or platform ownership remain outstanding.
+
+This is not a sandbox. Coding tools retain the user's authority. Windows Job
+containment is the strong supported tree boundary. Linux and macOS have no
+equivalent portable unprivileged primitive; a hostile child may fork, detach,
+and disappear between process-table samples. The adapter never signals a PID or
+process group after its retained birth identity no longer matches, and reports
+process-table inspection failures as terminal containment failures rather than
+claiming cleanup.
 
 ## Configuration
 

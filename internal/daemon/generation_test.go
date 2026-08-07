@@ -40,6 +40,8 @@ func TestDaemonGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 	}
 	for _, expected := range []string{
 		`"name": "daemonRootRegistry"`,
+		`"name": "processLauncher"`,
+		`"name": "processResolver"`,
 		`"name": "openAIModelProvider"`,
 		`"name": "read"`,
 		`"name": "replace"`,
@@ -73,6 +75,7 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 	if components.DaemonRootRegistry == nil || components.DaemonRoot == nil ||
 		components.DaemonEngine == nil || components.RunHost == nil ||
 		components.GrpcServer == nil || components.DaemonRuntime == nil ||
+		components.ProcessLauncher == nil || components.ProcessResolver == nil ||
 		components.Read == nil || components.Replace == nil || components.Shell == nil {
 		t.Fatal("generated daemon graph is incomplete")
 	}
@@ -94,13 +97,21 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 		t.Fatal(err)
 	}
 	registry := bytes.Index(providers, []byte("ConstructDaemonRootRegistry"))
+	launcher := bytes.Index(providers, []byte("ConstructProcessLauncher"))
 	codingConfig := bytes.Index(providers, []byte("ConstructCodingConfig"))
-	readTool := bytes.Index(providers, []byte("ConstructRead"))
-	if registry < 0 || codingConfig <= registry || readTool <= codingConfig {
-		t.Fatalf("generated containment order registry=%d coding=%d read=%d", registry, codingConfig, readTool)
+	shellTool := bytes.Index(providers, []byte("ConstructShell"))
+	if registry < 0 || launcher <= registry || codingConfig <= registry || shellTool <= launcher {
+		t.Fatalf(
+			"generated containment order registry=%d launcher=%d coding=%d shell=%d",
+			registry,
+			launcher,
+			codingConfig,
+			shellTool,
+		)
 	}
 	for _, expected := range []string{
 		"ConstructDaemonRuntime", "ConstructGrpcServer", "ConstructRunHost",
+		"ConstructProcessLauncher", "ConstructProcessResolver",
 		`map[string]tool.Tool{"read": read, "replace": replace, "shell": shell}`,
 	} {
 		if !bytes.Contains(providers, []byte(expected)) {
@@ -118,7 +129,8 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 	}
 	for _, expected := range []string{
 		`"layout": "generated-package"`, `"role": "source-unit"`,
-		"internal/daemon/root.go", "NewRootRegistry", "NewRuntime",
+		"internal/daemon/root.go", "internal/daemon/process.go",
+		"NewRootRegistry", "NewProcessLauncher", "NewExecutableResolver", "NewRuntime",
 		"github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
 	} {
 		if !bytes.Contains(manifest, []byte(expected)) {

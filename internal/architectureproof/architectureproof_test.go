@@ -38,6 +38,9 @@ func TestGeneratedArchitectureProofExecutesProviderToolContinuation(t *testing.T
 	if !slices.Equal(report.Tools, []string{"read", "replace", "shell"}) {
 		t.Fatalf("generated named tools = %v", report.Tools)
 	}
+	if components := application.Components(); components.ProcessLauncher == nil || components.ProcessResolver == nil {
+		t.Fatal("generated architecture proof lacks explicit process adapters")
+	}
 	metadata := architectureproof.NewExecutionPlanMetadata()
 	if !slices.Equal(report.CompiledPlanIdentities, metadata.CompiledPlanIdentities) ||
 		report.SnapshotCompatibilityIdentity != metadata.SnapshotCompatibilityIdentity ||

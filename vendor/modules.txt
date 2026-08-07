@@ -54,7 +54,7 @@ github.com/spice-framework/spice/security
 github.com/spice-framework/spice/starter
 github.com/spice-framework/spice/validation
 github.com/spice-framework/spice/web
-# github.com/spice-framework/spice-agent v0.0.0-20260807141124-852f79b1d092
+# github.com/spice-framework/spice-agent v0.0.0-20260807151358-4a1c8124e63f
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent/agent
 github.com/spice-framework/spice-agent/annotation/agent
@@ -75,13 +75,14 @@ github.com/spice-framework/spice-agent/interaction
 github.com/spice-framework/spice-agent/internal/annotationtool
 github.com/spice-framework/spice-agent/message
 github.com/spice-framework/spice-agent/model
+github.com/spice-framework/spice-agent/process
 github.com/spice-framework/spice-agent/stage
 github.com/spice-framework/spice-agent/tool
 # github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-provider-openai
 github.com/spice-framework/spice-agent-provider-openai/autoconfigure
-# github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806232406-25b93fb6e1b2
+# github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260807150540-eeacf58875c5
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-tools-coding
 github.com/spice-framework/spice-agent-tools-coding/autoconfigure

@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 )
 
@@ -47,5 +48,12 @@ func TestRootRegistryAdoptionReturnsGeneratedCleanup(t *testing.T) {
 }
 
 type rootRegistryFixture struct{}
+
+func (*rootRegistryFixture) Register(process *os.Process) error {
+	if process == nil || process.Pid <= 0 {
+		return errors.New("test process is invalid")
+	}
+	return nil
+}
 
 func (*rootRegistryFixture) Close() error { return nil }

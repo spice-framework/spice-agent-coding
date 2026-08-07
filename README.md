@@ -25,9 +25,12 @@ without publishing. See [the generated daemon target](docs/daemon-target.md).
 The second product target, `spice-agent`, remains pending. It will provide the
 TUI, explicit attach, and managed attach-or-start. The managed launcher cleans
 up only a daemon it starts. Coding tools still run with the selected user
-process's privileges and are not sandboxed. Unix root-registry adoption is now
-ordered before tool construction, but tool launches do not yet pass through
-that registry; descendant-containment acceptance therefore remains open.
+process's privileges and are not sandboxed. Their generated beans now receive
+an explicit executable resolver and native process launcher. Windows attaches
+each child to a kill-on-close Job before it runs. Unix registers each direct
+child with the adopted daemon root and combines a process group with
+PID-plus-birth-identity tracking; an uncooperative fork that detaches between
+process-table samples remains outside this unprivileged guarantee.
 
 The transport-neutral argument contract is implemented and tested in
 `internal/daemoncommand` and `internal/terminalcommand`. It provides strict

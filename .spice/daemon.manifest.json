@@ -10,7 +10,7 @@
   },
   "generator_version": "0.1.0-dev",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:2a0b793f9459acfdba31a52a446a49e5dffcd959347488299badd8f180121d92",
+  "input_sha256": "sha256:30bc84e0570bce591028466dbc96288e4746c5da3e2540e27c291c047215c456",
   "files": [
     {
       "path": "internal/spicegen/daemon/sources/internal_/daemon/application_spice_gen.go",
@@ -385,6 +385,51 @@
       ]
     },
     {
+      "path": "internal/spicegen/daemon/sources/internal_/daemon/process_spice_gen.go",
+      "sha256": "sha256:afa1591d11636f3b69bf47a381f38b045172d45247644462588603d7b4291774",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/daemon/process.go",
+        "line": 14,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher",
+          "source": {
+            "path": "internal/daemon/process.go",
+            "line": 22,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher"
+          },
+          "generated": {
+            "start_line": 18,
+            "start_column": 4,
+            "end_line": 18,
+            "end_column": 37
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver",
+          "source": {
+            "path": "internal/daemon/process.go",
+            "line": 14,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver"
+          },
+          "generated": {
+            "start_line": 29,
+            "start_column": 4,
+            "end_line": 29,
+            "end_column": 37
+          }
+        }
+      ]
+    },
+    {
       "path": "internal/spicegen/daemon/sources/internal_/daemon/properties_spice_gen.go",
       "sha256": "sha256:9da91396cf8af72b8f64697f031cbd7a2c919f91a01ba0271f459087aaa86bc1",
       "role": "source-unit",
@@ -518,11 +563,11 @@
     },
     {
       "path": "internal/spicegen/daemon/sources/vendor_/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure_spice_gen.go",
-      "sha256": "sha256:5b5315e75bba2037256b2b19dea78138151a015a3f9f21c4bcaeb91b4ce70d65",
+      "sha256": "sha256:863d65048384607baab728d4300dcc0399fdcd22b65cbbeca80e63a0808f17fd",
       "role": "source-unit",
       "primary_source": {
         "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-        "line": 12,
+        "line": 14,
         "column": 6,
         "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
       },
@@ -532,14 +577,14 @@
           "contribution": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead",
           "source": {
             "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-            "line": 12,
+            "line": 14,
             "column": 6,
             "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
           },
           "generated": {
-            "start_line": 19,
+            "start_line": 20,
             "start_column": 4,
-            "end_line": 19,
+            "end_line": 20,
             "end_column": 26
           }
         },
@@ -548,14 +593,14 @@
           "contribution": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell",
           "source": {
             "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-            "line": 22,
+            "line": 24,
             "column": 6,
             "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
           },
           "generated": {
-            "start_line": 30,
+            "start_line": 31,
             "start_column": 4,
-            "end_line": 30,
+            "end_line": 31,
             "end_column": 27
           }
         },
@@ -564,14 +609,14 @@
           "contribution": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace",
           "source": {
             "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-            "line": 17,
+            "line": 19,
             "column": 6,
             "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"
           },
           "generated": {
-            "start_line": 41,
+            "start_line": 42,
             "start_column": 4,
-            "end_line": 41,
+            "end_line": 42,
             "end_column": 29
           }
         }
@@ -579,7 +624,7 @@
     },
     {
       "path": "internal/spicegen/daemon/spice_assembly_gen.go",
-      "sha256": "sha256:fd14c013b10ea754dcb5c7a7f06c9d6ed83784da5597ed7b1d0c547d4498eb53",
+      "sha256": "sha256:f86be480c8e669a7b92b74f5d93c8fc642423ea0d293c05c4f2be24e7ea88a8b",
       "role": "target-assembly",
       "related_sources": [
         {
@@ -703,6 +748,18 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },
         {
+          "path": "internal/daemon/process.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver"
+        },
+        {
+          "path": "internal/daemon/process.go",
+          "line": 22,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher"
+        },
+        {
           "path": "internal/daemon/properties.go",
           "line": 10,
           "column": 4,
@@ -800,19 +857,19 @@
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 12,
+          "line": 14,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 17,
+          "line": 19,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 22,
+          "line": 24,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
         }
@@ -906,7 +963,7 @@
     },
     {
       "path": "internal/spicegen/daemon/spice_contracts_gen.go",
-      "sha256": "sha256:3571480371d4b535239860842e833ee8bd854579edd94e6c8786c5a45c3a956e",
+      "sha256": "sha256:a160d92b586eb64be08edae52d63b59a101331518199133f1544c64fc15d232b",
       "role": "target-contracts",
       "related_sources": [
         {
@@ -1030,6 +1087,18 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },
         {
+          "path": "internal/daemon/process.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver"
+        },
+        {
+          "path": "internal/daemon/process.go",
+          "line": 22,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher"
+        },
+        {
           "path": "internal/daemon/properties.go",
           "line": 10,
           "column": 4,
@@ -1127,19 +1196,19 @@
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 12,
+          "line": 14,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 17,
+          "line": 19,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 22,
+          "line": 24,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
         }
@@ -1197,7 +1266,7 @@
     },
     {
       "path": "internal/spicegen/daemon/spice_providers_gen.go",
-      "sha256": "sha256:188adbb5553d011b472fe19ccac2da9c05ac20315c3a29c94313382ef2c168a7",
+      "sha256": "sha256:7204e0729f9cf5d5c93e71fa1113a8c0d2bfbfa25ed601d589e11fec13a37ff2",
       "role": "target-providers",
       "related_sources": [
         {
@@ -1321,6 +1390,18 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },
         {
+          "path": "internal/daemon/process.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver"
+        },
+        {
+          "path": "internal/daemon/process.go",
+          "line": 22,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher"
+        },
+        {
           "path": "internal/daemon/properties.go",
           "line": 10,
           "column": 4,
@@ -1406,19 +1487,19 @@
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 12,
+          "line": 14,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 17,
+          "line": 19,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
-          "line": 22,
+          "line": 24,
           "column": 6,
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
         }

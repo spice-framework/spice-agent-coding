@@ -15,6 +15,7 @@ import (
 	agent "github.com/spice-framework/spice-agent/agent"
 	interaction "github.com/spice-framework/spice-agent/interaction"
 	model "github.com/spice-framework/spice-agent/model"
+	process "github.com/spice-framework/spice-agent/process"
 	stage "github.com/spice-framework/spice-agent/stage"
 	tool "github.com/spice-framework/spice-agent/tool"
 	spiceconfig "github.com/spice-framework/spice/config"
@@ -24,13 +25,15 @@ import (
 type applicationDependencies struct {
 	codingConfig                       coding.Config
 	read                               tool.Tool
-	shell                              tool.Tool
 	replace                            tool.Tool
-	architectureProofToolDispatcher    stage.ToolDispatcher
-	architectureProofToolPlanSource    stage.ToolPlanSource
+	processLauncher                    process.Launcher
 	responsesFixture                   *architectureproof.ResponsesFixture
 	architectureProofOpenai            model.Provider
 	architectureProofInteractionBroker interaction.Broker
+	processResolver                    process.ExecutableResolver
+	shell                              tool.Tool
+	architectureProofToolDispatcher    stage.ToolDispatcher
+	architectureProofToolPlanSource    stage.ToolPlanSource
 	architectureProofExecutionPlan     architectureproof.ExecutionPlanMetadata
 	architectureProofEngine            *agent.Engine
 	proof                              *architectureproof.Proof
@@ -76,21 +79,6 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = read
-	shell, shellCleanup, err := func() (tool.Tool, spicelifecycle.Cleanup, error) {
-		if options.Overrides.Shell.Enabled() {
-			return options.Overrides.Shell.Acquire(ctx)
-		}
-		return spiceAutoconfigure.ConstructShell_a48b269f(codingConfig)
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean shell (github.com/spice-framework/spice-agent/tool.Tool, source spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell): %w", err))
-	}
-	if shellCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell", shellCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean shell (source spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell): %w", err))
-		}
-	}
-	_ = shell
 	replace, replaceCleanup, err := func() (tool.Tool, spicelifecycle.Cleanup, error) {
 		if options.Overrides.Replace.Enabled() {
 			return options.Overrides.Replace.Acquire(ctx)
@@ -106,6 +94,96 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = replace
+	processLauncher, processLauncherCleanup, err := func() (process.Launcher, spicelifecycle.Cleanup, error) {
+		if options.Overrides.ProcessLauncher.Enabled() {
+			return options.Overrides.ProcessLauncher.Acquire(ctx)
+		}
+		return spiceArchitectureproof.ConstructProcessLauncher_33098fb2()
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean processLauncher (github.com/spice-framework/spice-agent/process.Launcher, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|18:NewProcessLauncher): %w", err))
+	}
+	if processLauncherCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|18:NewProcessLauncher", processLauncherCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean processLauncher (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|18:NewProcessLauncher): %w", err))
+		}
+	}
+	_ = processLauncher
+	responsesFixture, responsesFixtureCleanup, err := func() (*architectureproof.ResponsesFixture, spicelifecycle.Cleanup, error) {
+		if options.Overrides.ResponsesFixture.Enabled() {
+			return options.Overrides.ResponsesFixture.Acquire(ctx)
+		}
+		return spiceArchitectureproof.ConstructResponsesFixture_e85077ec()
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean responsesFixture (*github.com/spice-framework/spice-agent-coding/internal/architectureproof.ResponsesFixture, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture): %w", err))
+	}
+	if responsesFixtureCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture", responsesFixtureCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean responsesFixture (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture): %w", err))
+		}
+	}
+	_ = responsesFixture
+	architectureProofOpenai, architectureProofOpenaiCleanup, err := func() (model.Provider, spicelifecycle.Cleanup, error) {
+		if options.Overrides.Provider5.Enabled() {
+			return options.Overrides.Provider5.Acquire(ctx)
+		}
+		return spiceArchitectureproof.ConstructArchitectureProofOpenai_7e4ddfc0(responsesFixture)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean architecture-proof-openai (github.com/spice-framework/spice-agent/model.Provider, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider): %w", err))
+	}
+	if architectureProofOpenaiCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider", architectureProofOpenaiCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean architecture-proof-openai (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider): %w", err))
+		}
+	}
+	_ = architectureProofOpenai
+	architectureProofInteractionBroker, architectureProofInteractionBrokerCleanup, err := func() (interaction.Broker, spicelifecycle.Cleanup, error) {
+		if options.Overrides.ArchitectureProofInteractionBroker.Enabled() {
+			return options.Overrides.ArchitectureProofInteractionBroker.Acquire(ctx)
+		}
+		return spiceArchitectureproof.ConstructArchitectureProofInteractionBroker_e456026b()
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean architectureProofInteractionBroker (github.com/spice-framework/spice-agent/interaction.Broker, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker): %w", err))
+	}
+	if architectureProofInteractionBrokerCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker", architectureProofInteractionBrokerCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean architectureProofInteractionBroker (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker): %w", err))
+		}
+	}
+	_ = architectureProofInteractionBroker
+	processResolver, processResolverCleanup, err := func() (process.ExecutableResolver, spicelifecycle.Cleanup, error) {
+		if options.Overrides.ProcessResolver.Enabled() {
+			return options.Overrides.ProcessResolver.Acquire(ctx)
+		}
+		return spiceArchitectureproof.ConstructProcessResolver_5cc0b06d()
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean processResolver (github.com/spice-framework/spice-agent/process.ExecutableResolver, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|21:NewExecutableResolver): %w", err))
+	}
+	if processResolverCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|21:NewExecutableResolver", processResolverCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean processResolver (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|21:NewExecutableResolver): %w", err))
+		}
+	}
+	_ = processResolver
+	shell, shellCleanup, err := func() (tool.Tool, spicelifecycle.Cleanup, error) {
+		if options.Overrides.Shell.Enabled() {
+			return options.Overrides.Shell.Acquire(ctx)
+		}
+		return spiceAutoconfigure.ConstructShell_a48b269f(codingConfig, processResolver, processLauncher)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean shell (github.com/spice-framework/spice-agent/tool.Tool, source spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell): %w", err))
+	}
+	if shellCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell", shellCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean shell (source spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell): %w", err))
+		}
+	}
+	_ = shell
 	architectureProofToolDispatcher, architectureProofToolDispatcherCleanup, err := func() (stage.ToolDispatcher, spicelifecycle.Cleanup, error) {
 		if options.Overrides.ArchitectureProofToolDispatcher.Enabled() {
 			return options.Overrides.ArchitectureProofToolDispatcher.Acquire(ctx)
@@ -136,51 +214,6 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = architectureProofToolPlanSource
-	responsesFixture, responsesFixtureCleanup, err := func() (*architectureproof.ResponsesFixture, spicelifecycle.Cleanup, error) {
-		if options.Overrides.ResponsesFixture.Enabled() {
-			return options.Overrides.ResponsesFixture.Acquire(ctx)
-		}
-		return spiceArchitectureproof.ConstructResponsesFixture_e85077ec()
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean responsesFixture (*github.com/spice-framework/spice-agent-coding/internal/architectureproof.ResponsesFixture, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture): %w", err))
-	}
-	if responsesFixtureCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture", responsesFixtureCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean responsesFixture (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture): %w", err))
-		}
-	}
-	_ = responsesFixture
-	architectureProofOpenai, architectureProofOpenaiCleanup, err := func() (model.Provider, spicelifecycle.Cleanup, error) {
-		if options.Overrides.Provider7.Enabled() {
-			return options.Overrides.Provider7.Acquire(ctx)
-		}
-		return spiceArchitectureproof.ConstructArchitectureProofOpenai_7e4ddfc0(responsesFixture)
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean architecture-proof-openai (github.com/spice-framework/spice-agent/model.Provider, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider): %w", err))
-	}
-	if architectureProofOpenaiCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider", architectureProofOpenaiCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean architecture-proof-openai (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider): %w", err))
-		}
-	}
-	_ = architectureProofOpenai
-	architectureProofInteractionBroker, architectureProofInteractionBrokerCleanup, err := func() (interaction.Broker, spicelifecycle.Cleanup, error) {
-		if options.Overrides.ArchitectureProofInteractionBroker.Enabled() {
-			return options.Overrides.ArchitectureProofInteractionBroker.Acquire(ctx)
-		}
-		return spiceArchitectureproof.ConstructArchitectureProofInteractionBroker_e456026b()
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean architectureProofInteractionBroker (github.com/spice-framework/spice-agent/interaction.Broker, source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker): %w", err))
-	}
-	if architectureProofInteractionBrokerCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker", architectureProofInteractionBrokerCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean architectureProofInteractionBroker (source spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|20:NewInteractionBroker): %w", err))
-		}
-	}
-	_ = architectureProofInteractionBroker
 	architectureProofExecutionPlan, architectureProofExecutionPlanCleanup, err := func() (architectureproof.ExecutionPlanMetadata, spicelifecycle.Cleanup, error) {
 		if options.Overrides.ArchitectureProofExecutionPlan.Enabled() {
 			return options.Overrides.ArchitectureProofExecutionPlan.Acquire(ctx)
@@ -229,13 +262,15 @@ func constructApplicationDependencies(
 	return &applicationDependencies{
 		codingConfig:                       codingConfig,
 		read:                               read,
-		shell:                              shell,
 		replace:                            replace,
-		architectureProofToolDispatcher:    architectureProofToolDispatcher,
-		architectureProofToolPlanSource:    architectureProofToolPlanSource,
+		processLauncher:                    processLauncher,
 		responsesFixture:                   responsesFixture,
 		architectureProofOpenai:            architectureProofOpenai,
 		architectureProofInteractionBroker: architectureProofInteractionBroker,
+		processResolver:                    processResolver,
+		shell:                              shell,
+		architectureProofToolDispatcher:    architectureProofToolDispatcher,
+		architectureProofToolPlanSource:    architectureProofToolPlanSource,
 		architectureProofExecutionPlan:     architectureProofExecutionPlan,
 		architectureProofEngine:            architectureProofEngine,
 		proof:                              proof,

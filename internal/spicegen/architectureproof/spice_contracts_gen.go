@@ -15,6 +15,7 @@ import (
 	agent "github.com/spice-framework/spice-agent/agent"
 	interaction "github.com/spice-framework/spice-agent/interaction"
 	model "github.com/spice-framework/spice-agent/model"
+	process "github.com/spice-framework/spice-agent/process"
 	stage "github.com/spice-framework/spice-agent/stage"
 	tool "github.com/spice-framework/spice-agent/tool"
 	spicebean "github.com/spice-framework/spice/bean"
@@ -37,20 +38,24 @@ type Components struct {
 	CodingConfig coding.Config
 	// Read is bean "read".
 	Read tool.Tool
-	// Shell is bean "shell".
-	Shell tool.Tool
 	// Replace is bean "replace".
 	Replace tool.Tool
+	// ProcessLauncher is bean "processLauncher".
+	ProcessLauncher process.Launcher
+	// ResponsesFixture is bean "responsesFixture".
+	ResponsesFixture *architectureproof.ResponsesFixture
+	// Provider5 is bean "architecture-proof-openai".
+	Provider5 model.Provider
+	// ArchitectureProofInteractionBroker is bean "architectureProofInteractionBroker".
+	ArchitectureProofInteractionBroker interaction.Broker
+	// ProcessResolver is bean "processResolver".
+	ProcessResolver process.ExecutableResolver
+	// Shell is bean "shell".
+	Shell tool.Tool
 	// ArchitectureProofToolDispatcher is bean "architectureProofToolDispatcher".
 	ArchitectureProofToolDispatcher stage.ToolDispatcher
 	// ArchitectureProofToolPlanSource is bean "architectureProofToolPlanSource".
 	ArchitectureProofToolPlanSource stage.ToolPlanSource
-	// ResponsesFixture is bean "responsesFixture".
-	ResponsesFixture *architectureproof.ResponsesFixture
-	// Provider7 is bean "architecture-proof-openai".
-	Provider7 model.Provider
-	// ArchitectureProofInteractionBroker is bean "architectureProofInteractionBroker".
-	ArchitectureProofInteractionBroker interaction.Broker
 	// ArchitectureProofExecutionPlan is bean "architectureProofExecutionPlan".
 	ArchitectureProofExecutionPlan architectureproof.ExecutionPlanMetadata
 	// ArchitectureProofEngine is bean "architectureProofEngine".
@@ -66,20 +71,24 @@ type BeanOverrides struct {
 	CodingConfig spicebean.Override[coding.Config]
 	// Read replaces bean "read".
 	Read spicebean.Override[tool.Tool]
-	// Shell replaces bean "shell".
-	Shell spicebean.Override[tool.Tool]
 	// Replace replaces bean "replace".
 	Replace spicebean.Override[tool.Tool]
+	// ProcessLauncher replaces bean "processLauncher".
+	ProcessLauncher spicebean.Override[process.Launcher]
+	// ResponsesFixture replaces bean "responsesFixture".
+	ResponsesFixture spicebean.Override[*architectureproof.ResponsesFixture]
+	// Provider5 replaces bean "architecture-proof-openai".
+	Provider5 spicebean.Override[model.Provider]
+	// ArchitectureProofInteractionBroker replaces bean "architectureProofInteractionBroker".
+	ArchitectureProofInteractionBroker spicebean.Override[interaction.Broker]
+	// ProcessResolver replaces bean "processResolver".
+	ProcessResolver spicebean.Override[process.ExecutableResolver]
+	// Shell replaces bean "shell".
+	Shell spicebean.Override[tool.Tool]
 	// ArchitectureProofToolDispatcher replaces bean "architectureProofToolDispatcher".
 	ArchitectureProofToolDispatcher spicebean.Override[stage.ToolDispatcher]
 	// ArchitectureProofToolPlanSource replaces bean "architectureProofToolPlanSource".
 	ArchitectureProofToolPlanSource spicebean.Override[stage.ToolPlanSource]
-	// ResponsesFixture replaces bean "responsesFixture".
-	ResponsesFixture spicebean.Override[*architectureproof.ResponsesFixture]
-	// Provider7 replaces bean "architecture-proof-openai".
-	Provider7 spicebean.Override[model.Provider]
-	// ArchitectureProofInteractionBroker replaces bean "architectureProofInteractionBroker".
-	ArchitectureProofInteractionBroker spicebean.Override[interaction.Broker]
 	// ArchitectureProofExecutionPlan replaces bean "architectureProofExecutionPlan".
 	ArchitectureProofExecutionPlan spicebean.Override[architectureproof.ExecutionPlanMetadata]
 	// ArchitectureProofEngine replaces bean "architectureProofEngine".
@@ -114,26 +123,32 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.Read.Enabled() {
 			result.Read = layer.Overrides.Read
 		}
-		if layer.Overrides.Shell.Enabled() {
-			result.Shell = layer.Overrides.Shell
-		}
 		if layer.Overrides.Replace.Enabled() {
 			result.Replace = layer.Overrides.Replace
+		}
+		if layer.Overrides.ProcessLauncher.Enabled() {
+			result.ProcessLauncher = layer.Overrides.ProcessLauncher
+		}
+		if layer.Overrides.ResponsesFixture.Enabled() {
+			result.ResponsesFixture = layer.Overrides.ResponsesFixture
+		}
+		if layer.Overrides.Provider5.Enabled() {
+			result.Provider5 = layer.Overrides.Provider5
+		}
+		if layer.Overrides.ArchitectureProofInteractionBroker.Enabled() {
+			result.ArchitectureProofInteractionBroker = layer.Overrides.ArchitectureProofInteractionBroker
+		}
+		if layer.Overrides.ProcessResolver.Enabled() {
+			result.ProcessResolver = layer.Overrides.ProcessResolver
+		}
+		if layer.Overrides.Shell.Enabled() {
+			result.Shell = layer.Overrides.Shell
 		}
 		if layer.Overrides.ArchitectureProofToolDispatcher.Enabled() {
 			result.ArchitectureProofToolDispatcher = layer.Overrides.ArchitectureProofToolDispatcher
 		}
 		if layer.Overrides.ArchitectureProofToolPlanSource.Enabled() {
 			result.ArchitectureProofToolPlanSource = layer.Overrides.ArchitectureProofToolPlanSource
-		}
-		if layer.Overrides.ResponsesFixture.Enabled() {
-			result.ResponsesFixture = layer.Overrides.ResponsesFixture
-		}
-		if layer.Overrides.Provider7.Enabled() {
-			result.Provider7 = layer.Overrides.Provider7
-		}
-		if layer.Overrides.ArchitectureProofInteractionBroker.Enabled() {
-			result.ArchitectureProofInteractionBroker = layer.Overrides.ArchitectureProofInteractionBroker
 		}
 		if layer.Overrides.ArchitectureProofExecutionPlan.Enabled() {
 			result.ArchitectureProofExecutionPlan = layer.Overrides.ArchitectureProofExecutionPlan
