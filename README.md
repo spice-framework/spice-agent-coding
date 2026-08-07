@@ -1,5 +1,7 @@
 # Spice Agent Coding
 
+Unified documentation: [spiceframework.dev/agent/distributions/coding](https://spiceframework.dev/agent/distributions/coding/).
+
 This repository provides the installable Spice Agent coding distribution. Its
 first executable slice is the generated
 `internal/spicegen/architectureproof` application: the real OpenAI Responses
