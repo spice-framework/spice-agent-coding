@@ -67,7 +67,12 @@ func run(ctx context.Context, root, mode string) error {
 	if runtime.Version() != requiredGoVersion {
 		return fmt.Errorf("go version is %s; require exactly %s", runtime.Version(), requiredGoVersion)
 	}
-	identity := step{"repository identity", func() error { return checkIdentity(root) }}
+	identity := step{"repository identity", func() error {
+		if err := checkIdentity(root); err != nil {
+			return err
+		}
+		return checkReleaseMetadata(root)
+	}}
 	bootstrap := step{"explicit dependency bootstrap", func() error { return bootstrapDependencies(ctx, root, networkCommand) }}
 	formatting := step{"formatting", func() error { return format(ctx, root, false) }}
 	modules := step{"module and vendor", func() error { return checkModule(ctx, root) }}
@@ -382,6 +387,9 @@ func checkGeneratedApplications(ctx context.Context, root string) error {
 		if err := command(ctx, root, offlineVendor, "go", arguments...); err != nil {
 			return err
 		}
+	}
+	if err := command(ctx, root, offlineVendor, "go", "run", "./internal/releaseassets", "--check"); err != nil {
+		return err
 	}
 	temporary, err := os.MkdirTemp("", "spice-agent-build-*")
 	if err != nil {

@@ -71,3 +71,14 @@ gracefully replaces only that process after a valid change. Target-local
 source paths are excluded from the other watcher; shared module or composition
 changes correctly invalidate both applications.
 See [the development-loop contract](docs/development-loop.md).
+
+Distribution setup and trust boundaries are documented in
+[installation](docs/installation.md), [configuration](docs/configuration.md),
+and [security](docs/security.md). Release archives include the Apache-2.0
+license, generated third-party notices, and the exact transitive Protobuf
+descriptor set compiled into the applications.
+
+`spice-release.json` is inert, canonical identity metadata for the centrally
+authorized `go-distribution-v1` release profile. It cannot select dependencies,
+payloads, commands, or permissions; those remain fail-closed in the development
+catalog and organization release authority.

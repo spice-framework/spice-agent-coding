@@ -30,6 +30,12 @@ The architecture-proof acceptance additionally runs `spice generate --check`,
 vendored toolchain. It then executes the generated provider → read tool →
 provider continuation locally without external network access.
 
+`make check` and `make verify` also regenerate the third-party notices and
+transitive Protobuf descriptor set in memory and require byte-identical
+committed release assets. Refresh them intentionally with
+`go run ./internal/releaseassets`; the generator is deterministic and operates
+only on the committed vendor and compiled protocol graphs.
+
 The repository-owned verifier is cross-platform. `make fast`, `make check`, and
 `make verify` force `GOPROXY=off`; missing cache entries fail instead of causing
 hidden downloads. `make fmt` is the only target that rewrites Go source.
