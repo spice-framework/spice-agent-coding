@@ -336,14 +336,21 @@ func initializeCandidate(
 	candidate *candidate,
 	request *pluginv1.InitializeRequest,
 ) (*pluginv1.InitializeResponse, error) {
+	candidate.mu.Lock()
+	ownedProcess := candidate.process
+	stdout := candidate.stdout
+	candidate.mu.Unlock()
+	if ownedProcess == nil || stdout == nil {
+		return nil, errors.New("runtime plugin candidate initialization ownership is unavailable")
+	}
 	operation, cancel := context.WithCancel(ctx)
 	defer cancel()
 	finished := make(chan struct{})
 	go func() {
 		select {
-		case <-candidate.process.Done():
+		case <-ownedProcess.Done():
 			cancel()
-		case <-candidate.stdout.failureSignal():
+		case <-stdout.failureSignal():
 			cancel()
 		case <-operation.Done():
 		case <-finished:
@@ -351,11 +358,11 @@ func initializeCandidate(
 	}()
 	response, err := candidate.client.Initialize(operation, request)
 	close(finished)
-	if stdoutErr := candidate.stdout.err(); stdoutErr != nil {
+	if stdoutErr := stdout.err(); stdoutErr != nil {
 		return nil, stdoutErr
 	}
 	select {
-	case <-candidate.process.Done():
+	case <-ownedProcess.Done():
 		return nil, errProcessExited
 	default:
 	}

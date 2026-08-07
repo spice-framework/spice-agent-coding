@@ -28,8 +28,8 @@ const (
 	minimumCoverage    = 85.0
 	spiceVersion       = "v0.1.0-preview.1.0.20260806200749-524424a04df0"
 	toolchainVersion   = "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6"
-	agentVersion       = "v0.0.0-20260807185918-0dad639cba64"
-	agentTUIVersion    = "v0.0.0-20260807044421-a0d48242cd4f"
+	agentVersion       = "v0.0.0-20260807193825-af8a393912a4"
+	agentTUIVersion    = "v0.0.0-20260807191321-a9c2bc36bc67"
 	providerVersion    = "v0.0.0-20260806230257-a6962fe2dabc"
 	codingToolsVersion = "v0.0.0-20260807150540-eeacf58875c5"
 )

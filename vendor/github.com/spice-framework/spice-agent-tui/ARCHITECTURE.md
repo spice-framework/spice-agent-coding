@@ -65,6 +65,10 @@ oldest-first-evicted bounded window. Prompt history is capped at 64 entries.
 Injected key bindings are copied, validated in deterministic order, and reject
 duplicate actions and keystrokes. Ctrl-C/Ctrl-Q quit, Escape/Ctrl-X cancel the
 active run, Enter submits, and Alt-Enter responds.
+The public-facade interaction acceptance drives those bytes through a running
+Bubble Tea program. It proves that a blocked submit lane does not prevent the
+independent cancel lane and that quitting cancels both the receive and submit
+operations before returning a normal exit.
 
 `terminal.NewShell` accepts only public interfaces and immutable values. It
 validates the initial view, snapshots the `Theme` SPI through `NewTheme`, copies

@@ -18,6 +18,8 @@ The implemented slice includes:
   activity, monotonic revision handling, and stale-update rejection;
 - cancellation-aware Bubble Tea lifecycle and panic-contained one-shot session
   effects;
+- a public-facade interaction proof that drives real Bubble Tea input through
+  prompt submission, concurrent run cancellation, and clean Ctrl-Q shutdown;
 - public `terminal.NewFixedRenderer` and `terminal.NewShell` factories whose
   signatures expose no Bubble Tea or internal types;
 - canonical `@UIShell` and `@UIRenderer` provider annotations; and

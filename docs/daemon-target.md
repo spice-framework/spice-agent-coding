@@ -34,7 +34,9 @@ validated `client.Build` is explicitly adapted to the Protobuf host identity
 used during a future plugin handshake. Construction does not inspect plugin
 configuration, open a plugin endpoint, or launch a process; runtime activation
 is an explicit Host operation and only changes immutable generations for future
-runs.
+runs. The generated Host deliberately retains the zero `RestartPolicy`, so its
+health reports a zero restart limit and no recovery worker is enabled before a
+later distribution slice explicitly owns activation and recovery policy.
 
 ## Lifecycle and publication
 

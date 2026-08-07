@@ -30,7 +30,9 @@ replace, and shell beans first, snapshots them into the fallback compiled
 dispatcher, and then constructs one exact `pluginhost.Host`. That same pointer
 is adapted to `stage.ToolPlanSource` for the engine; there is no parallel
 registry or compiled `RuntimeGraph`. Host construction performs no plugin
-discovery or launch. Future runtime-plugin activation can only publish a new
+discovery or launch. This distribution currently injects the Host's zero
+restart policy, so automatic recovery is disabled until runtime activation is
+delivered with an explicit application-owned policy. Future runtime-plugin activation can only publish a new
 immutable tool generation through this generated host, while generated reverse
 cleanup drains its leases before releasing the shared contained process
 launcher and root registry.

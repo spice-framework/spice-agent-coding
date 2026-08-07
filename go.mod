@@ -13,10 +13,10 @@ tool (
 
 require (
 	github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0
-	github.com/spice-framework/spice-agent v0.0.0-20260807185918-0dad639cba64
+	github.com/spice-framework/spice-agent v0.0.0-20260807193825-af8a393912a4
 	github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc
 	github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260807150540-eeacf58875c5
-	github.com/spice-framework/spice-agent-tui v0.0.0-20260807044421-a0d48242cd4f
+	github.com/spice-framework/spice-agent-tui v0.0.0-20260807191321-a9c2bc36bc67
 	golang.org/x/sys v0.47.0
 	google.golang.org/grpc v1.83.0
 )

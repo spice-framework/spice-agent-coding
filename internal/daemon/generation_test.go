@@ -127,6 +127,17 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 	if pluginLaunches.Load() != 0 {
 		t.Fatalf("runtime plugin launches during construction = %d", pluginLaunches.Load())
 	}
+	health := components.RuntimePluginHost.Health()
+	if err = health.Validate(); err != nil {
+		t.Fatalf("initial runtime plugin host health: %v", err)
+	}
+	if health.State() != pluginhost.HealthStateReady || health.RestartLimit() != 0 ||
+		health.RestartAttempts() != 0 || len(health.Issues()) != 0 {
+		t.Fatalf(
+			"initial runtime plugin host health = %s, want ready with disabled recovery",
+			health,
+		)
+	}
 	if components.Properties.Model != daemonTestModel || components.OpenAIConfig.APIKey != daemonTestSecret {
 		t.Fatal("generated typed configuration was not injected")
 	}

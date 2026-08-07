@@ -33,6 +33,7 @@ type HostConfig struct {
 	Decorators   []stage.ToolDispatchDecorator
 	Processes    process.Launcher
 	Endpoints    LocalEndpointFactory
+	Restart      RestartPolicy
 }
 
 // Host owns immutable runtime-tool generations and implements
@@ -41,22 +42,34 @@ type HostConfig struct {
 type Host struct {
 	mu sync.Mutex
 
-	starter     generationStarter
-	compiled    stage.ToolDispatcher
-	decorators  []stage.ToolDispatchDecorator
-	rootDone    <-chan struct{}
-	cancel      context.CancelFunc
-	activation  chan struct{}
-	closeGate   chan struct{}
-	changed     chan struct{}
-	current     *hostGeneration
-	available   map[stage.PlanID]*hostGeneration
-	owned       map[*hostGeneration]struct{}
-	sequence    uint64
-	epoch       [hostEpochBytes]byte
-	activations int
-	closing     bool
-	closeTry    uint64
+	starter             generationStarter
+	compiled            stage.ToolDispatcher
+	decorators          []stage.ToolDispatchDecorator
+	restart             RestartPolicy
+	clock               recoveryClock
+	root                context.Context //nolint:containedctx // Host owns this cancellation root for its full lifecycle.
+	rootDone            <-chan struct{}
+	cancel              context.CancelFunc
+	activation          chan struct{}
+	closeGate           chan struct{}
+	changed             chan struct{}
+	recoveryWake        chan struct{}
+	recoveryDone        chan struct{}
+	current             *hostGeneration
+	available           map[stage.PlanID]*hostGeneration
+	owned               map[*hostGeneration]struct{}
+	desired             Set
+	hasDesired          bool
+	recovery            *recoveryEpisode
+	desiredRevision     uint64
+	explicitRevision    uint64
+	sequence            uint64
+	epoch               [hostEpochBytes]byte
+	activations         int
+	explicitActivations int
+	closing             bool
+	stopped             bool
+	closeTry            uint64
 }
 
 type generationCandidate interface {
@@ -154,6 +167,9 @@ func newHost(config HostConfig, random io.Reader, starter generationStarter) (*H
 	if config.Compiled == nil {
 		return nil, errors.New("runtime plugin host requires a compiled dispatcher")
 	}
+	if err := config.Restart.Validate(); err != nil {
+		return nil, err
+	}
 	decorators := slices.Clone(config.Decorators)
 	for _, decorator := range decorators {
 		if decorator == nil {
@@ -189,14 +205,20 @@ func newHost(config HostConfig, random io.Reader, starter generationStarter) (*H
 	root, cancel := context.WithCancel(context.Background())
 	initial := &hostGeneration{id: id, dispatcher: compiled, current: true}
 	host := &Host{
-		starter: starter, compiled: base, decorators: decorators,
-		rootDone: root.Done(), cancel: cancel, activation: make(chan struct{}, 1), closeGate: make(chan struct{}, 1),
-		changed: make(chan struct{}), epoch: epoch,
+		starter: starter, compiled: base, decorators: decorators, restart: config.Restart,
+		clock: systemRecoveryClock{},
+		root:  root, rootDone: root.Done(), cancel: cancel, activation: make(chan struct{}, 1), closeGate: make(chan struct{}, 1),
+		changed: make(chan struct{}), recoveryWake: make(chan struct{}, 1), recoveryDone: make(chan struct{}), epoch: epoch,
 		current: initial, available: map[stage.PlanID]*hostGeneration{id: initial},
 		owned: map[*hostGeneration]struct{}{initial: {}},
 	}
 	host.activation <- struct{}{}
 	host.closeGate <- struct{}{}
+	if host.restart.Enabled() {
+		go host.recoveryController()
+	} else {
+		close(host.recoveryDone)
+	}
 	return host, nil
 }
 
@@ -210,12 +232,33 @@ func (host *Host) Activate(ctx context.Context, set Set) (stage.PlanID, error) {
 	if err := set.Validate(); err != nil {
 		return "", err
 	}
-	operation, sequence, finish, err := host.beginActivation(ctx, set.Len())
+	revision, err := host.beginExplicitActivation(ctx)
 	if err != nil {
 		return "", err
 	}
-	defer finish()
+	succeeded := false
+	defer func() { host.finishExplicitActivation(succeeded) }()
+	next, err := host.stage(ctx, set)
+	if err != nil {
+		return "", err
+	}
+	if !host.publishExplicit(ctx, next, set, revision) {
+		host.cleanAborted(next.candidates)
+		if err = ctx.Err(); err != nil {
+			return "", err
+		}
+		return "", errors.New("runtime plugin activation was superseded")
+	}
+	succeeded = true
+	return next.id, nil
+}
 
+func (host *Host) stage(ctx context.Context, set Set) (*hostGeneration, error) {
+	operation, sequence, finish, err := host.beginActivation(ctx, set.Len())
+	if err != nil {
+		return nil, err
+	}
+	defer finish()
 	candidates := make([]generationCandidate, 0, set.Len())
 	for _, executable := range set.Executables() {
 		value, startErr := host.starter.start(operation, executable)
@@ -224,57 +267,86 @@ func (host *Host) Activate(ctx context.Context, set Set) (stage.PlanID, error) {
 		}
 		if startErr != nil {
 			host.cleanAborted(candidates)
-			return "", errors.New("runtime plugin activation failed while staging a candidate")
+			return nil, errors.New("runtime plugin activation failed while staging a candidate")
 		}
 	}
 	dispatcher, composeErr := host.compose(candidates)
 	if composeErr != nil {
 		host.cleanAborted(candidates)
-		return "", composeErr
+		return nil, composeErr
 	}
 	if err = operation.Err(); err != nil {
 		host.cleanAborted(candidates)
-		return "", err
+		return nil, err
 	}
 	if err = candidateHealth(candidates); err != nil {
 		host.cleanAborted(candidates)
-		return "", errors.New("runtime plugin activation candidate became unhealthy")
+		return nil, errors.New("runtime plugin activation candidate became unhealthy")
 	}
 	id, err := generationPlanID(host.epoch[:], sequence, candidates, dispatcher.Definitions())
 	if err != nil {
 		host.cleanAborted(candidates)
-		return "", err
+		return nil, err
 	}
-	next := &hostGeneration{id: id, dispatcher: dispatcher, candidates: candidates, current: true}
+	return &hostGeneration{id: id, dispatcher: dispatcher, candidates: candidates}, nil
+}
 
-	host.mu.Lock()
-	if host.closing || operation.Err() != nil {
-		host.mu.Unlock()
-		host.cleanAborted(candidates)
-		if operation.Err() != nil {
-			return "", operation.Err()
-		}
-		return "", errors.New("runtime plugin host is closing")
+func (host *Host) beginExplicitActivation(ctx context.Context) (uint64, error) {
+	if err := ctx.Err(); err != nil {
+		return 0, err
 	}
-	if candidateHealth(candidates) != nil {
+	host.mu.Lock()
+	defer host.mu.Unlock()
+	if host.closing {
+		return 0, errors.New("runtime plugin host is closing")
+	}
+	host.explicitRevision++
+	host.explicitActivations++
+	host.cancelRecoveryLocked()
+	return host.explicitRevision, nil
+}
+
+func (host *Host) finishExplicitActivation(succeeded bool) {
+	host.mu.Lock()
+	defer host.mu.Unlock()
+	if host.explicitActivations > 0 {
+		host.explicitActivations--
+	}
+	if !succeeded && host.current != nil && host.generationHealthLocked(host.current) != nil {
+		host.scheduleRecoveryLocked(host.current)
+	}
+	host.signalLocked()
+}
+
+func (host *Host) publishExplicit(ctx context.Context, next *hostGeneration, set Set, revision uint64) bool {
+	host.mu.Lock()
+	if host.closing || ctx.Err() != nil || host.explicitRevision != revision {
 		host.mu.Unlock()
-		host.cleanAborted(candidates)
-		return "", errors.New("runtime plugin activation candidate became unhealthy")
+		return false
+	}
+	if candidateHealth(next.candidates) != nil {
+		host.mu.Unlock()
+		return false
 	}
 	previous := host.current
+	next.current = true
 	previous.current = false
 	host.current = next
-	host.available[id] = next
+	host.available[next.id] = next
 	host.owned[next] = struct{}{}
+	host.desired = cloneSet(set)
+	host.hasDesired = true
+	host.desiredRevision++
+	host.recovery = nil
 	if previous.refs == 0 {
 		host.queueCleanupLocked(previous, 0)
 	}
 	host.signalLocked()
 	host.mu.Unlock()
-	for _, value := range candidates {
+	for _, value := range next.candidates {
 		go host.observe(next, value)
 	}
-	return id, nil
+	return true
 }
 
 func (host *Host) beginActivation(
@@ -305,16 +377,9 @@ func (host *Host) beginActivation(
 	host.signalLocked()
 	host.mu.Unlock()
 	operation, cancel := context.WithCancel(ctx)
-	stopRoot := make(chan struct{})
-	go func() {
-		select {
-		case <-host.rootDone:
-			cancel()
-		case <-stopRoot:
-		}
-	}()
+	stopRoot := context.AfterFunc(host.root, cancel)
 	return operation, sequence, func() {
-		close(stopRoot)
+		stopRoot()
 		cancel()
 		host.mu.Lock()
 		host.activations--
@@ -446,6 +511,7 @@ func (host *Host) observe(generation *hostGeneration, candidate generationCandid
 				failure = errors.New("runtime plugin candidate stopped")
 			}
 			generation.unhealthy = failure
+			host.scheduleRecoveryLocked(generation)
 			host.signalLocked()
 		}
 		host.mu.Unlock()
@@ -475,7 +541,7 @@ func (host *Host) Close(ctx context.Context) error {
 	attempt := host.beginClose()
 
 	for {
-		done, changed, err := host.closeProgress(attempt)
+		done, changed, recoveryDone, err := host.closeProgress(attempt)
 		if done {
 			return err
 		}
@@ -483,6 +549,7 @@ func (host *Host) Close(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-changed:
+		case <-recoveryDone:
 		}
 	}
 }
@@ -493,6 +560,7 @@ func (host *Host) beginClose() uint64 {
 	if !host.closing {
 		host.closing = true
 		host.cancel()
+		host.cancelRecoveryLocked()
 		if host.current != nil {
 			host.current.current = false
 		}
@@ -502,10 +570,15 @@ func (host *Host) beginClose() uint64 {
 	return host.closeTry
 }
 
-func (host *Host) closeProgress(attempt uint64) (bool, <-chan struct{}, error) {
+func (host *Host) closeProgress(attempt uint64) (bool, <-chan struct{}, <-chan struct{}, error) {
 	host.mu.Lock()
 	defer host.mu.Unlock()
-	if host.activations == 0 {
+	controllerDone := channelClosed(host.recoveryDone)
+	var recoveryDone <-chan struct{}
+	if !controllerDone {
+		recoveryDone = host.recoveryDone
+	}
+	if host.activations == 0 && host.explicitActivations == 0 && controllerDone {
 		for generation := range host.owned {
 			if generation.refs == 0 && !generation.cleaning && !generation.cleaned && generation.cleanupTry < attempt {
 				host.queueCleanupLocked(generation, attempt)
@@ -513,17 +586,20 @@ func (host *Host) closeProgress(attempt uint64) (bool, <-chan struct{}, error) {
 		}
 	}
 	refs, cleaning, failed := host.closeStateLocked(attempt)
-	if host.activations != 0 || refs != 0 || cleaning != 0 {
-		return false, host.changed, nil
+	if host.activations != 0 || host.explicitActivations != 0 || !controllerDone || refs != 0 || cleaning != 0 {
+		return false, host.changed, recoveryDone, nil
 	}
 	if len(host.owned) == 0 {
 		clear(host.epoch[:])
-		return true, nil, nil
+		host.desired = Set{}
+		host.hasDesired = false
+		host.stopped = true
+		return true, nil, nil, nil
 	}
 	if failed {
-		return true, nil, errors.New("runtime plugin host cleanup failed")
+		return true, nil, nil, errors.New("runtime plugin host cleanup failed")
 	}
-	return false, host.changed, nil
+	return false, host.changed, recoveryDone, nil
 }
 
 func (host *Host) closeStateLocked(attempt uint64) (refs, cleaning int, failed bool) {
@@ -609,6 +685,7 @@ func (host *Host) generationHealthLocked(generation *hostGeneration) error {
 	}
 	if failure := candidateHealth(generation.candidates); failure != nil {
 		generation.unhealthy = failure
+		host.scheduleRecoveryLocked(generation)
 		return failure
 	}
 	return nil
@@ -639,6 +716,15 @@ func (host *Host) candidateCountLocked() int {
 func (host *Host) signalLocked() {
 	close(host.changed)
 	host.changed = make(chan struct{})
+}
+
+func channelClosed(channel <-chan struct{}) bool {
+	select {
+	case <-channel:
+		return true
+	default:
+		return false
+	}
 }
 
 func generationPlanID(
