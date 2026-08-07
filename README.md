@@ -15,28 +15,36 @@ continuation, final event delivery, and provider cancellation without
 credentials or external network access. See
 [the architecture-proof evidence](docs/architecture-proof.md).
 
-The distribution will also contain two inspectable, independently generated Spice
-applications: `spice-agentd`, which supports explicit daemon serve, and
-`spice-agent`, which supports explicit attach and managed attach-or-start. The
-managed launcher cleans up only a daemon it starts. Coding tools still run with
-the selected user process's privileges; that security property is not a ban on
-the supported daemon process.
+The distribution now also contains the independently generated `spice-agentd`
+application. Its inspectable graph constructs typed configuration, the OpenAI
+provider, compiled coding tools, the deterministic engine, the run host, the
+authenticated gRPC server, and current-user local IPC. `serve` publishes only
+after the accept loop is live; `--check` constructs and cleans the same graph
+without publishing. See [the generated daemon target](docs/daemon-target.md).
+
+The second product target, `spice-agent`, remains pending. It will provide the
+TUI, explicit attach, and managed attach-or-start. The managed launcher cleans
+up only a daemon it starts. Coding tools still run with the selected user
+process's privileges and are not sandboxed. Unix root-registry adoption is now
+ordered before tool construction, but tool launches do not yet pass through
+that registry; descendant-containment acceptance therefore remains open.
 
 The transport-neutral argument contract is implemented and tested in
 `internal/daemoncommand` and `internal/terminalcommand`. It provides strict
 serve, attach, managed, help, and check modes through injected runners without
-inventing the not-yet-adopted daemon/client transport APIs. It also establishes
-fixed secret-safe diagnostics and the mandatory bare-privilege warning. See
-[the command seam](docs/command-seam.md).
+reflecting arguments or implementation failures into diagnostics. The daemon
+command now drives its generated application; the terminal command remains an
+injected seam until the TUI target exists. See [the command seam](docs/command-seam.md).
 
 Go 1.26.5 is exact. On a fresh clone, run `make tools-bootstrap` once to
 populate the exact product and tools module graphs without changing tracked
 module files. All ordinary quality targets remain offline. Use `make fast`,
 `make check`, and `make verify`.
 
-The generated proof is committed for inspection. Do not edit it directly;
-change `internal/architectureproof`, then run:
+Generated applications are committed for inspection. Do not edit them
+directly. Change the corresponding handwritten composition and run:
 
 ```text
 go tool github.com/spice-framework/toolchain/cmd/spice generate --target ArchitectureProof . ./internal/architectureproof
+go tool github.com/spice-framework/toolchain/cmd/spice generate --target Daemon . ./internal/daemon
 ```

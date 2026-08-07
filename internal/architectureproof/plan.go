@@ -15,7 +15,7 @@ import (
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
 
 const (
-	agentModuleSelection    = "v0.0.0-20260806225954-af79fc7fe4ad"
+	agentModuleSelection    = "v0.0.0-20260807141124-852f79b1d092"
 	providerModuleSelection = "v0.0.0-20260806230257-a6962fe2dabc"
 	toolsModuleSelection    = "v0.0.0-20260806232406-25b93fb6e1b2"
 

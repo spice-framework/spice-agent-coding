@@ -10,6 +10,29 @@ import (
 
 const MaximumPayloadBytes = 512 << 10
 
+// Scope identifies the immutable run authority that owns an interaction.
+// Brokers use it to route pending requests without depending on agent internals.
+type Scope struct {
+	runID string
+}
+
+// NewScope constructs a validated interaction scope.
+func NewScope(runID string) (Scope, error) {
+	if err := token("interaction run ID", runID); err != nil {
+		return Scope{}, err
+	}
+	return Scope{runID: runID}, nil
+}
+
+// Validate rejects a zero or malformed scope.
+func (scope Scope) Validate() error {
+	_, err := NewScope(scope.runID)
+	return err
+}
+
+// RunID returns the stable run that owns the interaction.
+func (scope Scope) RunID() string { return scope.runID }
+
 // ID identifies one interaction lifecycle.
 type ID string
 
@@ -83,13 +106,13 @@ func (response Response) Clone() Response        { return Response{id: response.
 // Broker is the UI-neutral user-interaction port injected into the engine.
 // Implementations must be concurrent-safe and cooperatively honor context.
 type Broker interface {
-	Request(context.Context, Request) (Response, error)
+	Request(context.Context, Scope, Request) (Response, error)
 }
 
 // UnavailableBroker is the fail-closed fallback when no client owns prompts.
 type UnavailableBroker struct{}
 
-func (UnavailableBroker) Request(context.Context, Request) (Response, error) {
+func (UnavailableBroker) Request(context.Context, Scope, Request) (Response, error) {
 	return Response{}, errors.New("interaction broker is unavailable")
 }
 

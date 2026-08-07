@@ -10,12 +10,19 @@ This repository does not maintain a second phase numbering scheme.
       and explicitly unselected compatibility metadata.
 - [x] Pin exact compatible Spice core, toolchain, Agent, provider, and coding
       tool versions behind an executable generated architecture proof.
+- [x] Generate the explicit-serve daemon target with authenticated local IPC,
+      lifecycle ownership, and deterministic generation verification.
 - [ ] Publish the distribution starter manifest and register release-target
       compatibility gates in the development catalog with the daemon/TUI slice.
+- [ ] Route every compiled coding-tool process through the injected launcher
+      and adopted containment registry, then prove the real managed daemon path.
+- [ ] Generate the TUI/managed-client target and complete Windows/Linux terminal
+      acceptance.
 
-The architecture-proof generated application backs the selected versions with
-executable product code. The distribution manifest and release-target catalog
-registration remain phase-specific daemon/TUI work in the canonical ledger.
+The architecture-proof and daemon generated applications back the selected
+versions with executable product code. The distribution manifest and
+release-target catalog registration remain phase-specific daemon/TUI work in
+the canonical ledger.
 
 ## Distribution product
 

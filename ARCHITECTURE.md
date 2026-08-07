@@ -24,9 +24,10 @@ supported process whose lease and cleanup belong to that launcher instance.
 Each target independently owns dependency construction, configuration,
 cancellation, observability, rollback, and cleanup for its boundary.
 
-`internal/distribution` owns composition and packaging.
-`internal/daemon` will adapt the separately versioned host contract.
-`internal/terminal` will compose the separately versioned TUI client.
+`internal/distribution` owns packaging. `internal/daemon` owns the handwritten
+daemon composition source, while `internal/spicegen/daemon` and
+`.spice/daemon.manifest.json` are generator-owned. `internal/terminal` will
+compose the separately versioned TUI client.
 
 Explicit serve and attach are supported lifecycle modes. Internal packages are
 not alternative entrypoints, and neither generated target may bypass the other
@@ -35,13 +36,24 @@ applies to coding tools: they execute with the selected user process's authority
 and are not sandboxed. It does not describe or prohibit the daemon process
 topology.
 
-`internal/daemoncommand` and `internal/terminalcommand` freeze the
-transport-neutral CLI boundary ahead of those generated targets. They parse
+`internal/daemoncommand` and `internal/terminalcommand` define the
+transport-neutral CLI boundaries. They parse
 only the documented grammar into immutable values and invoke injected runners
 with caller-owned contexts. They do not import daemon, client, gRPC, IPC, or
 generated packages. Detailed runner errors, raw arguments, and endpoint values
 are never reflected through the public command diagnostics. See
 [the command seam](docs/command-seam.md).
+
+`cmd/spice-agentd` adapts `internal/daemoncommand` to the generated daemon
+application. Construction opens protected state without binding or publishing.
+Start binds current-user local IPC, enters the gRPC accept loop, and only then
+publishes authenticated endpoint metadata. Shutdown withdraws that exact
+publication before stopping admission, closing the listener, draining the host,
+and reversing generated ownership. A generated root-registry bean is adopted
+before the daemon root and coding-tool beans. This proves lifecycle order but
+does not yet intercept tool process starts; the public injected launcher SPI and
+coding-tool integration remain required before Unix descendant containment is
+accepted. See [the daemon target](docs/daemon-target.md).
 
 `internal/architectureproof` is a real generated application used to freeze the
 SDK composition boundary before daemon and terminal commands are added. It
@@ -63,5 +75,6 @@ and source mappings live in `.spice/architectureproof.manifest.json`.
 
 `compatibility.json` records Go 1.26.5 plus the exact immutable Spice,
 toolchain, Agent, OpenAI provider, and coding-tools selections exercised by the
-architecture proof. The TUI remains explicitly null until the terminal target
-adopts it. Replacing any selection requires executable compatibility tests.
+architecture proof and generated daemon. The TUI remains explicitly null until
+the terminal target adopts it. Replacing any selection requires executable
+compatibility tests.

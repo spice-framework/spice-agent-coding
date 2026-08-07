@@ -48,10 +48,64 @@ type ResourceExhaustedError struct {
 	LastDelivered uint64
 	MaxEvents     int
 	MaxBytes      int
+	resource      string
+	limit         uint64
+	observed      uint64
 }
 
 func (failure *ResourceExhaustedError) Error() string {
-	return fmt.Sprintf("event delivery exceeded %d events or %d bytes after sequence %d", failure.MaxEvents, failure.MaxBytes, failure.LastDelivered)
+	return fmt.Sprintf(
+		"event delivery exceeded %s limit %d with %d after sequence %d",
+		failure.resource, failure.limit, failure.observed, failure.LastDelivered,
+	)
+}
+
+// Resource identifies the exact safe protocol resource that was exhausted.
+func (failure *ResourceExhaustedError) Resource() string {
+	if failure == nil {
+		return ""
+	}
+	return failure.resource
+}
+
+// Limit returns the exact configured bound that was exceeded.
+func (failure *ResourceExhaustedError) Limit() uint64 {
+	if failure == nil {
+		return 0
+	}
+	return failure.limit
+}
+
+// Observed returns the exact count or byte size refused by the bound.
+func (failure *ResourceExhaustedError) Observed() uint64 {
+	if failure == nil {
+		return 0
+	}
+	return failure.observed
+}
+
+func newResourceExhausted(
+	lastDelivered uint64,
+	maxEvents int,
+	maxBytes int,
+	resource string,
+	limit uint64,
+	observed uint64,
+) *ResourceExhaustedError {
+	return &ResourceExhaustedError{
+		LastDelivered: lastDelivered, MaxEvents: maxEvents, MaxBytes: maxBytes,
+		resource: resource, limit: limit, observed: observed,
+	}
+}
+
+// nonnegativeUint64 converts count and byte values only after rejecting an
+// impossible negative internal value. Returning zero fails closed when the
+// value is later translated into protocol overload facts.
+func nonnegativeUint64(value int) uint64 {
+	if value < 0 {
+		return 0
+	}
+	return uint64(value) // #nosec G115 -- negativity is rejected immediately above.
 }
 
 type logEntry struct {
@@ -68,6 +122,28 @@ type LogStats struct {
 	AuthoritativeExhaustions  uint64
 	SubscriptionExhaustions   uint64
 	SlowSubscriberDisconnects uint64
+}
+
+// ReplayRequest bounds one atomic retained-history page and optionally asks to
+// register a live tail when that page reaches the captured latest sequence.
+type ReplayRequest struct {
+	AfterSequence uint64
+	MaxEvents     int
+	MaxBytes      int
+	Tail          bool
+}
+
+// ReplayPage is one gap-free page captured with its retained bounds. Tail is
+// non-nil only when Tailing is true and future appends were registered under
+// the same log lock that captured Events and LatestSequence.
+type ReplayPage struct {
+	EarliestSequence uint64
+	LatestSequence   uint64
+	PageLastSequence uint64
+	Events           []Envelope
+	HasMore          bool
+	Tailing          bool
+	Tail             *Subscription
 }
 
 // Log is a count-and-byte-bounded authoritative per-run replay log.
@@ -130,9 +206,12 @@ func (log *Log) Append(envelope Envelope) error {
 	}
 	if size > maxBytes {
 		log.stats.AuthoritativeExhaustions++
-		return &ResourceExhaustedError{LastDelivered: log.lastSequence, MaxEvents: maxEvents, MaxBytes: maxBytes}
+		return newResourceExhausted(
+			log.lastSequence, maxEvents, maxBytes, "event_log_bytes",
+			nonnegativeUint64(maxBytes), nonnegativeUint64(size),
+		)
 	}
-	for len(log.entries) >= maxEvents || log.bytes+size > maxBytes {
+	for len(log.entries) >= maxEvents || log.bytes > maxBytes-size {
 		log.stats.EvictedEvents++
 		log.stats.EvictedBytes += uint64(log.entries[0].bytes) // #nosec G115 -- entry size is positive and bounded by MaxBytes.
 		log.bytes -= log.entries[0].bytes
@@ -180,6 +259,119 @@ func (log *Log) boundsLocked() (uint64, uint64) {
 	return log.entries[0].envelope.Sequence(), log.lastSequence
 }
 
+// Replay atomically captures retained bounds and one count-and-byte-bounded
+// page after a cursor. When Tail is requested on the final page, a live
+// subscription is registered before the log lock is released, so an append
+// cannot fall between replay and tail delivery.
+func (log *Log) Replay(ctx context.Context, request ReplayRequest) (ReplayPage, error) {
+	if ctx == nil {
+		return ReplayPage{}, errors.New("event replay context must not be nil")
+	}
+	if log == nil {
+		return ReplayPage{}, errors.New("event log is nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return ReplayPage{}, err
+	}
+	if request.MaxEvents < 1 || request.MaxEvents > log.limits.SubscriberMaxEvents {
+		return ReplayPage{}, fmt.Errorf("event replay max events must be between 1 and %d", log.limits.SubscriberMaxEvents)
+	}
+	if request.MaxBytes < 1 || request.MaxBytes > log.limits.SubscriberMaxBytes {
+		return ReplayPage{}, fmt.Errorf("event replay max bytes must be between 1 and %d", log.limits.SubscriberMaxBytes)
+	}
+
+	log.mu.Lock()
+	defer log.mu.Unlock()
+	entries, page, err := log.replayPageLocked(request)
+	if err != nil {
+		return ReplayPage{}, err
+	}
+	page.Events = make([]Envelope, len(entries))
+	for index, entry := range entries {
+		page.Events[index] = entry.envelope
+	}
+	if request.Tail && !page.HasMore && !log.closed {
+		page.Tail = log.registerSubscriptionLocked(ctx, page.PageLastSequence, nil)
+		page.Tailing = true
+	}
+	return page, nil
+}
+
+func (log *Log) replayPageLocked(request ReplayRequest) ([]logEntry, ReplayPage, error) {
+	earliest, latest := log.boundsLocked()
+	page := ReplayPage{
+		EarliestSequence: earliest,
+		LatestSequence:   latest,
+		PageLastSequence: request.AfterSequence,
+	}
+	if replayCursorOutside(request.AfterSequence, earliest, latest) {
+		recovery := latest
+		if request.AfterSequence < earliest {
+			recovery = earliest - 1
+		}
+		return nil, ReplayPage{}, &OutOfRangeError{
+			RequestedAfter: request.AfterSequence,
+			Earliest:       earliest, Latest: latest, RecoveryAfter: recovery,
+		}
+	}
+	entries := make([]logEntry, 0, min(request.MaxEvents, len(log.entries)))
+	bytes := 0
+	for _, entry := range log.entries {
+		if entry.envelope.Sequence() <= request.AfterSequence {
+			continue
+		}
+		if len(entries) == request.MaxEvents {
+			break
+		}
+		if entry.bytes > request.MaxBytes || bytes > request.MaxBytes-entry.bytes {
+			if len(entries) == 0 {
+				log.stats.SubscriptionExhaustions++
+				return nil, ReplayPage{}, newResourceExhausted(
+					request.AfterSequence, request.MaxEvents, request.MaxBytes,
+					"event_replay_bytes",
+					nonnegativeUint64(request.MaxBytes), nonnegativeUint64(entry.bytes),
+				)
+			}
+			break
+		}
+		entries = append(entries, entry)
+		bytes += entry.bytes
+		page.PageLastSequence = entry.envelope.Sequence()
+	}
+	if page.PageLastSequence < latest {
+		if len(entries) == 0 {
+			return nil, ReplayPage{}, errors.New("event replay made no progress without an exhausted bound")
+		}
+		page.HasMore = true
+	}
+	return entries, page, nil
+}
+
+func replayCursorOutside(after, earliest, latest uint64) bool {
+	if earliest == latest+1 { // Empty initial [1,0] or imported tail [N+1,N].
+		return after != latest
+	}
+	return after > latest || after < earliest-1
+}
+
+func (log *Log) registerSubscriptionLocked(ctx context.Context, after uint64, replay []logEntry) *Subscription {
+	log.nextSubID++
+	subscription := newSubscription(ctx, after, log.limits, replay)
+	id := log.nextSubID
+	subscription.onDone = func() {
+		log.mu.Lock()
+		delete(log.subscribers, id)
+		log.mu.Unlock()
+	}
+	if log.closed {
+		subscription.finish(nil)
+	} else {
+		log.subscribers[id] = subscription
+	}
+	go subscription.deliver()
+	return subscription
+}
+
 // Subscribe atomically replays entries after a cursor and tails future appends.
 func (log *Log) Subscribe(ctx context.Context, afterSequence uint64) (*Subscription, error) {
 	if ctx == nil {
@@ -193,42 +385,51 @@ func (log *Log) Subscribe(ctx context.Context, afterSequence uint64) (*Subscript
 	}
 	log.mu.Lock()
 	defer log.mu.Unlock()
-	earliest, latest := log.boundsLocked()
-	if afterSequence > latest || (latest != 0 && earliest > 1 && afterSequence < earliest-1) {
-		recovery := latest
-		if afterSequence <= latest {
-			recovery = earliest - 1
-		}
-		return nil, &OutOfRangeError{RequestedAfter: afterSequence, Earliest: earliest, Latest: latest, RecoveryAfter: recovery}
+	replay, page, err := log.replayPageLocked(ReplayRequest{
+		AfterSequence: afterSequence,
+		MaxEvents:     log.limits.SubscriberMaxEvents,
+		MaxBytes:      log.limits.SubscriberMaxBytes,
+		Tail:          true,
+	})
+	if err != nil {
+		return nil, err
 	}
-	replay := make([]logEntry, 0)
-	replayBytes := 0
-	for _, entry := range log.entries {
-		if entry.envelope.Sequence() <= afterSequence {
-			continue
-		}
-		replay = append(replay, entry)
-		replayBytes += entry.bytes
-	}
-	if len(replay) > log.limits.SubscriberMaxEvents || replayBytes > log.limits.SubscriberMaxBytes {
+	if page.HasMore {
 		log.stats.SubscriptionExhaustions++
-		return nil, &ResourceExhaustedError{LastDelivered: afterSequence, MaxEvents: log.limits.SubscriberMaxEvents, MaxBytes: log.limits.SubscriberMaxBytes}
+		exhausted, exhaustedErr := log.replayExhaustionLocked(page.PageLastSequence, replay)
+		if exhaustedErr != nil {
+			return nil, exhaustedErr
+		}
+		return nil, exhausted
 	}
-	log.nextSubID++
-	subscription := newSubscription(ctx, afterSequence, log.limits, replay, nil)
-	id := log.nextSubID
-	subscription.onDone = func() {
-		log.mu.Lock()
-		delete(log.subscribers, id)
-		log.mu.Unlock()
+	return log.registerSubscriptionLocked(ctx, afterSequence, replay), nil
+}
+
+func (log *Log) replayExhaustionLocked(
+	lastDelivered uint64,
+	replay []logEntry,
+) (*ResourceExhaustedError, error) {
+	if len(replay) >= log.limits.SubscriberMaxEvents {
+		return newResourceExhausted(
+			lastDelivered, log.limits.SubscriberMaxEvents, log.limits.SubscriberMaxBytes,
+			"event_replay_events", nonnegativeUint64(log.limits.SubscriberMaxEvents),
+			nonnegativeUint64(len(replay))+1,
+		), nil
 	}
-	if log.closed {
-		subscription.finish(nil)
-	} else {
-		log.subscribers[id] = subscription
+	var queuedBytes uint64
+	for _, entry := range replay {
+		queuedBytes += nonnegativeUint64(entry.bytes)
 	}
-	go subscription.deliver()
-	return subscription, nil
+	for _, entry := range log.entries {
+		if entry.envelope.Sequence() > lastDelivered {
+			return newResourceExhausted(
+				lastDelivered, log.limits.SubscriberMaxEvents, log.limits.SubscriberMaxBytes,
+				"event_replay_bytes", nonnegativeUint64(log.limits.SubscriberMaxBytes),
+				queuedBytes+nonnegativeUint64(entry.bytes),
+			), nil
+		}
+	}
+	return nil, errors.New("event replay exhausted without a retained recovery entry")
 }
 
 // Close completes live subscribers after their queued tail is delivered.
@@ -268,11 +469,11 @@ type Subscription struct {
 	stopContext   func() bool
 }
 
-func newSubscription(ctx context.Context, after uint64, limits LogLimits, replay []logEntry, onDone func()) *Subscription {
+func newSubscription(ctx context.Context, after uint64, limits LogLimits, replay []logEntry) *Subscription {
 	subscription := &Subscription{
 		ctx: ctx, queue: append([]logEntry(nil), replay...), events: make(chan Envelope), done: make(chan struct{}),
 		maxEvents: limits.SubscriberMaxEvents, maxBytes: limits.SubscriberMaxBytes,
-		lastDelivered: after, onDone: onDone, abort: make(chan struct{}),
+		lastDelivered: after, abort: make(chan struct{}),
 	}
 	for _, entry := range replay {
 		subscription.queuedBytes += entry.bytes
@@ -313,8 +514,21 @@ func (subscription *Subscription) offer(entry logEntry) bool {
 	if subscription.terminal {
 		return false
 	}
-	if len(subscription.queue) >= subscription.maxEvents || subscription.queuedBytes+entry.bytes > subscription.maxBytes {
-		subscription.terminateLocked(&ResourceExhaustedError{LastDelivered: subscription.lastDelivered, MaxEvents: subscription.maxEvents, MaxBytes: subscription.maxBytes})
+	if len(subscription.queue) >= subscription.maxEvents {
+		subscription.terminateLocked(newResourceExhausted(
+			subscription.lastDelivered, subscription.maxEvents, subscription.maxBytes,
+			"event_subscription_events", nonnegativeUint64(subscription.maxEvents),
+			nonnegativeUint64(len(subscription.queue))+1,
+		))
+		subscription.cond.Broadcast()
+		return true
+	}
+	if entry.bytes > subscription.maxBytes || subscription.queuedBytes > subscription.maxBytes-entry.bytes {
+		subscription.terminateLocked(newResourceExhausted(
+			subscription.lastDelivered, subscription.maxEvents, subscription.maxBytes,
+			"event_subscription_bytes", nonnegativeUint64(subscription.maxBytes),
+			nonnegativeUint64(subscription.queuedBytes)+nonnegativeUint64(entry.bytes),
+		))
 		subscription.cond.Broadcast()
 		return true
 	}

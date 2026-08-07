@@ -318,6 +318,7 @@ type Run struct {
 	suspendRequested   bool
 	suspendWaiter      chan error
 	resumeSignal       chan struct{}
+	localResume        *PreparedLocalResume
 	activeInteractions map[interaction.ID]struct{}
 	seenInteractions   map[interaction.ID]struct{}
 	interactionWG      sync.WaitGroup
@@ -348,6 +349,15 @@ func (run *Run) Subscribe(ctx context.Context, afterSequence uint64) (*event.Sub
 		return nil, errors.New("agent run is nil")
 	}
 	return run.log.Subscribe(ctx, afterSequence)
+}
+
+// ReplayEvents captures one bounded authoritative replay page and may
+// atomically register a live tail when the page reaches the captured head.
+func (run *Run) ReplayEvents(ctx context.Context, request event.ReplayRequest) (event.ReplayPage, error) {
+	if run == nil {
+		return event.ReplayPage{}, errors.New("agent run is nil")
+	}
+	return run.log.Replay(ctx, request)
 }
 
 // Cancel requests cooperative run cancellation.
@@ -422,8 +432,7 @@ func (run *Run) Suspend(ctx context.Context) error {
 			run.suspendWaiter = nil
 			run.status = runStatusRunning
 		} else if run.status == LifecycleSuspended && run.resumeSignal != nil {
-			close(run.resumeSignal)
-			run.resumeSignal = nil
+			_ = run.resumeLocked()
 		}
 		run.stateMu.Unlock()
 		return ctx.Err()
@@ -434,16 +443,24 @@ func (run *Run) Suspend(ctx context.Context) error {
 
 // Resume continues a locally suspended run using its immutable plan snapshot.
 func (run *Run) Resume() error {
-	if run == nil {
-		return errors.New("agent run is nil")
+	prepared, err := run.PrepareLocalResume()
+	if err != nil {
+		return err
 	}
-	run.stateMu.Lock()
-	defer run.stateMu.Unlock()
+	return prepared.Commit()
+}
+
+func (run *Run) resumeLocked() error {
 	if run.status != LifecycleSuspended || run.resumeSignal == nil {
 		return &UnsafeSnapshotError{Status: run.status, ActiveInteractions: len(run.activeInteractions)}
 	}
-	close(run.resumeSignal)
+	resumeSignal := run.resumeSignal
+	// Make snapshot export fail before unblocking execution. Otherwise the
+	// caller can duplicate suspended authority between Resume returning and the
+	// execution goroutine observing resumeSignal.
+	run.status = runStatusRunning
 	run.resumeSignal = nil
+	close(resumeSignal)
 	return nil
 }
 
@@ -493,7 +510,13 @@ func (run *Run) Interact(ctx context.Context, request interaction.Request) (inte
 	}
 	brokerContext, cancel := context.WithCancel(ctx)
 	stop := context.AfterFunc(run.ctx, cancel)
-	response, err := safeInteraction(brokerContext, run.engine.broker, request.Clone())
+	scope, scopeErr := interaction.NewScope(run.id)
+	if scopeErr != nil {
+		stop()
+		cancel()
+		return interaction.Response{}, errors.Join(scopeErr, run.emitter.interactionFailure(ctx, event.InteractionFailed, request.ID()))
+	}
+	response, err := safeInteraction(brokerContext, run.engine.broker, scope, request.Clone())
 	stop()
 	cancel()
 	if err != nil {
@@ -551,75 +574,11 @@ func (run *Run) releaseInteraction(id interaction.ID) {
 
 // Start begins one run. Caller context ownership propagates to providers and tools.
 func (engine *Engine) Start(ctx context.Context, definition Definition, input Input) (*Run, error) {
-	if ctx == nil {
-		return nil, errors.New("agent start context must not be nil")
-	}
-	if engine == nil {
-		return nil, errors.New("agent engine is nil")
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	if _, err := NewDefinition(definition.name, definition.model, definition.maxTurns); err != nil {
-		return nil, err
-	}
-	if _, err := NewInput(input.message); err != nil {
-		return nil, err
-	}
-	if engine.isClosed() {
-		return nil, errors.New("agent engine is closed")
-	}
-	lease, err := leaseCurrentToolPlan(ctx, engine.toolPlans, engine.finalizationTimeout)
+	prepared, err := engine.PrepareStart(ctx, definition, input)
 	if err != nil {
 		return nil, err
 	}
-	planIdentity, err := newPlanIdentity(engine.compiledPlan, engine.snapshotCompatibility, lease)
-	if err != nil {
-		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
-	}
-	runID, err := engine.ids.Next("run")
-	if err != nil {
-		return nil, releaseLeaseOnRollback(lease, fmt.Errorf("allocate run ID: %w", err), engine.finalizationTimeout)
-	}
-	if err = snapshotToken("run ID", runID, 96); err != nil {
-		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
-	}
-	log, err := event.NewLog(runID, engine.logLimits)
-	if err != nil {
-		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
-	}
-	runContext, cancel := context.WithCancel(ctx)
-	run := &Run{
-		id: runID, log: log, done: make(chan struct{}), cancel: cancel, engine: engine, ctx: runContext,
-		definition: definition, dispatcher: lease.Dispatcher(), planLease: lease, planIdentity: planIdentity,
-		history: []message.Message{input.message.Clone()}, activeInteractions: make(map[interaction.ID]struct{}),
-		seenInteractions: make(map[interaction.ID]struct{}),
-		messageIDs:       map[message.ID]struct{}{input.message.ID(): {}},
-	}
-	run.emitter = &runEmitter{engine: engine, run: run, next: 1}
-	engine.mu.Lock()
-	if engine.closed {
-		engine.mu.Unlock()
-		cancel()
-		log.Close()
-		return nil, releaseLeaseOnRollback(lease, errors.New("agent engine is closed"), engine.finalizationTimeout)
-	}
-	if _, duplicate := engine.seen[runID]; duplicate {
-		engine.mu.Unlock()
-		cancel()
-		log.Close()
-		return nil, releaseLeaseOnRollback(
-			lease, fmt.Errorf("agent ID source returned duplicate run ID %q", runID), engine.finalizationTimeout,
-		)
-	}
-	if len(engine.active) == 0 {
-		engine.drained = make(chan struct{})
-	}
-	engine.active[runID] = run
-	engine.seen[runID] = struct{}{}
-	engine.mu.Unlock()
-	go engine.execute(runContext, run, definition, input)
-	return run, nil
+	return prepared.Commit(ctx)
 }
 
 func (engine *Engine) isClosed() bool {
@@ -740,89 +699,15 @@ func releaseLeaseOnRollback(lease *stage.ToolPlanLease, cause error, timeout tim
 	return cause
 }
 
-// ResumeSnapshot imports an exclusively owned suspended snapshot. Callers must
-// ensure the original process/run authority is no longer executing.
+// ResumeSnapshot is the compatibility wrapper that prepares and immediately
+// commits an exclusively owned suspended snapshot using ctx as the run root.
+// Callers must ensure the original process/run authority is no longer executing.
 func (engine *Engine) ResumeSnapshot(ctx context.Context, snapshot Snapshot) (*Run, error) {
-	if ctx == nil {
-		return nil, errors.New("agent resume context must not be nil")
-	}
-	if engine == nil {
-		return nil, errors.New("agent engine is nil")
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	if err := snapshot.Validate(); err != nil {
-		return nil, err
-	}
-	if snapshot.status != LifecycleSuspended {
-		return nil, &UnsafeSnapshotError{Status: snapshot.status}
-	}
-	if engine.isClosed() {
-		return nil, errors.New("agent engine is closed")
-	}
-	if engine.snapshotCompatibility == "" {
-		return nil, errors.New("agent engine snapshot import requires an explicit generated compatibility identity")
-	}
-	if snapshot.planIdentity.SnapshotCompatibilityIdentity() != engine.snapshotCompatibility ||
-		!slices.Equal(snapshot.planIdentity.CompiledIdentities(), engine.compiledPlan) {
-		return nil, errors.New("agent snapshot compiled compatibility does not match the constructed engine")
-	}
-	lease, err := leaseToolPlanGeneration(
-		ctx, engine.toolPlans, snapshot.planIdentity.ToolPlanID(), engine.finalizationTimeout,
-	)
+	prepared, err := engine.PrepareResumeSnapshot(ctx, snapshot)
 	if err != nil {
 		return nil, err
 	}
-	planIdentity, err := newPlanIdentity(engine.compiledPlan, engine.snapshotCompatibility, lease)
-	if err != nil {
-		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
-	}
-	if !snapshot.planIdentity.equal(planIdentity) {
-		return nil, releaseLeaseOnRollback(
-			lease,
-			errors.New("agent snapshot plan identity does not match the leased engine plan"),
-			engine.finalizationTimeout,
-		)
-	}
-	log, err := event.NewLogAfter(snapshot.runID, snapshot.lastSequence, engine.logLimits)
-	if err != nil {
-		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
-	}
-	runContext, cancel := context.WithCancel(ctx)
-	run := &Run{
-		id: snapshot.runID, log: log, done: make(chan struct{}), cancel: cancel, engine: engine, ctx: runContext,
-		definition: snapshot.definition, history: cloneHistory(snapshot.history), completedTurns: snapshot.completedTurns,
-		status: runStatusRunning, started: true, lastSequence: snapshot.lastSequence,
-		dispatcher: lease.Dispatcher(), planLease: lease, planIdentity: planIdentity,
-		activeInteractions: make(map[interaction.ID]struct{}),
-		seenInteractions:   interactionIDSet(snapshot.interactionIDs),
-		messageIDs:         snapshotMessageIDs(snapshot.history),
-	}
-	run.emitter = &runEmitter{engine: engine, run: run, next: snapshot.lastSequence + 1}
-	engine.mu.Lock()
-	if engine.closed {
-		engine.mu.Unlock()
-		cancel()
-		log.Close()
-		return nil, releaseLeaseOnRollback(lease, errors.New("agent engine is closed"), engine.finalizationTimeout)
-	}
-	if _, duplicate := engine.seen[run.id]; duplicate {
-		engine.mu.Unlock()
-		cancel()
-		log.Close()
-		return nil, releaseLeaseOnRollback(
-			lease, fmt.Errorf("agent snapshot run ID %q was already imported", run.id), engine.finalizationTimeout,
-		)
-	}
-	if len(engine.active) == 0 {
-		engine.drained = make(chan struct{})
-	}
-	engine.active[run.id] = run
-	engine.seen[run.id] = struct{}{}
-	engine.mu.Unlock()
-	go engine.executeState(runContext, run, snapshot.definition, cloneHistory(snapshot.history), snapshot.completedTurns+1, false)
-	return run, nil
+	return prepared.Commit(ctx)
 }
 
 // Close rejects new runs and waits for cooperative active runs to drain.
@@ -863,15 +748,10 @@ func (engine *Engine) stop(ctx context.Context, cancelActive bool) error {
 	}
 }
 
-func (engine *Engine) execute(ctx context.Context, run *Run, definition Definition, input Input) {
-	engine.executeState(ctx, run, definition, []message.Message{input.message.Clone()}, 1, true)
-}
-
 func (engine *Engine) executeState(ctx context.Context, run *Run, definition Definition, history []message.Message, firstTurn uint32, emitRunStart bool) {
 	emitter := run.emitter
 	var runErr error
 	terminalKind := event.RunCompleted
-	runStarted := !emitRunStart
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			runErr = errors.Join(runErr, fmt.Errorf("agent execution panic: %v", recovered))
@@ -888,26 +768,20 @@ func (engine *Engine) executeState(ctx context.Context, run *Run, definition Def
 			)
 			terminalKind = event.RunFailed
 		}
-		var terminalErr error
-		terminalCommitted := false
-		if runStarted {
-			terminalErr = emitter.terminal(ctx, terminalKind, runErr)
-			terminalCommitted = terminalErr == nil || committed(terminalErr)
-		}
+		terminalErr := emitter.terminal(ctx, terminalKind, runErr)
+		terminalCommitted := terminalErr == nil || committed(terminalErr)
 		if terminalCommitted {
 			run.recordTerminal(terminalKind, history)
 		}
 		run.complete(errors.Join(runErr, terminalErr))
 	}()
 	if emitRunStart {
-		if err := emitter.emit(ctx, event.RunStarted, map[string]string{"definition": definition.name}); err != nil {
-			runStarted = committed(err)
-			run.markStarted(runStarted)
+		if err := emitter.lifecycleStart(ctx, map[string]string{"definition": definition.name}); err != nil {
+			run.markStarted(committed(err))
 			runErr = err
 			terminalKind = event.RunFailed
 			return
 		}
-		runStarted = true
 		run.markStarted(true)
 	}
 	for turn := firstTurn; turn <= definition.maxTurns; turn++ {
@@ -1241,13 +1115,13 @@ func safeDispatch(ctx context.Context, dispatcher stage.ToolDispatcher, call too
 	return dispatcher.Dispatch(ctx, call, reporter)
 }
 
-func safeInteraction(ctx context.Context, broker interaction.Broker, request interaction.Request) (response interaction.Response, err error) {
+func safeInteraction(ctx context.Context, broker interaction.Broker, scope interaction.Scope, request interaction.Request) (response interaction.Response, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			err = fmt.Errorf("interaction broker panic: %v", recovered)
 		}
 	}()
-	return broker.Request(ctx, request)
+	return broker.Request(ctx, scope, request)
 }
 
 func (run *Run) markStarted(started bool) {
@@ -1295,13 +1169,21 @@ func (run *Run) suspendAtBoundary(ctx context.Context) error {
 	waiter <- nil
 	select {
 	case <-ctx.Done():
+		run.stateMu.Lock()
+		prepared := run.localResume
+		if prepared == nil {
+			run.status = runStatusFinishing
+			run.stateMu.Unlock()
+			return ctx.Err()
+		}
+		decision := prepared.decision
+		run.stateMu.Unlock()
+		<-decision
 		return ctx.Err()
 	case <-resumeSignal:
-		run.stateMu.Lock()
-		if run.status == LifecycleSuspended {
-			run.status = runStatusRunning
+		if err := ctx.Err(); err != nil {
+			return err
 		}
-		run.stateMu.Unlock()
 		return nil
 	}
 }
@@ -1369,6 +1251,12 @@ func (emitter *runEmitter) emit(ctx context.Context, kind event.Kind, payload an
 		return err
 	}
 	return emitter.persist(ctx, kind, payload)
+}
+
+func (emitter *runEmitter) lifecycleStart(ctx context.Context, payload any) error {
+	startContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), emitter.engine.finalizationTimeout)
+	defer cancel()
+	return emitter.persist(startContext, event.RunStarted, payload)
 }
 
 func (emitter *runEmitter) terminal(ctx context.Context, kind event.Kind, runErr error) error {

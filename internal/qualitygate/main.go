@@ -28,7 +28,7 @@ const (
 	minimumCoverage    = 85.0
 	spiceVersion       = "v0.1.0-preview.1.0.20260806200749-524424a04df0"
 	toolchainVersion   = "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6"
-	agentVersion       = "v0.0.0-20260806225954-af79fc7fe4ad"
+	agentVersion       = "v0.0.0-20260807141124-852f79b1d092"
 	providerVersion    = "v0.0.0-20260806230257-a6962fe2dabc"
 	codingToolsVersion = "v0.0.0-20260806232406-25b93fb6e1b2"
 )
@@ -70,6 +70,7 @@ func run(ctx context.Context, root, mode string) error {
 	bootstrap := step{"explicit dependency bootstrap", func() error { return bootstrapDependencies(ctx, root, networkCommand) }}
 	formatting := step{"formatting", func() error { return format(ctx, root, false) }}
 	modules := step{"module and vendor", func() error { return checkModule(ctx, root) }}
+	generated := step{"generated applications", func() error { return checkGeneratedApplications(ctx, root) }}
 	vet := step{"go vet", func() error { return command(ctx, root, nil, "go", "vet", "./...") }}
 	test := step{"shuffled tests", func() error { return tests(ctx, root, false) }}
 	var steps []step
@@ -80,12 +81,12 @@ func run(ctx context.Context, root, mode string) error {
 		case "fast":
 			steps = []step{identity, test}
 		case "check":
-			steps = []step{identity, formatting, modules, vet, test}
+			steps = []step{identity, formatting, modules, generated, vet, test}
 		case "fmt":
 			steps = []step{identity, {"formatting write", func() error { return format(ctx, root, true) }}}
 		case "verify":
 			steps = []step{
-				identity, formatting, modules, vet,
+				identity, formatting, modules, generated, vet,
 				{"lint and nil safety", func() error { return lint(ctx, root) }},
 				{"security", func() error { return security(ctx, root) }},
 				test,
@@ -371,6 +372,46 @@ func checkModule(ctx context.Context, root string) error {
 		return errors.New("vendor differs from a fresh go mod vendor result")
 	}
 	return nil
+}
+
+func checkGeneratedApplications(ctx context.Context, root string) error {
+	for _, arguments := range generatedApplicationChecks() {
+		if err := command(ctx, root, nil, "go", arguments...); err != nil {
+			return err
+		}
+	}
+	temporary, err := os.MkdirTemp("", "spice-agentd-build-*")
+	if err != nil {
+		return err
+	}
+	defer removeTree(temporary)
+	executable := "spice-agentd"
+	if runtime.GOOS == "windows" {
+		executable += ".exe"
+	}
+	return command(
+		ctx, root, nil, "go", "build", "-trimpath",
+		"-o", filepath.Join(temporary, executable), "./cmd/spice-agentd",
+	)
+}
+
+func generatedApplicationChecks() [][]string {
+	const spiceTool = "github.com/spice-framework/toolchain/cmd/spice"
+	result := make([][]string, 0, 4)
+	for _, target := range []struct {
+		name   string
+		source string
+	}{
+		{name: "ArchitectureProof", source: "./internal/architectureproof"},
+		{name: "Daemon", source: "./internal/daemon"},
+	} {
+		for _, mode := range []string{"--check", "--diff"} {
+			result = append(result, []string{
+				"tool", spiceTool, "generate", mode, "--target", target.name, ".", target.source,
+			})
+		}
+	}
+	return result
 }
 
 func treeDigests(root string) (map[string][sha256.Size]byte, error) {

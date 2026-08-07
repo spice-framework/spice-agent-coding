@@ -1,3 +1,3 @@
-// Package daemon will compose the independently generated spice-agentd
-// application target after the Spice Agent host contract is adopted.
+// Package daemon owns the handwritten composition source for the independently
+// generated spice-agentd application target.
 package daemon

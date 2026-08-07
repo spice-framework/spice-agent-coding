@@ -12,12 +12,15 @@ tool (
 
 require (
 	github.com/spice-framework/spice v0.1.0-preview.1.0.20260806200749-524424a04df0
-	github.com/spice-framework/spice-agent v0.0.0-20260806225954-af79fc7fe4ad
+	github.com/spice-framework/spice-agent v0.0.0-20260807141124-852f79b1d092
 	github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc
 	github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260806232406-25b93fb6e1b2
+	golang.org/x/sys v0.47.0
+	google.golang.org/grpc v1.83.0
 )
 
 require (
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/openai/openai-go/v3 v3.50.0 // indirect
 	github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6 // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
@@ -25,7 +28,10 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	golang.org/x/mod v0.38.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )

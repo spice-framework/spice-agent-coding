@@ -35,6 +35,30 @@ func TestExactGoExecutable(t *testing.T) {
 	}
 }
 
+func TestGeneratedApplicationChecksCoverBothTargetsAndModes(t *testing.T) {
+	t.Parallel()
+	checks := generatedApplicationChecks()
+	if len(checks) != 4 {
+		t.Fatalf("generated checks = %d, want 4", len(checks))
+	}
+	want := []string{
+		"ArchitectureProof --check ./internal/architectureproof",
+		"ArchitectureProof --diff ./internal/architectureproof",
+		"Daemon --check ./internal/daemon",
+		"Daemon --diff ./internal/daemon",
+	}
+	for index, arguments := range checks {
+		if len(arguments) != 8 || arguments[0] != "tool" || arguments[2] != "generate" ||
+			arguments[4] != "--target" || arguments[6] != "." {
+			t.Fatalf("generated check %d malformed: %q", index, arguments)
+		}
+		got := arguments[5] + " " + arguments[3] + " " + arguments[7]
+		if got != want[index] {
+			t.Fatalf("generated check %d = %q, want %q", index, got, want[index])
+		}
+	}
+}
+
 func TestBootstrapDownloadArguments(t *testing.T) {
 	t.Parallel()
 	moduleFile := filepath.Join("private", "graph.mod")
