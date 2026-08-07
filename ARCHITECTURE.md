@@ -24,6 +24,17 @@ supported process whose lease and cleanup belong to that launcher instance.
 Each target independently owns dependency construction, configuration,
 cancellation, observability, rollback, and cleanup for its boundary.
 
+The daemon explicitly blank-imports the Agent runtime-plugin host
+auto-configuration. Its generated graph constructs the compiled read,
+replace, and shell beans first, snapshots them into the fallback compiled
+dispatcher, and then constructs one exact `pluginhost.Host`. That same pointer
+is adapted to `stage.ToolPlanSource` for the engine; there is no parallel
+registry or compiled `RuntimeGraph`. Host construction performs no plugin
+discovery or launch. Future runtime-plugin activation can only publish a new
+immutable tool generation through this generated host, while generated reverse
+cleanup drains its leases before releasing the shared contained process
+launcher and root registry.
+
 `internal/distribution` owns packaging. `internal/daemon` and
 `internal/terminal` own the handwritten compositions. Their generated packages
 live under `internal/spicegen/daemon` and `internal/spicegen/terminal`; exact
@@ -53,11 +64,12 @@ publication before stopping admission, closing the listener, draining the host,
 and reversing generated ownership. A generated root-registry bean is adopted
 before the daemon root and coding-tool beans. The graph injects a
 distribution-owned executable resolver and process launcher into the shell
-tool. Windows creates a suspended child, assigns it to a kill-on-close Job, then
-resumes it. Unix establishes a new process group, registers the direct child
-with the adopted root, and tracks observed descendants by PID and immutable
-birth identity. This is lifecycle containment, not a sandbox; Unix cannot
-universally observe an adversarial fork-and-detach between snapshots. See
+tool and the runtime-plugin host. Windows creates a suspended child, assigns it
+to a kill-on-close Job, then resumes it. Unix establishes a new process group,
+registers the direct child with the adopted root, and tracks observed
+descendants by PID and immutable birth identity. This is lifecycle containment,
+not a sandbox; Unix cannot universally observe an adversarial fork-and-detach
+between snapshots. See
 [the daemon target](docs/daemon-target.md).
 
 `cmd/spice-agent` adapts `internal/terminalcommand` to the separately generated

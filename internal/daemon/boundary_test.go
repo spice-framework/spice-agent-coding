@@ -10,7 +10,7 @@ import (
 	agentdaemon "github.com/spice-framework/spice-agent/daemon"
 	"github.com/spice-framework/spice-agent/daemon/endpoint"
 	"github.com/spice-framework/spice-agent/daemon/grpcserver"
-	"github.com/spice-framework/spice-agent/tool"
+	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
 )
 
 func TestHostConstructorsRejectInvalidOwnedDependencies(t *testing.T) {
@@ -36,11 +36,30 @@ func TestHostConstructorsRejectInvalidOwnedDependencies(t *testing.T) {
 	if _, err := NewGRPCServer(nil, endpoint.Token{}, nil, nil, client.Build{}); err == nil {
 		t.Fatal("NewGRPCServer() accepted a nil root")
 	}
-	if _, err := NewToolDispatcher(map[string]tool.Tool{"invalid": nil}); err == nil {
-		t.Fatal("NewToolDispatcher() accepted a nil tool")
-	}
 	if _, err := rootContext(nil); err == nil {
 		t.Fatal("rootContext() accepted a nil root")
+	}
+}
+
+func TestRuntimePluginHostIdentityAdaptsValidatedServerBuild(t *testing.T) {
+	t.Parallel()
+	if identity, err := NewRuntimePluginHostIdentity(client.Build{}); err == nil || identity != nil {
+		t.Fatalf("NewRuntimePluginHostIdentity(zero) = (%v, %v), want nil, error", identity, err)
+	}
+	build, err := client.NewBuild("spice-agentd", "test", "commit", "go1.26.5")
+	if err != nil {
+		t.Fatal(err)
+	}
+	identity, err := NewRuntimePluginHostIdentity(build)
+	if err != nil {
+		t.Fatalf("NewRuntimePluginHostIdentity() error = %v", err)
+	}
+	if identity.GetComponent() != build.Component() || identity.GetVersion() != build.Version() ||
+		identity.GetCommit() != build.Commit() || identity.GetRuntime() != build.GoVersion() {
+		t.Fatalf("runtime plugin identity = %#v, build = %#v", identity, build)
+	}
+	if err = pluginv1.ValidateBuildIdentity(identity); err != nil {
+		t.Fatalf("runtime plugin identity validation = %v", err)
 	}
 }
 

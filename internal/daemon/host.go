@@ -11,6 +11,7 @@ import (
 	agentdaemon "github.com/spice-framework/spice-agent/daemon"
 	"github.com/spice-framework/spice-agent/daemon/endpoint"
 	"github.com/spice-framework/spice-agent/daemon/grpcserver"
+	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
 	"github.com/spice-framework/spice/lifecycle"
 )
 
@@ -54,6 +55,27 @@ func NewEndpointToken() (endpoint.Token, error) {
 // @Bean(name="serverBuild")
 func NewServerBuild() (client.Build, error) {
 	return client.NewBuild(daemonComponent, daemonVersion, daemonCommit, runtime.Version())
+}
+
+// NewRuntimePluginHostIdentity adapts the daemon's single validated build
+// provenance value to the Protobuf identity used only at the runtime-plugin
+// process boundary. It neither discovers nor launches plugins.
+//
+// @Bean(name="runtimePluginHostIdentity")
+func NewRuntimePluginHostIdentity(build client.Build) (*pluginv1.BuildIdentity, error) {
+	if err := build.Validate(); err != nil {
+		return nil, fmt.Errorf("construct runtime plugin host identity: %w", err)
+	}
+	identity := &pluginv1.BuildIdentity{
+		Component: build.Component(),
+		Version:   build.Version(),
+		Commit:    build.Commit(),
+		Runtime:   build.GoVersion(),
+	}
+	if err := pluginv1.ValidateBuildIdentity(identity); err != nil {
+		return nil, fmt.Errorf("validate runtime plugin host identity: %w", err)
+	}
+	return identity, nil
 }
 
 // NewProtocolVersion declares the highest engine protocol supported by this

@@ -3,15 +3,20 @@ package daemon_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/daemon"
+	pluginhost "github.com/spice-framework/spice-agent/plugin/host"
+	agentprocess "github.com/spice-framework/spice-agent/process"
+	spicebean "github.com/spice-framework/spice/bean"
 	spiceconfig "github.com/spice-framework/spice/config"
 )
 
@@ -46,6 +51,11 @@ func TestDaemonGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 		`"name": "read"`,
 		`"name": "replace"`,
 		`"name": "shell"`,
+		`"name": "runtimePluginCompiledDispatcher"`,
+		`"name": "runtimePluginEndpointFactory"`,
+		`"name": "runtimePluginHost"`,
+		`"name": "runtimePluginToolPlanSource"`,
+		`"module": "github.com/spice-framework/spice-agent"`,
 		`"name": "daemonRuntime"`,
 	} {
 		if !strings.Contains(stdout, expected) {
@@ -56,6 +66,11 @@ func TestDaemonGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 
 func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.T) {
 	t.Parallel()
+	var pluginLaunches atomic.Int32
+	launcher := agentprocess.LauncherFunc(func(context.Context, agentprocess.Spec) (agentprocess.Process, error) {
+		pluginLaunches.Add(1)
+		return nil, errors.New("generated construction must not launch a runtime plugin")
+	})
 	values, err := spiceconfig.NewMapSource("test", map[string]string{
 		"agent.openai.api-key": daemonTestSecret,
 		"agent.model":          daemonTestModel,
@@ -66,7 +81,12 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 	}
 	application, err := spicegen.NewApplicationWithOptions(
 		context.Background(),
-		spicegen.ApplicationOptions{Sources: []spiceconfig.Source{values}},
+		spicegen.ApplicationOptions{
+			Sources: []spiceconfig.Source{values},
+			Overrides: spicegen.BeanOverrides{
+				ProcessLauncher: spicebean.Replace[agentprocess.Launcher](launcher),
+			},
+		},
 	)
 	if err != nil {
 		t.Fatalf("construct generated daemon: %v", err)
@@ -76,8 +96,28 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 		components.DaemonEngine == nil || components.RunHost == nil ||
 		components.GrpcServer == nil || components.DaemonRuntime == nil ||
 		components.ProcessLauncher == nil || components.ProcessResolver == nil ||
-		components.Read == nil || components.Replace == nil || components.Shell == nil {
+		components.Read == nil || components.Replace == nil || components.Shell == nil ||
+		components.RuntimePluginHostIdentity == nil || components.RuntimePluginEndpointFactory == nil ||
+		components.RuntimePluginCompiledDispatcher == nil || components.RuntimePluginHost == nil ||
+		components.RuntimePluginToolPlanSource == nil {
 		t.Fatal("generated daemon graph is incomplete")
+	}
+	sourceHost, ok := components.RuntimePluginToolPlanSource.(*pluginhost.Host)
+	if !ok || sourceHost != components.RuntimePluginHost {
+		t.Fatalf(
+			"runtime plugin plan source = %T %p, want exact generated host %p",
+			components.RuntimePluginToolPlanSource,
+			sourceHost,
+			components.RuntimePluginHost,
+		)
+	}
+	definitions := components.RuntimePluginCompiledDispatcher.Definitions()
+	if len(definitions) != 3 || definitions[0].Name() != "read" ||
+		definitions[1].Name() != "replace" || definitions[2].Name() != "shell" {
+		t.Fatalf("compiled runtime plugin definitions = %#v", definitions)
+	}
+	if pluginLaunches.Load() != 0 {
+		t.Fatalf("runtime plugin launches during construction = %d", pluginLaunches.Load())
 	}
 	if components.Properties.Model != daemonTestModel || components.OpenAIConfig.APIKey != daemonTestSecret {
 		t.Fatal("generated typed configuration was not injected")
@@ -86,6 +126,9 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 	defer cancel()
 	if err = application.Stop(stopContext); err != nil {
 		t.Fatalf("stop generated daemon: %v", err)
+	}
+	if pluginLaunches.Load() != 0 {
+		t.Fatalf("runtime plugin launches after generated cleanup = %d", pluginLaunches.Load())
 	}
 }
 
@@ -100,25 +143,33 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 	launcher := bytes.Index(providers, []byte("ConstructProcessLauncher"))
 	codingConfig := bytes.Index(providers, []byte("ConstructCodingConfig"))
 	shellTool := bytes.Index(providers, []byte("ConstructShell"))
-	if registry < 0 || launcher <= registry || codingConfig <= registry || shellTool <= launcher {
+	runtimeHost := bytes.Index(providers, []byte("ConstructRuntimePluginHost_"))
+	runtimePlanSource := bytes.Index(providers, []byte("ConstructRuntimePluginToolPlanSource_"))
+	if registry < 0 || launcher <= registry || codingConfig <= registry || shellTool <= launcher ||
+		runtimeHost <= shellTool || runtimePlanSource <= runtimeHost {
 		t.Fatalf(
-			"generated containment order registry=%d launcher=%d coding=%d shell=%d",
+			"generated containment order registry=%d launcher=%d coding=%d shell=%d host=%d plan=%d",
 			registry,
 			launcher,
 			codingConfig,
 			shellTool,
+			runtimeHost,
+			runtimePlanSource,
 		)
 	}
 	for _, expected := range []string{
 		"ConstructDaemonRuntime", "ConstructGrpcServer", "ConstructRunHost",
 		"ConstructProcessLauncher", "ConstructProcessResolver",
+		"ConstructRuntimePluginHost_", "ConstructRuntimePluginToolPlanSource_",
 		`map[string]tool.Tool{"read": read, "replace": replace, "shell": shell}`,
 	} {
 		if !bytes.Contains(providers, []byte(expected)) {
 			t.Fatalf("generated provider file lacks %q", expected)
 		}
 	}
-	for _, forbidden := range []string{"reflect.", "RuntimeGraph", "ServiceLocator", daemonTestSecret} {
+	for _, forbidden := range []string{
+		"reflect.", "RuntimeGraph", "ServiceLocator", "ExtensionRegistry", daemonTestSecret,
+	} {
 		if bytes.Contains(providers, []byte(forbidden)) {
 			t.Fatalf("generated provider file contains forbidden %q", forbidden)
 		}
@@ -131,7 +182,9 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 		`"layout": "generated-package"`, `"role": "source-unit"`,
 		"internal/daemon/root.go", "internal/daemon/process.go",
 		"NewRootRegistry", "NewProcessLauncher", "NewExecutableResolver", "NewRuntime",
+		"NewRuntimePluginHostIdentity",
 		"github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
+		"github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
 	} {
 		if !bytes.Contains(manifest, []byte(expected)) {
 			t.Fatalf("generation manifest lacks %q", expected)

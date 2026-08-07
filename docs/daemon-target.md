@@ -11,9 +11,21 @@ go tool github.com/spice-framework/toolchain/cmd/spice generate --target Daemon 
 ```
 
 The graph directly constructs typed configuration, the OpenAI provider, the
-three compiled coding tools, the deterministic engine, the run host, the
-authenticated gRPC server, and the local endpoint runtime. It contains no
-reflection, service locator, runtime registry, or package scan.
+three compiled coding tools, the runtime-plugin Host, the deterministic engine,
+the run host, the authenticated gRPC server, and the local endpoint runtime. It
+contains no reflection, service locator, parallel runtime registry,
+`RuntimeGraph`, or package scan.
+
+The daemon opts in by blank-importing
+`github.com/spice-framework/spice-agent/plugin/host/autoconfigure`. Spice
+injects the named `read`, `replace`, and `shell` beans into an immutable
+compiled dispatcher, constructs exactly one `*pluginhost.Host`, and exposes
+that exact pointer as the engine's `stage.ToolPlanSource`. The daemon's existing
+validated `client.Build` is explicitly adapted to the Protobuf host identity
+used during a future plugin handshake. Construction does not inspect plugin
+configuration, open a plugin endpoint, or launch a process; runtime activation
+is an explicit Host operation and only changes immutable generations for future
+runs.
 
 ## Lifecycle and publication
 
@@ -40,7 +52,9 @@ of the compiled coding tools. Generated reverse cleanup keeps the registry open
 until those beans and the daemon root have been released.
 
 The generated graph now constructs `processResolver` and `processLauncher`
-beans and injects them into the compiled shell tool. On Windows the launcher
+beans and injects them into both the compiled shell tool and runtime-plugin
+Host. Generated reverse cleanup closes the Host before the shared launcher and
+root registry are released. On Windows the launcher
 creates a suspended child with explicit inherited stream handles, assigns its
 process tree to a kill-on-close Job, and only then resumes the child. On Unix it
 starts a new process group, immediately registers the direct child with the

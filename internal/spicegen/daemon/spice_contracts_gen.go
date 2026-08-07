@@ -21,6 +21,8 @@ import (
 	grpcserver "github.com/spice-framework/spice-agent/daemon/grpcserver"
 	interaction "github.com/spice-framework/spice-agent/interaction"
 	model "github.com/spice-framework/spice-agent/model"
+	pluginhost "github.com/spice-framework/spice-agent/plugin/host"
+	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
 	process "github.com/spice-framework/spice-agent/process"
 	stage "github.com/spice-framework/spice-agent/stage"
 	tool "github.com/spice-framework/spice-agent/tool"
@@ -60,6 +62,8 @@ type Components struct {
 	DaemonInteractionBroker interaction.Broker
 	// ProcessResolver is bean "processResolver".
 	ProcessResolver process.ExecutableResolver
+	// RuntimePluginHostIdentity is bean "runtimePluginHostIdentity".
+	RuntimePluginHostIdentity *pluginv1.BuildIdentity
 	// DaemonRoot is bean "daemonRoot".
 	DaemonRoot *daemon.Root
 	// SessionStore is bean "sessionStore".
@@ -68,6 +72,8 @@ type Components struct {
 	OperationLedger *daemon2.Ledger
 	// ServerLimits is bean "serverLimits".
 	ServerLimits client.Limits
+	// RuntimePluginEndpointFactory is bean "runtimePluginEndpointFactory".
+	RuntimePluginEndpointFactory pluginhost.LocalEndpointFactory
 	// Properties is bean "Properties".
 	Properties daemon.Properties
 	// CodingConfig is bean "codingConfig".
@@ -84,10 +90,12 @@ type Components struct {
 	Shell tool.Tool
 	// Replace is bean "replace".
 	Replace tool.Tool
-	// DaemonToolDispatcher is bean "daemonToolDispatcher".
-	DaemonToolDispatcher stage.ToolDispatcher
-	// DaemonToolPlanSource is bean "daemonToolPlanSource".
-	DaemonToolPlanSource stage.ToolPlanSource
+	// RuntimePluginCompiledDispatcher is bean "runtimePluginCompiledDispatcher".
+	RuntimePluginCompiledDispatcher stage.ToolDispatcher
+	// RuntimePluginHost is bean "runtimePluginHost".
+	RuntimePluginHost *pluginhost.Host
+	// RuntimePluginToolPlanSource is bean "runtimePluginToolPlanSource".
+	RuntimePluginToolPlanSource stage.ToolPlanSource
 	// OpenAIModelProvider is bean "openAIModelProvider".
 	OpenAIModelProvider model.Provider
 	// DaemonEngine is bean "daemonEngine".
@@ -123,6 +131,8 @@ type BeanOverrides struct {
 	DaemonInteractionBroker spicebean.Override[interaction.Broker]
 	// ProcessResolver replaces bean "processResolver".
 	ProcessResolver spicebean.Override[process.ExecutableResolver]
+	// RuntimePluginHostIdentity replaces bean "runtimePluginHostIdentity".
+	RuntimePluginHostIdentity spicebean.Override[*pluginv1.BuildIdentity]
 	// DaemonRoot replaces bean "daemonRoot".
 	DaemonRoot spicebean.Override[*daemon.Root]
 	// SessionStore replaces bean "sessionStore".
@@ -131,6 +141,8 @@ type BeanOverrides struct {
 	OperationLedger spicebean.Override[*daemon2.Ledger]
 	// ServerLimits replaces bean "serverLimits".
 	ServerLimits spicebean.Override[client.Limits]
+	// RuntimePluginEndpointFactory replaces bean "runtimePluginEndpointFactory".
+	RuntimePluginEndpointFactory spicebean.Override[pluginhost.LocalEndpointFactory]
 	// CodingConfig replaces bean "codingConfig".
 	CodingConfig spicebean.Override[coding.Config]
 	// OpenAIConfig replaces bean "openAIConfig".
@@ -145,10 +157,12 @@ type BeanOverrides struct {
 	Shell spicebean.Override[tool.Tool]
 	// Replace replaces bean "replace".
 	Replace spicebean.Override[tool.Tool]
-	// DaemonToolDispatcher replaces bean "daemonToolDispatcher".
-	DaemonToolDispatcher spicebean.Override[stage.ToolDispatcher]
-	// DaemonToolPlanSource replaces bean "daemonToolPlanSource".
-	DaemonToolPlanSource spicebean.Override[stage.ToolPlanSource]
+	// RuntimePluginCompiledDispatcher replaces bean "runtimePluginCompiledDispatcher".
+	RuntimePluginCompiledDispatcher spicebean.Override[stage.ToolDispatcher]
+	// RuntimePluginHost replaces bean "runtimePluginHost".
+	RuntimePluginHost spicebean.Override[*pluginhost.Host]
+	// RuntimePluginToolPlanSource replaces bean "runtimePluginToolPlanSource".
+	RuntimePluginToolPlanSource spicebean.Override[stage.ToolPlanSource]
 	// OpenAIModelProvider replaces bean "openAIModelProvider".
 	OpenAIModelProvider spicebean.Override[model.Provider]
 	// DaemonEngine replaces bean "daemonEngine".
@@ -211,6 +225,9 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.ProcessResolver.Enabled() {
 			result.ProcessResolver = layer.Overrides.ProcessResolver
 		}
+		if layer.Overrides.RuntimePluginHostIdentity.Enabled() {
+			result.RuntimePluginHostIdentity = layer.Overrides.RuntimePluginHostIdentity
+		}
 		if layer.Overrides.DaemonRoot.Enabled() {
 			result.DaemonRoot = layer.Overrides.DaemonRoot
 		}
@@ -222,6 +239,9 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		}
 		if layer.Overrides.ServerLimits.Enabled() {
 			result.ServerLimits = layer.Overrides.ServerLimits
+		}
+		if layer.Overrides.RuntimePluginEndpointFactory.Enabled() {
+			result.RuntimePluginEndpointFactory = layer.Overrides.RuntimePluginEndpointFactory
 		}
 		if layer.Overrides.CodingConfig.Enabled() {
 			result.CodingConfig = layer.Overrides.CodingConfig
@@ -244,11 +264,14 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.Replace.Enabled() {
 			result.Replace = layer.Overrides.Replace
 		}
-		if layer.Overrides.DaemonToolDispatcher.Enabled() {
-			result.DaemonToolDispatcher = layer.Overrides.DaemonToolDispatcher
+		if layer.Overrides.RuntimePluginCompiledDispatcher.Enabled() {
+			result.RuntimePluginCompiledDispatcher = layer.Overrides.RuntimePluginCompiledDispatcher
 		}
-		if layer.Overrides.DaemonToolPlanSource.Enabled() {
-			result.DaemonToolPlanSource = layer.Overrides.DaemonToolPlanSource
+		if layer.Overrides.RuntimePluginHost.Enabled() {
+			result.RuntimePluginHost = layer.Overrides.RuntimePluginHost
+		}
+		if layer.Overrides.RuntimePluginToolPlanSource.Enabled() {
+			result.RuntimePluginToolPlanSource = layer.Overrides.RuntimePluginToolPlanSource
 		}
 		if layer.Overrides.OpenAIModelProvider.Enabled() {
 			result.OpenAIModelProvider = layer.Overrides.OpenAIModelProvider

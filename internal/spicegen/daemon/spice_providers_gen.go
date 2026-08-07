@@ -13,6 +13,7 @@ import (
 	spiceDaemon "github.com/spice-framework/spice-agent-coding/internal/spicegen/daemon/sources/internal_/daemon"
 	spiceAutoconfigure "github.com/spice-framework/spice-agent-coding/internal/spicegen/daemon/sources/vendor_/github.com/spice-framework/spice-agent-provider-openai/autoconfigure"
 	spiceAutoconfigure2 "github.com/spice-framework/spice-agent-coding/internal/spicegen/daemon/sources/vendor_/github.com/spice-framework/spice-agent-tools-coding/autoconfigure"
+	spiceAutoconfigure3 "github.com/spice-framework/spice-agent-coding/internal/spicegen/daemon/sources/vendor_/github.com/spice-framework/spice-agent/plugin/host/autoconfigure"
 	openaiprovider "github.com/spice-framework/spice-agent-provider-openai"
 	coding "github.com/spice-framework/spice-agent-tools-coding"
 	agent "github.com/spice-framework/spice-agent/agent"
@@ -22,6 +23,8 @@ import (
 	grpcserver "github.com/spice-framework/spice-agent/daemon/grpcserver"
 	interaction "github.com/spice-framework/spice-agent/interaction"
 	model "github.com/spice-framework/spice-agent/model"
+	pluginhost "github.com/spice-framework/spice-agent/plugin/host"
+	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
 	process "github.com/spice-framework/spice-agent/process"
 	stage "github.com/spice-framework/spice-agent/stage"
 	tool "github.com/spice-framework/spice-agent/tool"
@@ -30,35 +33,38 @@ import (
 )
 
 type applicationDependencies struct {
-	pendingHub              *daemon2.PendingHub
-	serverBuild             client.Build
-	daemonRootRegistry      daemonprocess.RootRegistry
-	endpointScope           endpoint.UserScope
-	endpointStore           *endpoint.Store
-	endpointToken           endpoint.Token
-	processLauncher         process.Launcher
-	serverProtocol          client.ProtocolVersion
-	daemonInteractionBroker interaction.Broker
-	processResolver         process.ExecutableResolver
-	daemonRoot              *daemon.Root
-	sessionStore            *daemon2.SessionStore
-	operationLedger         *daemon2.Ledger
-	serverLimits            client.Limits
-	properties              daemon.Properties
-	codingConfig            coding.Config
-	openAIConfig            openaiprovider.Config
-	runAuthority            *daemon2.RunAuthority
-	definitionSet           daemon2.DefinitionSet
-	read                    tool.Tool
-	shell                   tool.Tool
-	replace                 tool.Tool
-	daemonToolDispatcher    stage.ToolDispatcher
-	daemonToolPlanSource    stage.ToolPlanSource
-	openAIModelProvider     model.Provider
-	daemonEngine            *agent.Engine
-	runHost                 *daemon2.RunHost
-	grpcServer              *grpcserver.Server
-	daemonRuntime           *daemon.Runtime
+	pendingHub                      *daemon2.PendingHub
+	serverBuild                     client.Build
+	daemonRootRegistry              daemonprocess.RootRegistry
+	endpointScope                   endpoint.UserScope
+	endpointStore                   *endpoint.Store
+	endpointToken                   endpoint.Token
+	processLauncher                 process.Launcher
+	serverProtocol                  client.ProtocolVersion
+	daemonInteractionBroker         interaction.Broker
+	processResolver                 process.ExecutableResolver
+	runtimePluginHostIdentity       *pluginv1.BuildIdentity
+	daemonRoot                      *daemon.Root
+	sessionStore                    *daemon2.SessionStore
+	operationLedger                 *daemon2.Ledger
+	serverLimits                    client.Limits
+	runtimePluginEndpointFactory    pluginhost.LocalEndpointFactory
+	properties                      daemon.Properties
+	codingConfig                    coding.Config
+	openAIConfig                    openaiprovider.Config
+	runAuthority                    *daemon2.RunAuthority
+	definitionSet                   daemon2.DefinitionSet
+	read                            tool.Tool
+	shell                           tool.Tool
+	replace                         tool.Tool
+	runtimePluginCompiledDispatcher stage.ToolDispatcher
+	runtimePluginHost               *pluginhost.Host
+	runtimePluginToolPlanSource     stage.ToolPlanSource
+	openAIModelProvider             model.Provider
+	daemonEngine                    *agent.Engine
+	runHost                         *daemon2.RunHost
+	grpcServer                      *grpcserver.Server
+	daemonRuntime                   *daemon.Runtime
 }
 
 func constructApplicationDependencies(
@@ -221,6 +227,21 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = processResolver
+	runtimePluginHostIdentity, runtimePluginHostIdentityCleanup, err := func() (*pluginv1.BuildIdentity, spicelifecycle.Cleanup, error) {
+		if options.Overrides.RuntimePluginHostIdentity.Enabled() {
+			return options.Overrides.RuntimePluginHostIdentity.Acquire(ctx)
+		}
+		return spiceDaemon.ConstructRuntimePluginHostIdentity_5b56db5e(serverBuild)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginHostIdentity (*github.com/spice-framework/spice-agent/plugin/v1.BuildIdentity, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|28:NewRuntimePluginHostIdentity): %w", err))
+	}
+	if runtimePluginHostIdentityCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|28:NewRuntimePluginHostIdentity", runtimePluginHostIdentityCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginHostIdentity (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|28:NewRuntimePluginHostIdentity): %w", err))
+		}
+	}
+	_ = runtimePluginHostIdentity
 	daemonRoot, daemonRootCleanup, err := func() (*daemon.Root, spicelifecycle.Cleanup, error) {
 		if options.Overrides.DaemonRoot.Enabled() {
 			return options.Overrides.DaemonRoot.Acquire(ctx)
@@ -281,6 +302,21 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = serverLimits
+	runtimePluginEndpointFactory, runtimePluginEndpointFactoryCleanup, err := func() (pluginhost.LocalEndpointFactory, spicelifecycle.Cleanup, error) {
+		if options.Overrides.RuntimePluginEndpointFactory.Enabled() {
+			return options.Overrides.RuntimePluginEndpointFactory.Acquire(ctx)
+		}
+		return spiceAutoconfigure3.ConstructRuntimePluginEndpointFactory_d1bddc00()
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginEndpointFactory (github.com/spice-framework/spice-agent/plugin/host.LocalEndpointFactory, source spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|33:DefaultCurrentUserEndpointFactory): %w", err))
+	}
+	if runtimePluginEndpointFactoryCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|33:DefaultCurrentUserEndpointFactory", runtimePluginEndpointFactoryCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginEndpointFactory (source spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|33:DefaultCurrentUserEndpointFactory): %w", err))
+		}
+	}
+	_ = runtimePluginEndpointFactory
 	properties, err := spiceDaemon.BindProperties_641bb6f4(configurationSnapshot)
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("bind configuration github.com/spice-framework/spice-agent-coding/internal/daemon.Properties for bean Properties (source spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties): %w", err))
@@ -391,36 +427,51 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = replace
-	daemonToolDispatcher, daemonToolDispatcherCleanup, err := func() (stage.ToolDispatcher, spicelifecycle.Cleanup, error) {
-		if options.Overrides.DaemonToolDispatcher.Enabled() {
-			return options.Overrides.DaemonToolDispatcher.Acquire(ctx)
+	runtimePluginCompiledDispatcher, runtimePluginCompiledDispatcherCleanup, err := func() (stage.ToolDispatcher, spicelifecycle.Cleanup, error) {
+		if options.Overrides.RuntimePluginCompiledDispatcher.Enabled() {
+			return options.Overrides.RuntimePluginCompiledDispatcher.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructDaemonToolDispatcher_62bc19b3(map[string]tool.Tool{"read": read, "replace": replace, "shell": shell})
+		return spiceAutoconfigure3.ConstructRuntimePluginCompiledDispatcher_288d6ba6(map[string]tool.Tool{"read": read, "replace": replace, "shell": shell})
 	}()
 	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean daemonToolDispatcher (github.com/spice-framework/spice-agent/stage.ToolDispatcher, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|17:NewToolDispatcher): %w", err))
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginCompiledDispatcher (github.com/spice-framework/spice-agent/stage.ToolDispatcher, source spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|25:DefaultCompiledDispatcher): %w", err))
 	}
-	if daemonToolDispatcherCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|17:NewToolDispatcher", daemonToolDispatcherCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean daemonToolDispatcher (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|17:NewToolDispatcher): %w", err))
+	if runtimePluginCompiledDispatcherCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|25:DefaultCompiledDispatcher", runtimePluginCompiledDispatcherCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginCompiledDispatcher (source spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|25:DefaultCompiledDispatcher): %w", err))
 		}
 	}
-	_ = daemonToolDispatcher
-	daemonToolPlanSource, daemonToolPlanSourceCleanup, err := func() (stage.ToolPlanSource, spicelifecycle.Cleanup, error) {
-		if options.Overrides.DaemonToolPlanSource.Enabled() {
-			return options.Overrides.DaemonToolPlanSource.Acquire(ctx)
+	_ = runtimePluginCompiledDispatcher
+	runtimePluginHost, runtimePluginHostCleanup, err := func() (*pluginhost.Host, spicelifecycle.Cleanup, error) {
+		if options.Overrides.RuntimePluginHost.Enabled() {
+			return options.Overrides.RuntimePluginHost.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructDaemonToolPlanSource_4dd1bcce(daemonToolDispatcher)
+		return spiceAutoconfigure3.ConstructRuntimePluginHost_335c4779(runtimePluginHostIdentity, runtimePluginCompiledDispatcher, []stage.ToolDispatchDecorator{}, processLauncher, runtimePluginEndpointFactory)
 	}()
 	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean daemonToolPlanSource (github.com/spice-framework/spice-agent/stage.ToolPlanSource, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|17:NewToolPlanSource): %w", err))
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginHost (*github.com/spice-framework/spice-agent/plugin/host.Host, source spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|11:DefaultHost): %w", err))
 	}
-	if daemonToolPlanSourceCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|17:NewToolPlanSource", daemonToolPlanSourceCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean daemonToolPlanSource (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|17:NewToolPlanSource): %w", err))
+	if runtimePluginHostCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|11:DefaultHost", runtimePluginHostCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginHost (source spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|11:DefaultHost): %w", err))
 		}
 	}
-	_ = daemonToolPlanSource
+	_ = runtimePluginHost
+	runtimePluginToolPlanSource, runtimePluginToolPlanSourceCleanup, err := func() (stage.ToolPlanSource, spicelifecycle.Cleanup, error) {
+		if options.Overrides.RuntimePluginToolPlanSource.Enabled() {
+			return options.Overrides.RuntimePluginToolPlanSource.Acquire(ctx)
+		}
+		return spiceAutoconfigure3.ConstructRuntimePluginToolPlanSource_db29b3aa(runtimePluginHost)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginToolPlanSource (github.com/spice-framework/spice-agent/stage.ToolPlanSource, source spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource): %w", err))
+	}
+	if runtimePluginToolPlanSourceCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource", runtimePluginToolPlanSourceCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginToolPlanSource (source spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource): %w", err))
+		}
+	}
+	_ = runtimePluginToolPlanSource
 	openAIModelProvider, openAIModelProviderCleanup, err := func() (model.Provider, spicelifecycle.Cleanup, error) {
 		if options.Overrides.OpenAIModelProvider.Enabled() {
 			return options.Overrides.OpenAIModelProvider.Acquire(ctx)
@@ -440,7 +491,7 @@ func constructApplicationDependencies(
 		if options.Overrides.DaemonEngine.Enabled() {
 			return options.Overrides.DaemonEngine.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructDaemonEngine_10b0c974(openAIModelProvider, daemonToolPlanSource, daemonInteractionBroker)
+		return spiceDaemon.ConstructDaemonEngine_10b0c974(openAIModelProvider, runtimePluginToolPlanSource, daemonInteractionBroker)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean daemonEngine (*github.com/spice-framework/spice-agent/agent.Engine, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine): %w", err))
@@ -497,34 +548,37 @@ func constructApplicationDependencies(
 	}
 	_ = daemonRuntime
 	return &applicationDependencies{
-		pendingHub:              pendingHub,
-		serverBuild:             serverBuild,
-		daemonRootRegistry:      daemonRootRegistry,
-		endpointScope:           endpointScope,
-		endpointStore:           endpointStore,
-		endpointToken:           endpointToken,
-		processLauncher:         processLauncher,
-		serverProtocol:          serverProtocol,
-		daemonInteractionBroker: daemonInteractionBroker,
-		processResolver:         processResolver,
-		daemonRoot:              daemonRoot,
-		sessionStore:            sessionStore,
-		operationLedger:         operationLedger,
-		serverLimits:            serverLimits,
-		properties:              properties,
-		codingConfig:            codingConfig,
-		openAIConfig:            openAIConfig,
-		runAuthority:            runAuthority,
-		definitionSet:           definitionSet,
-		read:                    read,
-		shell:                   shell,
-		replace:                 replace,
-		daemonToolDispatcher:    daemonToolDispatcher,
-		daemonToolPlanSource:    daemonToolPlanSource,
-		openAIModelProvider:     openAIModelProvider,
-		daemonEngine:            daemonEngine,
-		runHost:                 runHost,
-		grpcServer:              grpcServer,
-		daemonRuntime:           daemonRuntime,
+		pendingHub:                      pendingHub,
+		serverBuild:                     serverBuild,
+		daemonRootRegistry:              daemonRootRegistry,
+		endpointScope:                   endpointScope,
+		endpointStore:                   endpointStore,
+		endpointToken:                   endpointToken,
+		processLauncher:                 processLauncher,
+		serverProtocol:                  serverProtocol,
+		daemonInteractionBroker:         daemonInteractionBroker,
+		processResolver:                 processResolver,
+		runtimePluginHostIdentity:       runtimePluginHostIdentity,
+		daemonRoot:                      daemonRoot,
+		sessionStore:                    sessionStore,
+		operationLedger:                 operationLedger,
+		serverLimits:                    serverLimits,
+		runtimePluginEndpointFactory:    runtimePluginEndpointFactory,
+		properties:                      properties,
+		codingConfig:                    codingConfig,
+		openAIConfig:                    openAIConfig,
+		runAuthority:                    runAuthority,
+		definitionSet:                   definitionSet,
+		read:                            read,
+		shell:                           shell,
+		replace:                         replace,
+		runtimePluginCompiledDispatcher: runtimePluginCompiledDispatcher,
+		runtimePluginHost:               runtimePluginHost,
+		runtimePluginToolPlanSource:     runtimePluginToolPlanSource,
+		openAIModelProvider:             openAIModelProvider,
+		daemonEngine:                    daemonEngine,
+		runHost:                         runHost,
+		grpcServer:                      grpcServer,
+		daemonRuntime:                   daemonRuntime,
 	}, nil
 }
