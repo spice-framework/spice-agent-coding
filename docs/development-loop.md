@@ -65,11 +65,37 @@ production-budget replay, credential redaction, and generated reverse cleanup.
 It deliberately drives the generated components on a private endpoint rather
 than claiming coverage of the installed command and Bubble Tea processes.
 
-That acceptance intentionally freezes one production supervisor rather than
-inventing a distribution-owned coordinator. The remaining dual-target proof is
-an installed workflow with the real `spice-agentd` and `spice-agent`
-supervisors running simultaneously: fault one target, keep the other attached,
-then prove TUI reconnection after only the daemon is replaced. The existing
-commands expose the two required supervisors, but there is not yet a structured
-cross-process test seam for observing the real Bubble Tea session and daemon
-replacement in one hermetic test.
+`internal/installedacceptance` closes the installed-process gap. It builds the
+committed generated `spice-agentd` and `spice-agent` packages in vendor-only
+mode, starts them as independent operating-system processes, and drives the
+Bubble Tea terminal through its pipe-backed accessible input mode. This is an
+installed-process and Bubble Tea event-loop proof, not a PTY or real-terminal
+interaction claim. An offline deterministic
+provider first invokes the compiled read tool, holds its streamed response,
+and faults the established local gRPC connection while the daemon, engine,
+run, and terminal remain alive. The same terminal reconnects from its exact
+acknowledged sequence, receives the bounded replay, and records exactly one
+terminal event.
+
+Both acceptance binaries use a build-tag-only endpoint constructor. It derives
+a distinct directory and IPC address below the validated current-user runtime
+scope, preserves the ordinary secure storage and platform validation, and is
+absent from production builds. The acceptance fails if either daemon publishes
+the normal user endpoint, so an already running user daemon cannot silently
+skip or weaken the gate.
+
+After that run is terminal, the test replaces the daemon process while leaving
+the Bubble Tea process alive. Endpoint discovery observes a new protected
+process identity and authentication token, the terminal establishes a fresh
+session, a second prompt completes through the replacement daemon, and local
+prompt history remains available. This split is deliberate: transient
+transport recovery preserves an in-flight run, while daemon process loss is
+accepted only between runs. Recovering an active run across daemon process
+loss requires the Phase 7 durable snapshot/recorder contract and is not claimed
+by this release.
+
+The installed proof also link-injects the shared
+`internal/distribution.Version` and `internal/distribution.Commit` variables,
+checks both executables' `--version` output, and verifies that the daemon
+advertises the same identity in protected endpoint metadata. Ordinary local
+builds retain the honest `0.1.0-preview.1-dev` / `development` defaults.

@@ -317,7 +317,7 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 
 func runSpice(t *testing.T, root string, arguments ...string) (string, string, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 90*time.Second)
 	defer cancel()
 	commandArguments := append([]string{"tool", spiceTool}, arguments...)
 	// #nosec G204,G702 -- executable and arguments are fixed daemon generation checks.

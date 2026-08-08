@@ -28,6 +28,13 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 			Kind: spiceconfig.KindString,
 		},
 		spiceconfig.Property{
+			Key:         "agent.terminal.accessible",
+			Kind:        spiceconfig.KindBoolean,
+			Environment: "SPICE_AGENT_TERMINAL_ACCESSIBLE",
+			Default:     "false",
+			HasDefault:  true,
+		},
+		spiceconfig.Property{
 			Key:         "spice.shutdown-timeout",
 			Kind:        spiceconfig.KindDuration,
 			Environment: "SPICE_SHUTDOWN_TIMEOUT",

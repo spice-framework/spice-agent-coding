@@ -3,7 +3,7 @@
   "go": "1.26.5",
   "spice": "v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0",
   "spice_toolchain": "v0.1.0-preview.1.0.20260807044408-6598abca8196",
-  "spice_agent": "v0.0.0-20260807202054-caf82692c80d",
+  "spice_agent": "v0.0.0-20260808000851-55168c1ebaac",
   "spice_agent_tui": "v0.0.0-20260807191321-a9c2bc36bc67",
   "spice_agent_provider_openai": "v0.0.0-20260806230257-a6962fe2dabc",
   "spice_agent_tools_coding": "v0.0.0-20260807150540-eeacf58875c5"

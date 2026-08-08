@@ -12,7 +12,7 @@
   },
   "generator_version": "0.1.0-dev",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:09ba5b740e2622b6eb5ab1c9ce78300109a988b663814bb9cd9d8ba538af8ea3",
+  "input_sha256": "sha256:821d84492d031669c6ed1f9f0571f85a8ec1615d8c2ce0c950d9f89a9ba73585",
   "files": [
     {
       "path": "internal/spicegen/spice_agentd/sources/cmd/spice-agentd/application_spice_gen.go",
@@ -90,11 +90,11 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/host_spice_gen.go",
-      "sha256": "sha256:89782d1f87d8463facf922e0eb01242e630b79775658761716b7bd0365666dfc",
+      "sha256": "sha256:f249308b077ebf7fae092706f9cbcb9ede99b26f69b5610f0266a75a9a03d88b",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/daemon/host.go",
-        "line": 29,
+        "line": 24,
         "column": 4,
         "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointScope"
       },
@@ -136,7 +136,7 @@
           "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|14:NewServerBuild",
           "source": {
             "path": "internal/daemon/host.go",
-            "line": 55,
+            "line": 50,
             "column": 4,
             "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|14:NewServerBuild"
           },
@@ -200,7 +200,7 @@
           "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointScope",
           "source": {
             "path": "internal/daemon/host.go",
-            "line": 29,
+            "line": 24,
             "column": 4,
             "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointScope"
           },
@@ -216,7 +216,7 @@
           "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointStore",
           "source": {
             "path": "internal/daemon/host.go",
-            "line": 37,
+            "line": 32,
             "column": 4,
             "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointStore"
           },
@@ -232,7 +232,7 @@
           "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointToken",
           "source": {
             "path": "internal/daemon/host.go",
-            "line": 48,
+            "line": 43,
             "column": 4,
             "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointToken"
           },
@@ -668,13 +668,13 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/runtime_spice_gen.go",
-      "sha256": "sha256:82c86a1b444c02c563d9e18cad9b3cba81f88bbf688d65bf2fe939ffa95128bf",
+      "sha256": "sha256:ced39ba267cca3cab562cd9b328c71968343d1adad38f52b4f29d9ad9f193825",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/daemon/runtime.go",
-        "line": 71,
+        "line": 59,
         "column": 4,
-        "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime"
+        "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory"
       },
       "mappings": [
         {
@@ -682,15 +682,31 @@
           "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime",
           "source": {
             "path": "internal/daemon/runtime.go",
-            "line": 71,
+            "line": 91,
             "column": 4,
             "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime"
           },
           "generated": {
-            "start_line": 18,
+            "start_line": 19,
             "start_column": 4,
-            "end_line": 18,
+            "end_line": 19,
             "end_column": 35
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory",
+          "source": {
+            "path": "internal/daemon/runtime.go",
+            "line": 59,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory"
+          },
+          "generated": {
+            "start_line": 30,
+            "start_column": 4,
+            "end_line": 30,
+            "end_column": 43
           }
         }
       ]
@@ -848,7 +864,7 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_assembly_gen.go",
-      "sha256": "sha256:3291bbf4d28b28120202b2631b3bd2d383b36cd378f4549395fbda40d14985d8",
+      "sha256": "sha256:7e17bd19029cad8ec5da1c754df59e2d0a05c36028fb1fc9b917f99793ac5090",
       "role": "target-assembly",
       "related_sources": [
         {
@@ -871,25 +887,25 @@
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 29,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointScope"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 37,
+          "line": 32,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointStore"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 48,
+          "line": 43,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointToken"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 55,
+          "line": 50,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|14:NewServerBuild"
         },
@@ -1057,19 +1073,25 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 71,
+          "line": 59,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory"
+        },
+        {
+          "path": "internal/daemon/runtime.go",
+          "line": 91,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime"
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 114,
+          "line": 135,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|5:Start"
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 223,
+          "line": 244,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|4:Stop"
         },
@@ -1481,7 +1503,7 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_contracts_gen.go",
-      "sha256": "sha256:f2637c6dcdbf5c466d02112f52146891c6397109521331f8d108155c9252cd18",
+      "sha256": "sha256:eeb353102f75df752dd0e71a02f3fee075b199a557003cdb11771141214f04a0",
       "role": "target-contracts",
       "related_sources": [
         {
@@ -1504,25 +1526,25 @@
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 29,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointScope"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 37,
+          "line": 32,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointStore"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 48,
+          "line": 43,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointToken"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 55,
+          "line": 50,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|14:NewServerBuild"
         },
@@ -1690,19 +1712,25 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 71,
+          "line": 59,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory"
+        },
+        {
+          "path": "internal/daemon/runtime.go",
+          "line": 91,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime"
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 114,
+          "line": 135,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|5:Start"
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 223,
+          "line": 244,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|4:Stop"
         },
@@ -1919,13 +1947,13 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 114,
+          "line": 135,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|5:Start"
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 223,
+          "line": 244,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|4:Stop"
         },
@@ -1950,13 +1978,13 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 114,
+          "line": 135,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|5:Start"
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 223,
+          "line": 244,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|4:Stop"
         },
@@ -1970,7 +1998,7 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_providers_gen.go",
-      "sha256": "sha256:77273565823f4c9f724c0f38ce67bc7403713ee64a2f9ff1ee6c789bd17697b2",
+      "sha256": "sha256:2ae7d2d5661ebdd05b351bcdd4237a2fa142645e484f1a613edf8dd84dba268c",
       "role": "target-providers",
       "related_sources": [
         {
@@ -1993,25 +2021,25 @@
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 29,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointScope"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 37,
+          "line": 32,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointStore"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 48,
+          "line": 43,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointToken"
         },
         {
           "path": "internal/daemon/host.go",
-          "line": 55,
+          "line": 50,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|14:NewServerBuild"
         },
@@ -2179,7 +2207,13 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 71,
+          "line": 59,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory"
+        },
+        {
+          "path": "internal/daemon/runtime.go",
+          "line": 91,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime"
         },

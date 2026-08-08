@@ -35,7 +35,7 @@ func bindSecureDirectory(path string) (*secureDirectory, error) {
 		_ = unix.Close(descriptor)
 		return nil, err
 	}
-	mode := uint32(stat.Mode)
+	mode := uint32(stat.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if mode&unix.S_IFMT != unix.S_IFDIR || int(stat.Uid) != os.Geteuid() {
 		_ = unix.Close(descriptor)
 		return nil, ErrUnavailable
@@ -235,7 +235,7 @@ func (directory *secureDirectory) removeFile(name string) error {
 	if err != nil {
 		return err
 	}
-	currentMode := uint32(current.Mode)
+	currentMode := uint32(current.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if opened.Dev != current.Dev || opened.Ino != current.Ino ||
 		currentMode&unix.S_IFMT != unix.S_IFREG || int(current.Uid) != os.Geteuid() ||
 		current.Nlink != 1 || currentMode&0o777 != 0o600 {
@@ -260,7 +260,7 @@ func bindExistingDirectory(path string) (*secureDirectory, error) {
 		_ = unix.Close(descriptor)
 		return nil, err
 	}
-	mode := uint32(stat.Mode)
+	mode := uint32(stat.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if mode&unix.S_IFMT != unix.S_IFDIR || int(stat.Uid) != os.Geteuid() || mode&0o777 != 0o700 {
 		_ = unix.Close(descriptor)
 		return nil, ErrUnavailable
@@ -403,7 +403,7 @@ func validateUnixAncestryPair(parent, child int) error {
 	if !trustedUnixOwner(parentStat.Uid) {
 		return ErrUnavailable
 	}
-	parentMode := uint32(parentStat.Mode)
+	parentMode := uint32(parentStat.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if parentMode&0o022 == 0 {
 		return nil
 	}
@@ -426,7 +426,7 @@ func validateUnixDestination(directory int, base string) error {
 	if err != nil {
 		return err
 	}
-	mode := uint32(stat.Mode)
+	mode := uint32(stat.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if mode&unix.S_IFMT != unix.S_IFREG || int(stat.Uid) != os.Geteuid() || stat.Nlink != 1 || mode&0o777 != 0o600 {
 		return ErrUnavailable
 	}
@@ -438,7 +438,7 @@ func validateUnixFile(descriptor int, mode uint32) error {
 	if err := unix.Fstat(descriptor, &stat); err != nil {
 		return err
 	}
-	statMode := uint32(stat.Mode)
+	statMode := uint32(stat.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if statMode&unix.S_IFMT != unix.S_IFREG || int(stat.Uid) != os.Geteuid() || stat.Nlink != 1 || statMode&0o777 != mode {
 		return ErrUnavailable
 	}

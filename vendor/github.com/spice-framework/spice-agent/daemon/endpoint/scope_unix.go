@@ -82,8 +82,9 @@ func validateXDGDirectory(directory string, effectiveUserID int) error {
 	if err = unix.Fstat(descriptor, &status); err != nil {
 		return err
 	}
-	if uint32(status.Mode)&unix.S_IFMT != unix.S_IFDIR || int(status.Uid) != effectiveUserID ||
-		uint32(status.Mode)&0o777 != 0o700 {
+	// Stat_t.Mode differs between Darwin and Linux; normalize it once for shared checks.
+	mode := uint32(status.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
+	if mode&unix.S_IFMT != unix.S_IFDIR || int(status.Uid) != effectiveUserID || mode&0o777 != 0o700 {
 		return errors.New("runtime directory must be owned by the current user with mode 0700")
 	}
 	bound, err := userstorage.Bind(directory)
@@ -106,7 +107,7 @@ func validateStickyTemp(directory string, effectiveUserID int) error {
 	if err = unix.Fstat(descriptor, &status); err != nil {
 		return err
 	}
-	mode := uint32(status.Mode)
+	mode := uint32(status.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	owner := int(status.Uid)
 	if mode&unix.S_IFMT != unix.S_IFDIR || mode&unix.S_ISVTX == 0 ||
 		(owner != 0 && owner != effectiveUserID) {

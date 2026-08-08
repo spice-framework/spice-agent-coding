@@ -63,6 +63,7 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		EndpointScope:                   dependencies.endpointScope,
 		EndpointStore:                   dependencies.endpointStore,
 		EndpointToken:                   dependencies.endpointToken,
+		DaemonListenerFactory:           dependencies.daemonListenerFactory,
 		ProcessLauncher:                 dependencies.processLauncher,
 		ServerProtocol:                  dependencies.serverProtocol,
 		DaemonInteractionBroker:         dependencies.daemonInteractionBroker,

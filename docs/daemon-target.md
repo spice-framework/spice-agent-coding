@@ -3,7 +3,7 @@
 The distribution pins the Spice runtime at
 `v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0`, the matching toolchain at
 `v0.1.0-preview.1.0.20260807044408-6598abca8196`, and Agent core at
-`v0.0.0-20260807202054-caf82692c80d`. This coordinated pin supplies the
+`v0.0.0-20260808000851-55168c1ebaac`. This coordinated pin supplies the
 canonical `@ConfigurationProperties` contract, hyphenated property-prefix
 segments, exact generated health-source injection, and plan-dependent runtime
 plugin recovery policy used by this target.

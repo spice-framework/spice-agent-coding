@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
 )
 
 func TestNewAndStarterRejectInvalidProcessBoundaries(t *testing.T) {
@@ -24,7 +26,7 @@ func TestNewAndStarterRejectInvalidProcessBoundaries(t *testing.T) {
 		t.Fatalf("New(valid) = %v, %v", starter, err)
 	}
 
-	directory := t.TempDir()
+	directory := testpath.TempDir(t)
 	executable := filepath.Join(directory, daemonExecutableName())
 	launcher := filepath.Join(directory, launcherExecutableName())
 	valid.Directory = directory

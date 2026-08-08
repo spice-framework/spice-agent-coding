@@ -96,7 +96,7 @@ github.com/spice-framework/spice/security
 github.com/spice-framework/spice/starter
 github.com/spice-framework/spice/validation
 github.com/spice-framework/spice/web
-# github.com/spice-framework/spice-agent v0.0.0-20260807202054-caf82692c80d
+# github.com/spice-framework/spice-agent v0.0.0-20260808000851-55168c1ebaac
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent/agent
 github.com/spice-framework/spice-agent/annotation/agent

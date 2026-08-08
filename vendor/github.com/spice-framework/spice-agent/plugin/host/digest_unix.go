@@ -45,5 +45,8 @@ func inspectExecutableDescriptor(descriptor int) (fileIdentity, error) {
 	if status.Mode&0o111 == 0 {
 		return fileIdentity{}, errors.New("plugin executable has no execute permission")
 	}
-	return fileIdentity{device: uint64(status.Dev), inode: uint64(status.Ino)}, nil
+	return fileIdentity{
+		device: uint64(status.Dev), //nolint:unconvert // Required on Darwin; redundant only on Linux.
+		inode:  uint64(status.Ino), //nolint:unconvert // Required on Darwin; redundant only on Linux.
+	}, nil
 }

@@ -40,6 +40,7 @@ type applicationDependencies struct {
 	endpointScope                   endpoint.UserScope
 	endpointStore                   *endpoint.Store
 	endpointToken                   endpoint.Token
+	daemonListenerFactory           daemon.ListenerFactory
 	processLauncher                 process.Launcher
 	serverProtocol                  client.ProtocolVersion
 	daemonInteractionBroker         interaction.Broker
@@ -188,6 +189,21 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = endpointToken
+	daemonListenerFactory, daemonListenerFactoryCleanup, err := func() (daemon.ListenerFactory, spicelifecycle.Cleanup, error) {
+		if options.Overrides.DaemonListenerFactory.Enabled() {
+			return options.Overrides.DaemonListenerFactory.Acquire(ctx)
+		}
+		return spiceDaemon.ConstructDaemonListenerFactory_66b0ce4f()
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean daemonListenerFactory (github.com/spice-framework/spice-agent-coding/internal/daemon.ListenerFactory, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory): %w", err))
+	}
+	if daemonListenerFactoryCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory", daemonListenerFactoryCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean daemonListenerFactory (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory): %w", err))
+		}
+	}
+	_ = daemonListenerFactory
 	processLauncher, processLauncherCleanup, err := func() (process.Launcher, spicelifecycle.Cleanup, error) {
 		if options.Overrides.ProcessLauncher.Enabled() {
 			return options.Overrides.ProcessLauncher.Acquire(ctx)
@@ -622,7 +638,7 @@ func constructApplicationDependencies(
 		if options.Overrides.DaemonRuntime.Enabled() {
 			return options.Overrides.DaemonRuntime.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructDaemonRuntime_b0e1ae70(endpointScope, endpointStore, endpointToken, serverBuild, serverProtocol, grpcServer, runtimePluginActivation)
+		return spiceDaemon.ConstructDaemonRuntime_b0e1ae70(endpointScope, endpointStore, endpointToken, serverBuild, serverProtocol, grpcServer, runtimePluginActivation, daemonListenerFactory)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean daemonRuntime (*github.com/spice-framework/spice-agent-coding/internal/daemon.Runtime, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime): %w", err))
@@ -641,6 +657,7 @@ func constructApplicationDependencies(
 		endpointScope:                   endpointScope,
 		endpointStore:                   endpointStore,
 		endpointToken:                   endpointToken,
+		daemonListenerFactory:           daemonListenerFactory,
 		processLauncher:                 processLauncher,
 		serverProtocol:                  serverProtocol,
 		daemonInteractionBroker:         daemonInteractionBroker,

@@ -50,8 +50,6 @@ type Components struct {
 	ConnectingView agenttui.ViewData
 	// RespondKeyBinding is bean "respondKeyBinding".
 	RespondKeyBinding agenttui.KeyBinding
-	// TerminalConfig is bean "terminalConfig".
-	TerminalConfig agenttui.TerminalConfig
 	// BackspaceKeyBinding is bean "backspaceKeyBinding".
 	BackspaceKeyBinding agenttui.KeyBinding
 	// CursorEndKeyBinding is bean "cursorEndKeyBinding".
@@ -98,6 +96,8 @@ type Components struct {
 	TerminalWorkspace agenttui.WorkspaceState
 	// TerminalSessionConfig is bean "terminalSessionConfig".
 	TerminalSessionConfig tuisession.Config
+	// TerminalConfig is bean "terminalConfig".
+	TerminalConfig agenttui.TerminalConfig
 	// TerminalClientConnector is bean "terminalClientConnector".
 	TerminalClientConnector client.Connector
 	// TerminalSession is bean "terminalSession".
@@ -125,8 +125,6 @@ type BeanOverrides struct {
 	ConnectingView spicebean.Override[agenttui.ViewData]
 	// RespondKeyBinding replaces bean "respondKeyBinding".
 	RespondKeyBinding spicebean.Override[agenttui.KeyBinding]
-	// TerminalConfig replaces bean "terminalConfig".
-	TerminalConfig spicebean.Override[agenttui.TerminalConfig]
 	// BackspaceKeyBinding replaces bean "backspaceKeyBinding".
 	BackspaceKeyBinding spicebean.Override[agenttui.KeyBinding]
 	// CursorEndKeyBinding replaces bean "cursorEndKeyBinding".
@@ -171,6 +169,8 @@ type BeanOverrides struct {
 	TerminalWorkspace spicebean.Override[agenttui.WorkspaceState]
 	// TerminalSessionConfig replaces bean "terminalSessionConfig".
 	TerminalSessionConfig spicebean.Override[tuisession.Config]
+	// TerminalConfig replaces bean "terminalConfig".
+	TerminalConfig spicebean.Override[agenttui.TerminalConfig]
 	// TerminalClientConnector replaces bean "terminalClientConnector".
 	TerminalClientConnector spicebean.Override[client.Connector]
 	// TerminalSession replaces bean "terminalSession".
@@ -222,9 +222,6 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		}
 		if layer.Overrides.RespondKeyBinding.Enabled() {
 			result.RespondKeyBinding = layer.Overrides.RespondKeyBinding
-		}
-		if layer.Overrides.TerminalConfig.Enabled() {
-			result.TerminalConfig = layer.Overrides.TerminalConfig
 		}
 		if layer.Overrides.BackspaceKeyBinding.Enabled() {
 			result.BackspaceKeyBinding = layer.Overrides.BackspaceKeyBinding
@@ -291,6 +288,9 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		}
 		if layer.Overrides.TerminalSessionConfig.Enabled() {
 			result.TerminalSessionConfig = layer.Overrides.TerminalSessionConfig
+		}
+		if layer.Overrides.TerminalConfig.Enabled() {
+			result.TerminalConfig = layer.Overrides.TerminalConfig
 		}
 		if layer.Overrides.TerminalClientConnector.Enabled() {
 			result.TerminalClientConnector = layer.Overrides.TerminalClientConnector

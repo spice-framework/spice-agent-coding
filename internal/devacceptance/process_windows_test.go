@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 	"syscall"
+	"time"
 
 	"golang.org/x/sys/windows"
 )
@@ -52,13 +53,24 @@ func replaceFile(source, destination string) error {
 	if err != nil {
 		return err
 	}
-	err = windows.MoveFileEx(
-		from,
-		to,
-		windows.MOVEFILE_REPLACE_EXISTING|windows.MOVEFILE_WRITE_THROUGH,
-	)
-	if errors.Is(err, windows.ERROR_FILE_NOT_FOUND) {
-		return os.ErrNotExist
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		err = windows.MoveFileEx(
+			from,
+			to,
+			windows.MOVEFILE_REPLACE_EXISTING|windows.MOVEFILE_WRITE_THROUGH,
+		)
+		if errors.Is(err, windows.ERROR_FILE_NOT_FOUND) {
+			return os.ErrNotExist
+		}
+		if err == nil || !transientReplaceContention(err) || time.Now().After(deadline) {
+			return err
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
-	return err
+}
+
+func transientReplaceContention(err error) bool {
+	return errors.Is(err, windows.ERROR_SHARING_VIOLATION) ||
+		errors.Is(err, windows.ERROR_ACCESS_DENIED)
 }

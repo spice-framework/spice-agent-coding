@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
 )
 
 const (
@@ -80,7 +82,7 @@ func copyStdinOrExit(exitCode int) {
 
 func TestStarterUsesSiblingDiscreteArgumentAndGracefulEOF(t *testing.T) {
 	t.Parallel()
-	starter := helperStarter(t, "eof", t.TempDir(), 256)
+	starter := helperStarter(t, "eof", testpath.TempDir(t), 256)
 	candidate, err := starter.Start(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -105,10 +107,10 @@ func TestStarterUsesSiblingDiscreteArgumentAndGracefulEOF(t *testing.T) {
 
 func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 	t.Parallel()
-	early := helperStarter(t, "early", t.TempDir(), 256)
+	early := helperStarter(t, "early", testpath.TempDir(t), 256)
 	candidate, err := early.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
+	if candidate == nil {
+		t.Fatalf("early exit returned no owned candidate: %v", err)
 	}
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
@@ -116,7 +118,7 @@ func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 		t.Fatalf("early exit containment/result = %v/%v", err, candidate.Result())
 	}
 
-	blocked := helperStarter(t, "blocked", t.TempDir(), 256)
+	blocked := helperStarter(t, "blocked", testpath.TempDir(t), 256)
 	candidate, err = blocked.Start(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -144,7 +146,7 @@ func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 
 func TestStarterPreservesWorkingDirectoryEnvironmentAndBoundsStderr(t *testing.T) {
 	t.Parallel()
-	directory := t.TempDir()
+	directory := testpath.TempDir(t)
 	starter := helperStarter(t, "report", directory, 1024)
 	candidate, err := starter.Start(t.Context())
 	if err != nil {
@@ -176,7 +178,7 @@ func TestStarterPreservesWorkingDirectoryEnvironmentAndBoundsStderr(t *testing.T
 
 func TestStarterRejectsInvalidConfigurationAndRedactsFailures(t *testing.T) {
 	t.Parallel()
-	directory := t.TempDir()
+	directory := testpath.TempDir(t)
 	launcher := filepath.Join(directory, launcherExecutableName())
 	daemon := filepath.Join(directory, daemonExecutableName())
 	valid := Config{
@@ -186,7 +188,7 @@ func TestStarterRejectsInvalidConfigurationAndRedactsFailures(t *testing.T) {
 	if _, err := newStarter(Config{}, daemon, launcher); err == nil {
 		t.Fatal("unbounded process configuration succeeded")
 	}
-	if _, err := newStarter(valid, filepath.Join(t.TempDir(), daemonExecutableName()), launcher); err == nil {
+	if _, err := newStarter(valid, filepath.Join(testpath.TempDir(t), daemonExecutableName()), launcher); err == nil {
 		t.Fatal("non-sibling daemon executable succeeded")
 	}
 	starter, err := newStarter(valid, daemon, launcher)
@@ -282,7 +284,7 @@ func installHelperExecutable(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	directory := t.TempDir()
+	directory := testpath.TempDir(t)
 	target := filepath.Join(directory, daemonExecutableName())
 	staging := target + ".staging"
 	source, err := os.Open(current)

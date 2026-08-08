@@ -31,7 +31,6 @@ type applicationDependencies struct {
 	submitKeyBinding          agenttui.KeyBinding
 	connectingView            agenttui.ViewData
 	respondKeyBinding         agenttui.KeyBinding
-	terminalConfig            agenttui.TerminalConfig
 	backspaceKeyBinding       agenttui.KeyBinding
 	cursorEndKeyBinding       agenttui.KeyBinding
 	cursorLeftKeyBinding      agenttui.KeyBinding
@@ -55,6 +54,7 @@ type applicationDependencies struct {
 	properties                terminal.Properties
 	terminalWorkspace         agenttui.WorkspaceState
 	terminalSessionConfig     tuisession.Config
+	terminalConfig            agenttui.TerminalConfig
 	terminalClientConnector   client.Connector
 	terminalSession           agenttui.Session
 	terminalShell             agenttui.Shell
@@ -190,21 +190,6 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = respondKeyBinding
-	terminalConfig, terminalConfigCleanup, err := func() (agenttui.TerminalConfig, spicelifecycle.Cleanup, error) {
-		if options.Overrides.TerminalConfig.Enabled() {
-			return options.Overrides.TerminalConfig.Acquire(ctx)
-		}
-		return spiceAutoconfigure.ConstructTerminalConfig_1d85063c()
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalConfig (github.com/spice-framework/spice-agent-tui.TerminalConfig, source spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig): %w", err))
-	}
-	if terminalConfigCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig", terminalConfigCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean terminalConfig (source spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig): %w", err))
-		}
-	}
-	_ = terminalConfig
 	backspaceKeyBinding, backspaceKeyBindingCleanup, err := func() (agenttui.KeyBinding, spicelifecycle.Cleanup, error) {
 		if options.Overrides.BackspaceKeyBinding.Enabled() {
 			return options.Overrides.BackspaceKeyBinding.Acquire(ctx)
@@ -540,6 +525,21 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = terminalSessionConfig
+	terminalConfig, terminalConfigCleanup, err := func() (agenttui.TerminalConfig, spicelifecycle.Cleanup, error) {
+		if options.Overrides.TerminalConfig.Enabled() {
+			return options.Overrides.TerminalConfig.Acquire(ctx)
+		}
+		return spiceTerminal.ConstructTerminalConfig_ec99ff28(properties)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalConfig (github.com/spice-framework/spice-agent-tui.TerminalConfig, source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig): %w", err))
+	}
+	if terminalConfigCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig", terminalConfigCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean terminalConfig (source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig): %w", err))
+		}
+	}
+	_ = terminalConfig
 	terminalClientConnector, terminalClientConnectorCleanup, err := func() (client.Connector, spicelifecycle.Cleanup, error) {
 		if options.Overrides.TerminalClientConnector.Enabled() {
 			return options.Overrides.TerminalClientConnector.Acquire(ctx)
@@ -574,14 +574,14 @@ func constructApplicationDependencies(
 		if options.Overrides.TerminalShell.Enabled() {
 			return options.Overrides.TerminalShell.Acquire(ctx)
 		}
-		return spiceAutoconfigure.ConstructTerminalShell_feec5b69(terminalSession, fixedRenderer, darkTheme, []agenttui.KeyBinding{submitKeyBinding, cancelKeyBinding, respondKeyBinding, quitKeyBinding, cursorLeftKeyBinding, cursorRightKeyBinding, cursorStartKeyBinding, cursorEndKeyBinding, historyPreviousKeyBinding, historyNextKeyBinding, backspaceKeyBinding}, connectingView, osTerminalIO, terminalConfig)
+		return spiceTerminal.ConstructTerminalShell_99b22456(terminalSession, fixedRenderer, darkTheme, []agenttui.KeyBinding{submitKeyBinding, cancelKeyBinding, respondKeyBinding, quitKeyBinding, cursorLeftKeyBinding, cursorRightKeyBinding, cursorStartKeyBinding, cursorEndKeyBinding, historyPreviousKeyBinding, historyNextKeyBinding, backspaceKeyBinding}, connectingView, osTerminalIO, terminalConfig)
 	}()
 	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalShell (github.com/spice-framework/spice-agent-tui.Shell, source spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell): %w", err))
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalShell (github.com/spice-framework/spice-agent-tui.Shell, source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell): %w", err))
 	}
 	if terminalShellCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell", terminalShellCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean terminalShell (source spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell): %w", err))
+		if err := application.coordinator.RegisterModuleCleanup("", "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell", terminalShellCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean terminalShell (source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell): %w", err))
 		}
 	}
 	_ = terminalShell
@@ -594,7 +594,6 @@ func constructApplicationDependencies(
 		submitKeyBinding:          submitKeyBinding,
 		connectingView:            connectingView,
 		respondKeyBinding:         respondKeyBinding,
-		terminalConfig:            terminalConfig,
 		backspaceKeyBinding:       backspaceKeyBinding,
 		cursorEndKeyBinding:       cursorEndKeyBinding,
 		cursorLeftKeyBinding:      cursorLeftKeyBinding,
@@ -618,6 +617,7 @@ func constructApplicationDependencies(
 		properties:                properties,
 		terminalWorkspace:         terminalWorkspace,
 		terminalSessionConfig:     terminalSessionConfig,
+		terminalConfig:            terminalConfig,
 		terminalClientConnector:   terminalClientConnector,
 		terminalSession:           terminalSession,
 		terminalShell:             terminalShell,

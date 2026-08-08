@@ -45,6 +45,14 @@ func NewInitialStatus() (agenttui.StatusState, error) {
 	return agenttui.NewStatus(agenttui.StatusReconnecting, message, nil)
 }
 
+// NewTerminalConfig selects stable line-oriented presentation when requested
+// by typed configuration. The default remains the normal styled terminal.
+//
+// @Bean(name="terminalConfig")
+func NewTerminalConfig(properties Properties) agenttui.TerminalConfig {
+	return agenttui.NewTerminalConfig(properties.TerminalAccessible)
+}
+
 // NewSessionConfig freezes the client and presentation inputs selected by the
 // generated graph.
 //

@@ -140,9 +140,11 @@ type Session struct {
 	initializeOnce sync.Once
 	initializeDone chan struct{}
 
-	clientMutex   sync.RWMutex
-	clientSession client.Session
-	initializeErr error
+	clientMutex      sync.RWMutex
+	clientSession    client.Session
+	clientGeneration uint64
+	initializeErr    error
+	reconnectMutex   sync.Mutex
 
 	publishMutex sync.Mutex
 	revision     uint64
@@ -306,6 +308,7 @@ func (session *Session) initialize() {
 	}
 	session.clientMutex.Lock()
 	session.clientSession = clientSession
+	session.clientGeneration = 1
 	session.clientMutex.Unlock()
 	if err = session.publishSnapshot(); err != nil {
 		session.clientMutex.Lock()
@@ -517,14 +520,28 @@ func (session *Session) performRespond(
 
 func (session *Session) observeEvents(run client.RunRef) {
 	cursor := uint64(0)
+	reconnecting := false
 	for {
-		stream, err := session.openEventStream(run, cursor)
+		stream, generation, err := session.openEventStream(run, cursor)
 		if err != nil {
-			if session.canRetryObservation(err) && session.waitToReconnect() {
+			if session.retryObservation("event", cursor, generation, err, &reconnecting) {
 				continue
 			}
 			session.recordFailure(fmt.Errorf("open event stream for run %s: %w", run.ID(), err))
 			return
+		}
+		if reconnecting {
+			if err = session.publishActivity(fmt.Sprintf(
+				"event stream reconnected after sequence %d (replay limit %d)", cursor, session.config.ReplayLimit,
+			)); err != nil {
+				releaseErr := session.releaseEventStream(stream)
+				session.recordFailure(errors.Join(
+					fmt.Errorf("publish event reconnection: %w", err),
+					releaseErr,
+				))
+				return
+			}
+			reconnecting = false
 		}
 		terminal, nextCursor, err := session.consumeEventStream(run, cursor, stream)
 		closeErr := session.releaseEventStream(stream)
@@ -543,37 +560,37 @@ func (session *Session) observeEvents(run client.RunRef) {
 			session.recordFailure(fmt.Errorf("observe events for run %s after sequence %d: %w", run.ID(), cursor, err))
 			return
 		}
-		if !session.waitToReconnect() {
+		if !session.retryObservation("event", cursor, generation, err, &reconnecting) {
 			return
 		}
 	}
 }
 
-func (session *Session) openEventStream(run client.RunRef, after uint64) (client.EventStream, error) {
+func (session *Session) openEventStream(run client.RunRef, after uint64) (client.EventStream, uint64, error) {
 	cursor, err := client.NewCursor(run, after)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	clientSession := session.currentClient()
+	clientSession, generation := session.currentClientGeneration()
 	options, err := client.NewEventStreamOptions(
 		session.config.ReplayLimit,
 		true,
 		clientSession.Connection().Limits(),
 	)
 	if err != nil {
-		return nil, err
+		return nil, generation, err
 	}
 	stream, err := clientSession.Events(session.context(), cursor, options)
 	if err != nil {
-		return nil, err
+		return nil, generation, err
 	}
 	if stream == nil {
-		return nil, errors.New("client returned a nil event stream")
+		return nil, generation, errors.New("client returned a nil event stream")
 	}
 	session.streamMutex.Lock()
 	session.eventStream = stream
 	session.streamMutex.Unlock()
-	return stream, nil
+	return stream, generation, nil
 }
 
 func (session *Session) consumeEventStream(
@@ -655,9 +672,10 @@ func (session *Session) handleEvent(
 
 func (session *Session) observeInteractions() {
 	for {
-		stream, err := session.openInteractionStream()
+		stream, generation, err := session.openInteractionStream()
 		if err != nil {
-			if session.canRetryObservation(err) && session.waitToReconnect() {
+			reconnecting := false
+			if session.retryObservation("interaction", 0, generation, err, &reconnecting) {
 				continue
 			}
 			session.recordFailure(fmt.Errorf("open interaction stream: %w", err))
@@ -672,27 +690,29 @@ func (session *Session) observeInteractions() {
 			session.recordFailure(fmt.Errorf("observe interactions: %w", err))
 			return
 		}
-		if !session.waitToReconnect() {
+		reconnecting := false
+		if !session.retryObservation("interaction", 0, generation, err, &reconnecting) {
 			return
 		}
 	}
 }
 
-func (session *Session) openInteractionStream() (client.InteractionStream, error) {
-	stream, err := session.currentClient().Interactions(
+func (session *Session) openInteractionStream() (client.InteractionStream, uint64, error) {
+	clientSession, generation := session.currentClientGeneration()
+	stream, err := clientSession.Interactions(
 		session.context(),
 		client.NewInteractionStreamOptions(true),
 	)
 	if err != nil {
-		return nil, err
+		return nil, generation, err
 	}
 	if stream == nil {
-		return nil, errors.New("client returned a nil interaction stream")
+		return nil, generation, errors.New("client returned a nil interaction stream")
 	}
 	session.streamMutex.Lock()
 	session.interactionStream = stream
 	session.streamMutex.Unlock()
-	return stream, nil
+	return stream, generation, nil
 }
 
 func (session *Session) consumeInteractionStream(stream client.InteractionStream) error {
@@ -880,9 +900,14 @@ func (session *Session) currentInteractionRevision() uint64 {
 }
 
 func (session *Session) currentClient() client.Session {
+	current, _ := session.currentClientGeneration()
+	return current
+}
+
+func (session *Session) currentClientGeneration() (client.Session, uint64) {
 	session.clientMutex.RLock()
 	defer session.clientMutex.RUnlock()
-	return session.clientSession
+	return session.clientSession, session.clientGeneration
 }
 
 func (session *Session) context() context.Context {
@@ -943,6 +968,13 @@ func (session *Session) canRetryObservation(err error) bool {
 		return false
 	}
 	if errors.Is(err, io.EOF) {
+		return true
+	}
+	if errors.Is(err, client.ErrClosed) {
+		return true
+	}
+	if status, ok := errors.AsType[*client.StatusError](err); ok && status != nil &&
+		status.Code() == client.ErrorUnauthenticated {
 		return true
 	}
 	var failure client.StatusFailure

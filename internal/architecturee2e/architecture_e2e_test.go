@@ -25,6 +25,7 @@ import (
 	"time"
 
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd"
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
 	openaiprovider "github.com/spice-framework/spice-agent-provider-openai"
 	"github.com/spice-framework/spice-agent/client"
 	"github.com/spice-framework/spice-agent/client/localclient"
@@ -51,7 +52,7 @@ var endpointSequence atomic.Uint64
 func TestGeneratedDistributionExecutesCompiledAndRuntimeToolsAcrossReconnect(t *testing.T) {
 	root := repositoryRoot(t)
 	executable, digest := buildFixture(t, root)
-	workspace := t.TempDir()
+	workspace := testpath.TempDir(t)
 	if err := os.WriteFile(filepath.Join(workspace, "README.md"), []byte(workspaceMarker+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +126,7 @@ func TestGeneratedDistributionExecutesCompiledAndRuntimeToolsAcrossReconnect(t *
 func TestGeneratedCompletedRunRemainsReplayableWithProductionLimits(t *testing.T) {
 	root := repositoryRoot(t)
 	executable, digest := buildFixture(t, root)
-	workspace := t.TempDir()
+	workspace := testpath.TempDir(t)
 	if err := os.WriteFile(filepath.Join(workspace, "README.md"), []byte(workspaceMarker+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -834,7 +835,7 @@ func buildFixture(t *testing.T, root string) (string, string) {
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
-	path := filepath.Join(t.TempDir(), name)
+	path := filepath.Join(testpath.TempDir(t), name)
 	ctx, cancel := context.WithTimeout(t.Context(), 45*time.Second)
 	defer cancel()
 	command := exec.CommandContext( // #nosec G204,G702 -- exact Go and fixed repository fixture.
@@ -871,6 +872,7 @@ func localEndpoint(t *testing.T) (endpoint.Transport, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	directory = testpath.Resolve(t, directory)
 	if err = os.Chmod(directory, 0o700); err != nil {
 		t.Fatal(errors.Join(err, os.RemoveAll(directory)))
 	}

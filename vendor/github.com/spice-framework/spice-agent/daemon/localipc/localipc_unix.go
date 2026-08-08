@@ -170,7 +170,7 @@ func openPrivateUnixDirectory(path string) (*unixDirectory, error) {
 			)
 			if openErr != nil {
 				_ = unix.Close(current)
-				return nil, fmt.Errorf("%w: open Unix socket directory component: %v", ErrUnsafeEndpoint, openErr)
+				return nil, fmt.Errorf("%w: open Unix socket directory component: %w", ErrUnsafeEndpoint, openErr)
 			}
 			if trustErr := validateUnixAncestryPair(current, next); trustErr != nil {
 				_ = unix.Close(next)
@@ -186,7 +186,7 @@ func openPrivateUnixDirectory(path string) (*unixDirectory, error) {
 		_ = unix.Close(current)
 		return nil, fmt.Errorf("inspect local IPC directory: %w", err)
 	}
-	mode := uint32(stat.Mode)
+	mode := uint32(stat.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if mode&unix.S_IFMT != unix.S_IFDIR || int(stat.Uid) != os.Geteuid() || mode&0o777 != 0o700 {
 		_ = unix.Close(current)
 		return nil, fmt.Errorf("%w: Unix socket directory must be owned and mode 0700", ErrUnsafeEndpoint)
@@ -205,7 +205,7 @@ func validateUnixAncestryPair(parent, child int) error {
 	if !trustedUnixOwner(parentStat.Uid) {
 		return fmt.Errorf("%w: Unix socket ancestor has an untrusted owner", ErrUnsafeEndpoint)
 	}
-	parentMode := uint32(parentStat.Mode)
+	parentMode := uint32(parentStat.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if parentMode&0o022 != 0 && (parentMode&unix.S_ISVTX == 0 || !trustedUnixOwner(childStat.Uid)) {
 		return fmt.Errorf("%w: Unix socket ancestry is writable by an untrusted user", ErrUnsafeEndpoint)
 	}
@@ -236,7 +236,7 @@ func (directory *unixDirectory) validatePrivateSocket(name string) (unixFileIden
 	if err := unix.Fstatat(directory.file, name, &stat, unix.AT_SYMLINK_NOFOLLOW); err != nil {
 		return unixFileIdentity{}, fmt.Errorf("inspect local IPC socket: %w", err)
 	}
-	mode := uint32(stat.Mode)
+	mode := uint32(stat.Mode) //nolint:unconvert // Required on Darwin; redundant only on Linux.
 	if mode&unix.S_IFMT != unix.S_IFSOCK || mode&0o077 != 0 || int(stat.Uid) != os.Geteuid() {
 		return unixFileIdentity{}, fmt.Errorf("%w: endpoint must be an owned private Unix socket", ErrUnsafeEndpoint)
 	}
@@ -253,7 +253,11 @@ func (directory *unixDirectory) close() error {
 }
 
 func unixIdentity(stat unix.Stat_t) unixFileIdentity {
-	return unixFileIdentity{device: uint64(stat.Dev), inode: uint64(stat.Ino)}
+	// Device and inode widths differ between Darwin and Linux.
+	return unixFileIdentity{
+		device: uint64(stat.Dev), //nolint:unconvert // Required on Darwin; redundant only on Linux.
+		inode:  uint64(stat.Ino), //nolint:unconvert // Required on Darwin; redundant only on Linux.
+	}
 }
 
 func prepareUnixSocket(directory *unixDirectory, name, path string) error {
@@ -264,7 +268,9 @@ func prepareUnixSocket(directory *unixDirectory, name, path string) error {
 	if err != nil {
 		return err
 	}
-	connection, dialErr := net.DialTimeout("unix", path, 100*time.Millisecond)
+	dialContext, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	connection, dialErr := (&net.Dialer{}).DialContext(dialContext, "unix", path)
 	if dialErr == nil {
 		_ = connection.Close()
 		return ErrEndpointInUse

@@ -16,8 +16,6 @@
 // Source: vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go:69
 // Source: vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go:75
 // Source: vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go:101
-// Source: vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go:107
-// Source: vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go:113
 
 package spicegen
 
@@ -28,17 +26,6 @@ import (
 	autoconfigure "github.com/spice-framework/spice-agent-tui/autoconfigure"
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
 )
-
-// ConstructTerminalShell_feec5b69 performs the direct construction selected for bean "terminalShell".
-// Spice source identity: spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell.
-func ConstructTerminalShell_feec5b69(dependency0 agenttui.Session, dependency1 agenttui.Renderer, dependency2 agenttui.Theme, dependency3 []agenttui.KeyBinding, dependency4 agenttui.ViewData, dependency5 agenttui.TerminalIO, dependency6 agenttui.TerminalConfig) (agenttui.Shell, spicelifecycle.Cleanup, error) {
-	value, err := autoconfigure.DefaultShell(dependency0, dependency1, dependency2, dependency3, dependency4, dependency5, dependency6)
-	if err != nil {
-		var zero agenttui.Shell
-		return zero, nil, fmt.Errorf("construct bean terminalShell (github.com/spice-framework/spice-agent-tui.Shell, source spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell): %w", err)
-	}
-	return value, nil, nil
-}
 
 // ConstructDarkTheme_236d4728 performs the direct construction selected for bean "darkTheme".
 // Spice source identity: spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|16:DefaultDarkTheme.
@@ -117,13 +104,6 @@ func ConstructRespondKeyBinding_f5d76bcf() (agenttui.KeyBinding, spicelifecycle.
 		var zero agenttui.KeyBinding
 		return zero, nil, fmt.Errorf("construct bean respondKeyBinding (github.com/spice-framework/spice-agent-tui.KeyBinding, source spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultRespondBinding): %w", err)
 	}
-	return value, nil, nil
-}
-
-// ConstructTerminalConfig_1d85063c performs the direct construction selected for bean "terminalConfig".
-// Spice source identity: spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig.
-func ConstructTerminalConfig_1d85063c() (agenttui.TerminalConfig, spicelifecycle.Cleanup, error) {
-	value := autoconfigure.DefaultTerminalConfig()
 	return value, nil, nil
 }
 

@@ -39,5 +39,13 @@ func BindProperties_940b9db9(configurationSnapshot spiceconfig.Snapshot) (termin
 		convertedValue := string(rawValue)
 		value.TerminalEndpoint = convertedValue
 	}
+	if _, configured := configurationSnapshot.Lookup("agent.terminal.accessible"); configured {
+		rawValue, valueErr := configurationSnapshot.Boolean("agent.terminal.accessible")
+		if valueErr != nil {
+			return terminal.Properties{}, fmt.Errorf("decode configuration property agent.terminal.accessible for github.com/spice-framework/spice-agent-coding/internal/terminal.Properties.TerminalAccessible: %w", valueErr)
+		}
+		convertedValue := bool(rawValue)
+		value.TerminalAccessible = convertedValue
+	}
 	return value, nil
 }

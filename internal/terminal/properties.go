@@ -14,7 +14,8 @@ const (
 //
 // @ConfigurationProperties(prefix="agent")
 type Properties struct {
-	Workspace        string `spice:"workspace,default=.,env=SPICE_AGENT_WORKSPACE"`
-	TerminalMode     string `spice:"terminal.mode,default=managed"`
-	TerminalEndpoint string `spice:"terminal.endpoint"`
+	Workspace          string `spice:"workspace,default=.,env=SPICE_AGENT_WORKSPACE"`
+	TerminalMode       string `spice:"terminal.mode,default=managed"`
+	TerminalEndpoint   string `spice:"terminal.endpoint"`
+	TerminalAccessible bool   `spice:"terminal.accessible,default=false,env=SPICE_AGENT_TERMINAL_ACCESSIBLE"`
 }

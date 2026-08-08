@@ -5,8 +5,9 @@
 // Source: internal/terminal/session.go:24
 // Source: internal/terminal/session.go:39
 // Source: internal/terminal/session.go:51
-// Source: internal/terminal/session.go:64
+// Source: internal/terminal/session.go:59
 // Source: internal/terminal/session.go:72
+// Source: internal/terminal/session.go:80
 
 package spicegen
 
@@ -72,6 +73,13 @@ func ConstructTerminalSessionConfig_87aa536d(dependency0 client.InitializeReques
 		var zero tuisession.Config
 		return zero, nil, fmt.Errorf("construct bean terminalSessionConfig (github.com/spice-framework/spice-agent-coding/internal/tuisession.Config, source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig): %w", err)
 	}
+	return value, nil, nil
+}
+
+// ConstructTerminalConfig_ec99ff28 performs the direct construction selected for bean "terminalConfig".
+// Spice source identity: spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig.
+func ConstructTerminalConfig_ec99ff28(dependency0 terminal.Properties) (agenttui.TerminalConfig, spicelifecycle.Cleanup, error) {
+	value := terminal.NewTerminalConfig(dependency0)
 	return value, nil, nil
 }
 

@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
+
 	agentprocess "github.com/spice-framework/spice-agent/process"
 	"golang.org/x/sys/windows"
 )
@@ -75,7 +77,7 @@ func TestWindowsAbortTransfersEveryLiveHandle(t *testing.T) {
 	for _, assigned := range []bool{false, true} {
 		t.Run(fmt.Sprintf("assigned=%t", assigned), func(t *testing.T) {
 			t.Parallel()
-			root := t.TempDir()
+			root := testpath.TempDir(t)
 			executable := installProcessHelper(t, root, "suspended")
 			spec := helperSpec(t, executable, root, "blocked", strings.NewReader(""), io.Discard, io.Discard, nil)
 			job, err := newPlatformJob()
@@ -135,7 +137,7 @@ func TestWindowsAbortTransfersEveryLiveHandle(t *testing.T) {
 func TestWindowsWaitJoinsBlockedStdinCopy(t *testing.T) {
 	t.Parallel()
 
-	root := t.TempDir()
+	root := testpath.TempDir(t)
 	executable := installProcessHelper(t, root, "early-exit")
 	input := &gatedEOFReader{started: make(chan struct{}), release: make(chan struct{})}
 	spec := helperSpec(t, executable, root, "early", input, io.Discard, io.Discard, nil)
@@ -168,7 +170,7 @@ func TestWindowsWaitJoinsBlockedStdinCopy(t *testing.T) {
 func TestWindowsReservedTerminationCodeIsAnOrdinaryUnsignaledExit(t *testing.T) {
 	t.Parallel()
 
-	root := t.TempDir()
+	root := testpath.TempDir(t)
 	executable := installProcessHelper(t, root, "reserved-exit")
 	spec := helperSpec(t, executable, root, "reserved-exit", strings.NewReader(""), io.Discard, io.Discard, nil)
 	owned, err := mustLauncher(t).Start(t.Context(), spec)

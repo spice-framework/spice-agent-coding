@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/spice-framework/spice-agent-coding/internal/distribution"
 	"github.com/spice-framework/spice-agent/agent"
 	"github.com/spice-framework/spice-agent/client"
 	agentdaemon "github.com/spice-framework/spice-agent/daemon"
@@ -16,12 +17,6 @@ import (
 )
 
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
-
-const (
-	daemonComponent = "spice-agentd"
-	daemonVersion   = "0.1.0-preview.1-dev"
-	daemonCommit    = "development"
-)
 
 // NewEndpointScope selects the inseparable current-user runtime directory and
 // local transport identity.
@@ -54,7 +49,12 @@ func NewEndpointToken() (endpoint.Token, error) {
 //
 // @Bean(name="serverBuild")
 func NewServerBuild() (client.Build, error) {
-	return client.NewBuild(daemonComponent, daemonVersion, daemonCommit, runtime.Version())
+	return client.NewBuild(
+		distribution.DaemonComponent,
+		distribution.Version,
+		distribution.Commit,
+		runtime.Version(),
+	)
 }
 
 // NewRuntimePluginHostIdentity adapts the daemon's single validated build

@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
+
 	"github.com/spice-framework/spice-agent-coding/internal/processcontainment"
 	agentprocess "github.com/spice-framework/spice-agent/process"
 )
@@ -80,7 +82,7 @@ func TestUnixProcessBoundaryFormattingAndNilSafety(t *testing.T) {
 func TestUnixAnchorFailureAbortsRootAndReturnsTerminalWaitFailure(t *testing.T) {
 	t.Parallel()
 
-	root := t.TempDir()
+	root := testpath.TempDir(t)
 	executable := installProcessHelper(t, root, "anchor-failure")
 	spec := helperSpec(t, executable, root, "blocked", strings.NewReader(""), io.Discard, io.Discard, nil)
 	snapshotFailure := errors.New("private process snapshot failure")

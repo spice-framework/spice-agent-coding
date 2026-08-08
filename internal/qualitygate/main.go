@@ -28,7 +28,7 @@ const (
 	minimumCoverage    = 85.0
 	spiceVersion       = "v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0"
 	toolchainVersion   = "v0.1.0-preview.1.0.20260807044408-6598abca8196"
-	agentVersion       = "v0.0.0-20260807202054-caf82692c80d"
+	agentVersion       = "v0.0.0-20260808000851-55168c1ebaac"
 	agentTUIVersion    = "v0.0.0-20260807191321-a9c2bc36bc67"
 	providerVersion    = "v0.0.0-20260806230257-a6962fe2dabc"
 	codingToolsVersion = "v0.0.0-20260807150540-eeacf58875c5"
@@ -41,7 +41,7 @@ func main() {
 }
 
 func execute() int {
-	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, fmt, or verify")
+	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, or verify")
 	flag.Parse()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
@@ -89,6 +89,8 @@ func run(ctx context.Context, root, mode string) error {
 			steps = []step{identity, fastTest}
 		case "check":
 			steps = []step{identity, formatting, modules, generated, vet, test}
+		case "coverage":
+			steps = []step{identity, {"coverage", func() error { return coverage(ctx, root) }}}
 		case "fmt":
 			steps = []step{identity, {"formatting write", func() error { return format(ctx, root, true) }}}
 		case "verify":
@@ -532,7 +534,8 @@ func tests(ctx context.Context, root string, race, includeAcceptance bool) error
 	}
 	if !includeAcceptance {
 		packages = slices.DeleteFunc(packages, func(candidate string) bool {
-			return candidate == modulePath+"/internal/devacceptance"
+			return candidate == modulePath+"/internal/devacceptance" ||
+				candidate == modulePath+"/internal/installedacceptance"
 		})
 	}
 	arguments := []string{"test"}

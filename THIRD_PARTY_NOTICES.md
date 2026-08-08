@@ -813,7 +813,7 @@ Source: https://github.com/spice-framework/spice
        limitations under the License.
 
 
-## `github.com/spice-framework/spice-agent` `v0.0.0-20260807202054-caf82692c80d`
+## `github.com/spice-framework/spice-agent` `v0.0.0-20260808000851-55168c1ebaac`
 
 Source: https://github.com/spice-framework/spice-agent
 

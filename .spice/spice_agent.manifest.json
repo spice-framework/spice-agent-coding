@@ -12,7 +12,7 @@
   },
   "generator_version": "0.1.0-dev",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:287871bc67bbe5d3b779b599c0d35e8ec62f9482cc2ac64a515a4442838d4883",
+  "input_sha256": "sha256:7717a35aaecab1605dfe85ab92ae94b56b1b5d93214ef2425c2f20bb0fa928c1",
   "files": [
     {
       "path": "internal/spicegen/spice_agent/sources/cmd/spice-agent/application_spice_gen.go",
@@ -44,12 +44,41 @@
       ]
     },
     {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/accessible_shell_spice_gen.go",
+      "sha256": "sha256:e060bd7a17d335c463c070a7a7ee73a72dea4aae8b01e518922e01a03f34b11d",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/accessible_shell.go",
+        "line": 29,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell",
+          "source": {
+            "path": "internal/terminal/accessible_shell.go",
+            "line": 29,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 35
+          }
+        }
+      ]
+    },
+    {
       "path": "internal/spicegen/spice_agent/sources/internal_/terminal/connection_spice_gen.go",
-      "sha256": "sha256:711154cbc18a13b51877fca2647fc4ac254b615d3512b37e3821b77058e10665",
+      "sha256": "sha256:4d0453e12a74cc29acf43f48ff6cebc4f0537afbc8e3abaee742dad48169188a",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/terminal/connection.go",
-        "line": 27,
+        "line": 22,
         "column": 4,
         "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
       },
@@ -59,7 +88,7 @@
           "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild",
           "source": {
             "path": "internal/terminal/connection.go",
-            "line": 55,
+            "line": 50,
             "column": 4,
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
           },
@@ -107,7 +136,7 @@
           "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector",
           "source": {
             "path": "internal/terminal/connection.go",
-            "line": 27,
+            "line": 22,
             "column": 4,
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
           },
@@ -247,7 +276,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/sources/internal_/terminal/properties_spice_gen.go",
-      "sha256": "sha256:7029510f5fd85f68727aa8f739a0bae47ebecbfad3c7cff15de6da214016523c",
+      "sha256": "sha256:75043f9a001534a3936f230e188a936edb31a063831fe8f3894c38865b792186",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/terminal/properties.go",
@@ -276,7 +305,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/sources/internal_/terminal/session_spice_gen.go",
-      "sha256": "sha256:90193a9f7a5dd082886ce6556e786f814905a01516ea6f7d459ab2fba173fef1",
+      "sha256": "sha256:dc0eb263075da7340777ce1d826b038f9bd65eefeb4c1921b0d0213d3281b4f1",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/terminal/session.go",
@@ -290,14 +319,14 @@
           "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession",
           "source": {
             "path": "internal/terminal/session.go",
-            "line": 72,
+            "line": 80,
             "column": 4,
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
           },
           "generated": {
-            "start_line": 23,
+            "start_line": 24,
             "start_column": 4,
-            "end_line": 23,
+            "end_line": 24,
             "end_column": 37
           }
         },
@@ -311,9 +340,9 @@
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
           },
           "generated": {
-            "start_line": 34,
+            "start_line": 35,
             "start_column": 4,
-            "end_line": 34,
+            "end_line": 35,
             "end_column": 39
           }
         },
@@ -327,9 +356,9 @@
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
           },
           "generated": {
-            "start_line": 45,
+            "start_line": 46,
             "start_column": 4,
-            "end_line": 45,
+            "end_line": 46,
             "end_column": 40
           }
         },
@@ -343,9 +372,9 @@
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
           },
           "generated": {
-            "start_line": 56,
+            "start_line": 57,
             "start_column": 4,
-            "end_line": 56,
+            "end_line": 57,
             "end_column": 43
           }
         },
@@ -354,15 +383,31 @@
           "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig",
           "source": {
             "path": "internal/terminal/session.go",
-            "line": 51,
+            "line": 59,
             "column": 4,
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
           },
           "generated": {
-            "start_line": 67,
+            "start_line": 68,
             "start_column": 4,
-            "end_line": 67,
+            "end_line": 68,
             "end_column": 43
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig",
+          "source": {
+            "path": "internal/terminal/session.go",
+            "line": 51,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
+          },
+          "generated": {
+            "start_line": 79,
+            "start_column": 4,
+            "end_line": 79,
+            "end_column": 36
           }
         },
         {
@@ -370,14 +415,14 @@
           "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource",
           "source": {
             "path": "internal/terminal/session.go",
-            "line": 64,
+            "line": 72,
             "column": 4,
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
           },
           "generated": {
-            "start_line": 78,
+            "start_line": 86,
             "start_column": 4,
-            "end_line": 78,
+            "end_line": 86,
             "end_column": 46
           }
         }
@@ -385,7 +430,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/sources/vendor_/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure_spice_gen.go",
-      "sha256": "sha256:ba30ee235b3af8ed3523657735674620a8255276fc881ead06b2dfd74498a8ba",
+      "sha256": "sha256:7d921af00c4387c2e4e705eef628c92cada8e789f5cedc9ec573e5ab7677b95c",
       "role": "source-unit",
       "primary_source": {
         "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
@@ -396,22 +441,6 @@
       "mappings": [
         {
           "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell",
-          "source": {
-            "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
-            "line": 113,
-            "column": 6,
-            "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell"
-          },
-          "generated": {
-            "start_line": 32,
-            "start_column": 4,
-            "end_line": 32,
-            "end_column": 35
-          }
-        },
-        {
-          "kind": "provider-construction",
           "contribution": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|16:DefaultDarkTheme",
           "source": {
             "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
@@ -420,9 +449,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|16:DefaultDarkTheme"
           },
           "generated": {
-            "start_line": 43,
+            "start_line": 30,
             "start_column": 4,
-            "end_line": 43,
+            "end_line": 30,
             "end_column": 31
           }
         },
@@ -436,9 +465,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|18:DefaultQuitBinding"
           },
           "generated": {
-            "start_line": 50,
+            "start_line": 37,
             "start_column": 4,
-            "end_line": 50,
+            "end_line": 37,
             "end_column": 36
           }
         },
@@ -452,9 +481,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|19:DefaultOSTerminalIO"
           },
           "generated": {
-            "start_line": 61,
+            "start_line": 48,
             "start_column": 4,
-            "end_line": 61,
+            "end_line": 48,
             "end_column": 34
           }
         },
@@ -468,9 +497,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|20:DefaultCancelBinding"
           },
           "generated": {
-            "start_line": 72,
+            "start_line": 59,
             "start_column": 4,
-            "end_line": 72,
+            "end_line": 59,
             "end_column": 38
           }
         },
@@ -484,9 +513,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|20:DefaultFixedRenderer"
           },
           "generated": {
-            "start_line": 83,
+            "start_line": 70,
             "start_column": 4,
-            "end_line": 83,
+            "end_line": 70,
             "end_column": 35
           }
         },
@@ -500,9 +529,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|20:DefaultSubmitBinding"
           },
           "generated": {
-            "start_line": 90,
+            "start_line": 77,
             "start_column": 4,
-            "end_line": 90,
+            "end_line": 77,
             "end_column": 38
           }
         },
@@ -516,9 +545,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultConnectingView"
           },
           "generated": {
-            "start_line": 101,
+            "start_line": 88,
             "start_column": 4,
-            "end_line": 101,
+            "end_line": 88,
             "end_column": 36
           }
         },
@@ -532,26 +561,10 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultRespondBinding"
           },
           "generated": {
-            "start_line": 112,
+            "start_line": 99,
             "start_column": 4,
-            "end_line": 112,
+            "end_line": 99,
             "end_column": 39
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig",
-          "source": {
-            "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
-            "line": 107,
-            "column": 6,
-            "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig"
-          },
-          "generated": {
-            "start_line": 123,
-            "start_column": 4,
-            "end_line": 123,
-            "end_column": 36
           }
         },
         {
@@ -564,9 +577,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|23:DefaultBackspaceBinding"
           },
           "generated": {
-            "start_line": 130,
+            "start_line": 110,
             "start_column": 4,
-            "end_line": 130,
+            "end_line": 110,
             "end_column": 41
           }
         },
@@ -580,9 +593,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|23:DefaultCursorEndBinding"
           },
           "generated": {
-            "start_line": 141,
+            "start_line": 121,
             "start_column": 4,
-            "end_line": 141,
+            "end_line": 121,
             "end_column": 41
           }
         },
@@ -596,9 +609,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|24:DefaultCursorLeftBinding"
           },
           "generated": {
-            "start_line": 152,
+            "start_line": 132,
             "start_column": 4,
-            "end_line": 152,
+            "end_line": 132,
             "end_column": 42
           }
         },
@@ -612,9 +625,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|25:DefaultCursorRightBinding"
           },
           "generated": {
-            "start_line": 163,
+            "start_line": 143,
             "start_column": 4,
-            "end_line": 163,
+            "end_line": 143,
             "end_column": 43
           }
         },
@@ -628,9 +641,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|25:DefaultCursorStartBinding"
           },
           "generated": {
-            "start_line": 174,
+            "start_line": 154,
             "start_column": 4,
-            "end_line": 174,
+            "end_line": 154,
             "end_column": 43
           }
         },
@@ -644,9 +657,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|25:DefaultHistoryNextBinding"
           },
           "generated": {
-            "start_line": 185,
+            "start_line": 165,
             "start_column": 4,
-            "end_line": 185,
+            "end_line": 165,
             "end_column": 43
           }
         },
@@ -660,9 +673,9 @@
             "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|29:DefaultHistoryPreviousBinding"
           },
           "generated": {
-            "start_line": 196,
+            "start_line": 176,
             "start_column": 4,
-            "end_line": 196,
+            "end_line": 176,
             "end_column": 47
           }
         }
@@ -670,7 +683,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_assembly_gen.go",
-      "sha256": "sha256:64e6e22cf459ee797282551f62eef82da4afefb4e894e27a807a53d1fbe7ea2a",
+      "sha256": "sha256:9cc291db0e505f75c656138039ef4ddfa91954475b58f68e854e34a9325b37dc",
       "role": "target-assembly",
       "related_sources": [
         {
@@ -680,14 +693,20 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
         {
+          "path": "internal/terminal/accessible_shell.go",
+          "line": 29,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+        },
+        {
           "path": "internal/terminal/connection.go",
-          "line": 27,
+          "line": 22,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
         },
         {
           "path": "internal/terminal/connection.go",
-          "line": 55,
+          "line": 50,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
         },
@@ -770,6 +789,12 @@
           "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalEndpoint"
         },
         {
+          "path": "internal/terminal/properties.go",
+          "line": 20,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalAccessible"
+        },
+        {
           "path": "internal/terminal/session.go",
           "line": 17,
           "column": 4,
@@ -791,17 +816,23 @@
           "path": "internal/terminal/session.go",
           "line": 51,
           "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
+        },
+        {
+          "path": "internal/terminal/session.go",
+          "line": 59,
+          "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
         },
         {
           "path": "internal/terminal/session.go",
-          "line": 64,
+          "line": 72,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
         },
         {
           "path": "internal/terminal/session.go",
-          "line": 72,
+          "line": 80,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
         },
@@ -894,18 +925,6 @@
           "line": 101,
           "column": 6,
           "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|19:DefaultOSTerminalIO"
-        },
-        {
-          "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
-          "line": 107,
-          "column": 6,
-          "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig"
-        },
-        {
-          "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
-          "line": 113,
-          "column": 6,
-          "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell"
         }
       ]
     },
@@ -924,7 +943,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_configuration_gen.go",
-      "sha256": "sha256:d3826d0304830b59be82d1974f034d3aa97c7ea5f6393351dc456ae24e2b04cd",
+      "sha256": "sha256:d25223e18de0d2a32dd6f8c84b434e9a8d01c32ad3627756267823529d078cc0",
       "role": "target-configuration",
       "related_sources": [
         {
@@ -956,12 +975,18 @@
           "line": 19,
           "column": 2,
           "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalEndpoint"
+        },
+        {
+          "path": "internal/terminal/properties.go",
+          "line": 20,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalAccessible"
         }
       ]
     },
     {
       "path": "internal/spicegen/spice_agent/spice_contracts_gen.go",
-      "sha256": "sha256:8695ee0621fd178c0e167da23157d9589e5360cce16da9f23379fcb181aa7a0f",
+      "sha256": "sha256:5aa32c53d18e73e13129379cd5f201c74f61f55cc57c05a3eee32d15acfeb9ab",
       "role": "target-contracts",
       "related_sources": [
         {
@@ -971,14 +996,20 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
         {
+          "path": "internal/terminal/accessible_shell.go",
+          "line": 29,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+        },
+        {
           "path": "internal/terminal/connection.go",
-          "line": 27,
+          "line": 22,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
         },
         {
           "path": "internal/terminal/connection.go",
-          "line": 55,
+          "line": 50,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
         },
@@ -1061,6 +1092,12 @@
           "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalEndpoint"
         },
         {
+          "path": "internal/terminal/properties.go",
+          "line": 20,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalAccessible"
+        },
+        {
           "path": "internal/terminal/session.go",
           "line": 17,
           "column": 4,
@@ -1082,17 +1119,23 @@
           "path": "internal/terminal/session.go",
           "line": 51,
           "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
+        },
+        {
+          "path": "internal/terminal/session.go",
+          "line": 59,
+          "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
         },
         {
           "path": "internal/terminal/session.go",
-          "line": 64,
+          "line": 72,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
         },
         {
           "path": "internal/terminal/session.go",
-          "line": 72,
+          "line": 80,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
         },
@@ -1185,18 +1228,6 @@
           "line": 101,
           "column": 6,
           "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|19:DefaultOSTerminalIO"
-        },
-        {
-          "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
-          "line": 107,
-          "column": 6,
-          "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig"
-        },
-        {
-          "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
-          "line": 113,
-          "column": 6,
-          "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell"
         }
       ]
     },
@@ -1215,7 +1246,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_providers_gen.go",
-      "sha256": "sha256:57347f1efcf9c6178e5ea1dca337532e693131b53903c60e899a399fc36b17fd",
+      "sha256": "sha256:95dc56ae7b18883180a2595fb68b12cd02d2398d0a194b66c3a4bb57f6a8618f",
       "role": "target-providers",
       "related_sources": [
         {
@@ -1225,14 +1256,20 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
         {
+          "path": "internal/terminal/accessible_shell.go",
+          "line": 29,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+        },
+        {
           "path": "internal/terminal/connection.go",
-          "line": 27,
+          "line": 22,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
         },
         {
           "path": "internal/terminal/connection.go",
-          "line": 55,
+          "line": 50,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
         },
@@ -1315,6 +1352,12 @@
           "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalEndpoint"
         },
         {
+          "path": "internal/terminal/properties.go",
+          "line": 20,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalAccessible"
+        },
+        {
           "path": "internal/terminal/session.go",
           "line": 17,
           "column": 4,
@@ -1336,17 +1379,23 @@
           "path": "internal/terminal/session.go",
           "line": 51,
           "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
+        },
+        {
+          "path": "internal/terminal/session.go",
+          "line": 59,
+          "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
         },
         {
           "path": "internal/terminal/session.go",
-          "line": 64,
+          "line": 72,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
         },
         {
           "path": "internal/terminal/session.go",
-          "line": 72,
+          "line": 80,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
         },
@@ -1439,18 +1488,6 @@
           "line": 101,
           "column": 6,
           "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|19:DefaultOSTerminalIO"
-        },
-        {
-          "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
-          "line": 107,
-          "column": 6,
-          "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultTerminalConfig"
-        },
-        {
-          "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
-          "line": 113,
-          "column": 6,
-          "symbol": "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|12:DefaultShell"
         }
       ]
     }

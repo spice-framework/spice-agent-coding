@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
+
 	"golang.org/x/sys/unix"
 )
 
@@ -317,7 +319,7 @@ func unixHelperStarter(t *testing.T, mode string) *Starter {
 	launcher := filepath.Join(filepath.Dir(executable), launcherExecutableName())
 	environment := replaceEnvironment(os.Environ(), unixHelperModeEnvironment, mode)
 	starter, err := newStarter(Config{
-		Directory: t.TempDir(), Environment: environment, StderrBytes: 1024,
+		Directory: testpath.TempDir(t), Environment: environment, StderrBytes: 1024,
 		GracefulTimeout: 2 * time.Second, TerminateDelay: 100 * time.Millisecond,
 	}, executable, launcher)
 	if err != nil {

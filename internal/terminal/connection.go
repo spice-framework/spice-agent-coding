@@ -5,6 +5,7 @@ import (
 	"errors"
 	"runtime"
 
+	"github.com/spice-framework/spice-agent-coding/internal/distribution"
 	"github.com/spice-framework/spice-agent-coding/internal/terminalconnector"
 	"github.com/spice-framework/spice-agent/client"
 	"github.com/spice-framework/spice-agent/client/managed"
@@ -13,12 +14,6 @@ import (
 )
 
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
-
-const (
-	terminalComponent = "spice-agent"
-	terminalVersion   = "0.1.0-preview.1-dev"
-	terminalCommit    = "development"
-)
 
 // NewClientConnector selects explicit attach or managed attach-or-start while
 // preserving one statically generated client. Check mode constructs the
@@ -54,7 +49,12 @@ func NewClientConnector(
 //
 // @Bean(name="terminalClientBuild")
 func NewClientBuild() (client.Build, error) {
-	return client.NewBuild(terminalComponent, terminalVersion, terminalCommit, runtime.Version())
+	return client.NewBuild(
+		distribution.TerminalComponent,
+		distribution.Version,
+		distribution.Commit,
+		runtime.Version(),
+	)
 }
 
 // NewClientProtocol declares the exact engine protocol supported by this

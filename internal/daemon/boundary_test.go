@@ -93,25 +93,27 @@ func TestNewRuntimeValidatesEveryPublicIdentityAndBuildsMetadata(t *testing.T) {
 		protocol   client.ProtocolVersion
 		server     *grpcserver.Server
 		activation *RuntimePluginActivation
+		listener   ListenerFactory
 	}{
-		{name: "nil store", scope: scope, token: token, build: build, protocol: protocol, server: server, activation: activation},
-		{name: "nil server", scope: scope, store: store, token: token, build: build, protocol: protocol, activation: activation},
-		{name: "nil activation", scope: scope, store: store, token: token, build: build, protocol: protocol, server: server},
-		{name: "scope", store: store, token: token, build: build, protocol: protocol, server: server, activation: activation},
-		{name: "token", scope: scope, store: store, build: build, protocol: protocol, server: server, activation: activation},
-		{name: "build", scope: scope, store: store, token: token, protocol: protocol, server: server, activation: activation},
-		{name: "protocol", scope: scope, store: store, token: token, build: build, server: server, activation: activation},
+		{name: "nil store", scope: scope, token: token, build: build, protocol: protocol, server: server, activation: activation, listener: NewListenerFactory()},
+		{name: "nil server", scope: scope, store: store, token: token, build: build, protocol: protocol, activation: activation, listener: NewListenerFactory()},
+		{name: "nil activation", scope: scope, store: store, token: token, build: build, protocol: protocol, server: server, listener: NewListenerFactory()},
+		{name: "nil listener", scope: scope, store: store, token: token, build: build, protocol: protocol, server: server, activation: activation},
+		{name: "scope", store: store, token: token, build: build, protocol: protocol, server: server, activation: activation, listener: NewListenerFactory()},
+		{name: "token", scope: scope, store: store, build: build, protocol: protocol, server: server, activation: activation, listener: NewListenerFactory()},
+		{name: "build", scope: scope, store: store, token: token, protocol: protocol, server: server, activation: activation, listener: NewListenerFactory()},
+		{name: "protocol", scope: scope, store: store, token: token, build: build, server: server, activation: activation, listener: NewListenerFactory()},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if _, constructErr := NewRuntime(
-				test.scope, test.store, test.token, test.build, test.protocol, test.server, test.activation,
+				test.scope, test.store, test.token, test.build, test.protocol, test.server, test.activation, test.listener,
 			); constructErr == nil {
 				t.Fatal("NewRuntime() accepted an invalid dependency")
 			}
 		})
 	}
 
-	runtime, err := NewRuntime(scope, store, token, build, protocol, server, activation)
+	runtime, err := NewRuntime(scope, store, token, build, protocol, server, activation, NewListenerFactory())
 	if err != nil {
 		t.Fatalf("NewRuntime() error = %v", err)
 	}

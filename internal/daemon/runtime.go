@@ -39,6 +39,26 @@ type runtimePublication interface {
 	CloseContext(context.Context) error
 }
 
+// ListenerFactory owns local transport creation. The interface keeps Runtime
+// transport-agnostic and gives process-level acceptance tests a typed seam for
+// faulting only an established client connection without replacing the daemon
+// or bypassing its generated Spice graph.
+type ListenerFactory interface {
+	Listen(string) (net.Listener, error)
+}
+
+type localListenerFactory struct{}
+
+func (localListenerFactory) Listen(address string) (net.Listener, error) {
+	return localipc.Listen(address)
+}
+
+// NewListenerFactory contributes the production current-user local IPC
+// listener through ordinary generated constructor injection.
+//
+// @Bean(name="daemonListenerFactory")
+func NewListenerFactory() ListenerFactory { return localListenerFactory{} }
+
 type runtimeServices struct {
 	listen   func(string) (net.Listener, error)
 	publish  func(context.Context, endpoint.Metadata) (runtimePublication, error)
@@ -77,9 +97,10 @@ func NewRuntime(
 	protocol client.ProtocolVersion,
 	server *grpcserver.Server,
 	activation *RuntimePluginActivation,
+	listenerFactory ListenerFactory,
 ) (*Runtime, error) {
-	if store == nil || server == nil || activation == nil {
-		return nil, errors.New("daemon runtime requires endpoint store, gRPC server, and runtime plugin activation")
+	if store == nil || server == nil || activation == nil || listenerFactory == nil {
+		return nil, errors.New("daemon runtime requires endpoint store, gRPC server, runtime plugin activation, and listener factory")
 	}
 	if err := scope.Validate(); err != nil {
 		return nil, fmt.Errorf("validate endpoint scope: %w", err)
@@ -99,7 +120,7 @@ func NewRuntime(
 		serveDone: make(chan struct{}),
 	}
 	runtime.services = runtimeServices{
-		listen: localipc.Listen,
+		listen: listenerFactory.Listen,
 		publish: func(ctx context.Context, metadata endpoint.Metadata) (runtimePublication, error) {
 			return store.Publish(ctx, metadata)
 		},

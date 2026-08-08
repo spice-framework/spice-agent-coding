@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/spice-framework/spice-agent-coding/internal/daemoncommand"
+	"github.com/spice-framework/spice-agent-coding/internal/distribution"
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd"
 	spiceconfig "github.com/spice-framework/spice/config"
 )
@@ -24,6 +25,12 @@ func main() {
 }
 
 func execute(ctx context.Context, arguments []string, stdout, stderr io.Writer) int {
+	if len(arguments) == 1 && arguments[0] == "--version" {
+		if err := distribution.WriteVersion(stdout, distribution.DaemonComponent); err != nil {
+			return daemoncommand.ExitFailure
+		}
+		return daemoncommand.ExitSuccess
+	}
 	environment, err := spiceconfig.OSEnvironment("SPICE_")
 	if err != nil {
 		if _, writeErr := io.WriteString(stderr, "spice-agentd: configuration is unavailable\n"); writeErr != nil {
@@ -31,8 +38,16 @@ func execute(ctx context.Context, arguments []string, stdout, stderr io.Writer) 
 		}
 		return daemoncommand.ExitFailure
 	}
+	applicationOptions := spicegen.ApplicationOptions{Sources: []spiceconfig.Source{environment}}
+	applicationOptions, err = acceptanceApplicationOptions(applicationOptions)
+	if err != nil {
+		if _, writeErr := io.WriteString(stderr, "spice-agentd: acceptance transport is unavailable\n"); writeErr != nil {
+			return daemoncommand.ExitFailure
+		}
+		return daemoncommand.ExitFailure
+	}
 	runner := &generatedRunner{
-		options: spicegen.ApplicationOptions{Sources: []spiceconfig.Source{environment}},
+		options: applicationOptions,
 		newApplication: func(
 			callContext context.Context,
 			options spicegen.ApplicationOptions,
@@ -44,7 +59,7 @@ func execute(ctx context.Context, arguments []string, stdout, stderr io.Writer) 
 			return generatedApplication{Application: application}, nil
 		},
 	}
-	return daemoncommand.Execute(ctx, arguments, stdout, stderr, runner)
+	return daemoncommand.Execute(ctx, arguments, stdout, stderr, acceptanceDaemonRunner(runner))
 }
 
 func withParentControl(parent context.Context, input io.Reader, terminal bool) (context.Context, context.CancelFunc) {

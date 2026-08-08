@@ -12,8 +12,9 @@ tool (
 )
 
 require (
+	charm.land/bubbletea/v2 v2.0.8
 	github.com/spice-framework/spice v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0
-	github.com/spice-framework/spice-agent v0.0.0-20260807202054-caf82692c80d
+	github.com/spice-framework/spice-agent v0.0.0-20260808000851-55168c1ebaac
 	github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc
 	github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260807150540-eeacf58875c5
 	github.com/spice-framework/spice-agent-tui v0.0.0-20260807191321-a9c2bc36bc67
@@ -23,7 +24,6 @@ require (
 )
 
 require (
-	charm.land/bubbletea/v2 v2.0.8 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260703014108-f5a850f9c2b7 // indirect

@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/spice-framework/spice-agent-coding/internal/distribution"
 	"github.com/spice-framework/spice-agent-coding/internal/tuisession"
 	agenttui "github.com/spice-framework/spice-agent-tui"
 	"github.com/spice-framework/spice-agent/client/managed"
@@ -16,8 +17,8 @@ func TestTerminalClientValuesAreExactAndValid(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if build.Component() != terminalComponent || build.Version() != terminalVersion ||
-		build.Commit() != terminalCommit || build.GoVersion() != runtime.Version() {
+	if build.Component() != distribution.TerminalComponent || build.Version() != distribution.Version ||
+		build.Commit() != distribution.Commit || build.GoVersion() != runtime.Version() {
 		t.Fatal("client build provenance is not exact")
 	}
 	protocol, err := NewClientProtocol()

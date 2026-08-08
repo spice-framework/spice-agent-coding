@@ -33,6 +33,8 @@ jobs:
         with:
           go-version: 1.26.5
           cache-dependency-path: tools/go.sum
+      - name: Bootstrap pinned verification tools
+        run: go run ./internal/qualitygate -mode=tools-bootstrap
       - name: Run complete local quality contract
         run: go run ./internal/qualitygate -mode=verify
 

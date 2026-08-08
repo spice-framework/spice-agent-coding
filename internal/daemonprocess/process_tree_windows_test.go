@@ -14,6 +14,8 @@ import (
 	"time"
 	"unicode/utf16"
 
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
+
 	"golang.org/x/sys/windows"
 )
 
@@ -39,7 +41,7 @@ func init() { //nolint:gochecknoinits // Process-launch fixture must run before 
 }
 
 func TestWindowsJobShutdownTerminatesProcessTree(t *testing.T) {
-	starter := helperStarter(t, "tree", t.TempDir(), 1024)
+	starter := helperStarter(t, "tree", testpath.TempDir(t), 1024)
 	candidate, err := starter.Start(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -68,7 +70,7 @@ func TestWindowsJobShutdownTerminatesProcessTree(t *testing.T) {
 }
 
 func TestWindowsSuspendedLaunchContainsImmediateDescendant(t *testing.T) {
-	starter := helperStarter(t, immediateTreeMode, t.TempDir(), 1024)
+	starter := helperStarter(t, immediateTreeMode, testpath.TempDir(t), 1024)
 	starter.graceful = 10 * time.Millisecond
 	starter.terminate = 100 * time.Millisecond
 
@@ -117,7 +119,7 @@ func TestWindowsEnvironmentBlockUsesLastValueAndRequiredOrdering(t *testing.T) {
 }
 
 func TestWindowsControlFailureReachesContainmentWait(t *testing.T) {
-	starter := helperStarter(t, "blocked", t.TempDir(), 1024)
+	starter := helperStarter(t, "blocked", testpath.TempDir(t), 1024)
 	starter.graceful = 10 * time.Millisecond
 	starter.terminate = 10 * time.Millisecond
 	candidate, err := starter.Start(t.Context())

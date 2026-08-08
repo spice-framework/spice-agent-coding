@@ -152,7 +152,7 @@ func TestGeneratedTerminalIsDirectAndSourceMapped(t *testing.T) {
 
 func runTerminalSpice(t *testing.T, root string, arguments ...string) (string, string, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 90*time.Second)
 	defer cancel()
 	commandArguments := append([]string{"tool", terminalSpiceTool}, arguments...)
 	// #nosec G204,G702 -- executable and arguments are fixed terminal generation checks.

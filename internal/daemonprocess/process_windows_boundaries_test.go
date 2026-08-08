@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
+
 	"golang.org/x/sys/windows"
 )
 
@@ -25,7 +27,7 @@ func TestWindowsPlatformBoundaryValidation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	directory := t.TempDir()
+	directory := testpath.TempDir(t)
 	valid := processSpec{
 		executable:  filepath.Join(directory, daemonExecutableName()),
 		argument:    daemonArgument,
@@ -86,7 +88,7 @@ func TestWindowsParameterAndEnvironmentBoundaries(t *testing.T) {
 		t.Fatalf("empty-value environment key = %q, %t", key, ok)
 	}
 
-	directory := t.TempDir()
+	directory := testpath.TempDir(t)
 	valid := processSpec{
 		executable: filepath.Join(directory, daemonExecutableName()), argument: daemonArgument,
 		directory: directory, environment: []string{"A=b"},

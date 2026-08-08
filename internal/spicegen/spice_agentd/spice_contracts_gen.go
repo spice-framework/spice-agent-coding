@@ -56,6 +56,8 @@ type Components struct {
 	EndpointStore *endpoint.Store
 	// EndpointToken is bean "endpointToken".
 	EndpointToken endpoint.Token
+	// DaemonListenerFactory is bean "daemonListenerFactory".
+	DaemonListenerFactory daemon.ListenerFactory
 	// ProcessLauncher is bean "processLauncher".
 	ProcessLauncher process.Launcher
 	// ServerProtocol is bean "serverProtocol".
@@ -137,6 +139,8 @@ type BeanOverrides struct {
 	EndpointStore spicebean.Override[*endpoint.Store]
 	// EndpointToken replaces bean "endpointToken".
 	EndpointToken spicebean.Override[endpoint.Token]
+	// DaemonListenerFactory replaces bean "daemonListenerFactory".
+	DaemonListenerFactory spicebean.Override[daemon.ListenerFactory]
 	// ProcessLauncher replaces bean "processLauncher".
 	ProcessLauncher spicebean.Override[process.Launcher]
 	// ServerProtocol replaces bean "serverProtocol".
@@ -237,6 +241,9 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		}
 		if layer.Overrides.EndpointToken.Enabled() {
 			result.EndpointToken = layer.Overrides.EndpointToken
+		}
+		if layer.Overrides.DaemonListenerFactory.Enabled() {
+			result.DaemonListenerFactory = layer.Overrides.DaemonListenerFactory
 		}
 		if layer.Overrides.ProcessLauncher.Enabled() {
 			result.ProcessLauncher = layer.Overrides.ProcessLauncher
