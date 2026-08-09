@@ -1,4 +1,4 @@
-.PHONY: tools-bootstrap fast check coverage fmt verify verify-release dev-daemon dev-terminal
+.PHONY: tools-bootstrap fast check coverage fmt verify verify-release verify-release-artifacts dev-daemon dev-terminal
 
 tools-bootstrap:
 	go run ./internal/qualitygate -mode=tools-bootstrap
@@ -19,6 +19,9 @@ verify:
 	go run ./internal/qualitygate -mode=verify
 
 verify-release: verify
+
+verify-release-artifacts:
+	go run ./internal/qualitygate -mode=release-artifacts -artifacts="$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)"
 
 # The daemon and terminal use separate Spice supervisors. Target-local source
 # changes therefore rebuild only their owning process, while shared source and

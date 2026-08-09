@@ -30,6 +30,25 @@ not an older `go` that may appear first on `PATH`.
 - `make verify-release` is the unconditional alias consumed by the central
   distribution workflow. The repository identity gate requires this exact
   alias before any release tag is considered valid.
+- `make verify-release-artifacts` is a separate, tag-independent installed-byte
+  gate. Set `SPICE_AGENT_VERIFIED_ARTIFACT_DIR` to a canonical absolute
+  directory containing exactly the nine subjects already authenticated by the
+  independent Toolchain verifier: six archives, release metadata, SPDX SBOM,
+  and `checksums.txt`. The Sigstore bundle is verification evidence rather than
+  an attested subject and must not be placed in that directory. This gate never
+  downloads or authenticates artifacts itself.
+
+The release-artifact gate rejects missing, extra, non-regular, or symlinked
+subjects; noncanonical checksums; metadata, target, payload, or SBOM drift; and
+archive traversal, duplicate entries, undeclared paths, invalid modes, sizes,
+or payload hashes. It extracts the native archive beneath a path containing
+spaces and Unicode, runs both exact binaries with `--version` and `--check`,
+then proves explicit `serve`/`attach` and zero-argument managed sibling startup
+and cleanup. Linux uses private `XDG_RUNTIME_DIR` and `XDG_CONFIG_HOME` roots.
+Windows deliberately exercises the default current-user endpoint and authority
+and therefore fails unless `SPICE_AGENT_EPHEMERAL_RUNNER=1` is supplied by a
+disposable runner. The gate is an installed execution check, not a replacement
+for provenance or checksum verification.
 
 The architecture-proof acceptance additionally runs `spice generate --check`,
 `spice generate --diff`, and `spice beans --explain` against the selected

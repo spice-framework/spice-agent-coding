@@ -12,13 +12,57 @@ import (
 
 func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 	t.Parallel()
-	for _, mode := range []string{"fast", "check", "fmt", "verify", "unknown"} {
+	for _, mode := range []string{"fast", "check", "fmt", "verify", "release-artifacts", "unknown"} {
 		if networkAllowed(mode) {
 			t.Fatalf("networkAllowed(%q) = true", mode)
 		}
 	}
 	if !networkAllowed("tools-bootstrap") {
 		t.Fatal("networkAllowed(tools-bootstrap) = false")
+	}
+}
+
+func TestReleaseArtifactEntrypointRequiresExactExplicitDirectoryContract(t *testing.T) {
+	t.Parallel()
+	const valid = ".PHONY: verify-release-artifacts\n\nverify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)\"\n"
+	for _, test := range []struct {
+		name, content string
+		wantErr       bool
+	}{
+		{name: "valid", content: valid},
+		{name: "missing target", content: strings.Replace(valid, "\nverify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)\"\n", "\n", 1), wantErr: true},
+		{name: "implicit directory", content: strings.Replace(valid, " -artifacts=\"$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)\"", "", 1), wantErr: true},
+		{name: "network helper", content: strings.Replace(valid, "go run", "gh release download && go run", 1), wantErr: true},
+		{name: "not phony", content: strings.Replace(valid, ".PHONY: verify-release-artifacts", ".PHONY: verify", 1), wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			writeFile(t, root, "Makefile", test.content)
+			err := checkReleaseArtifactEntrypoint(root)
+			if test.wantErr && err == nil {
+				t.Fatal("checkReleaseArtifactEntrypoint() error = nil")
+			}
+			if !test.wantErr && err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestReleaseArtifactGateUsesOneOfflineBuildTaggedTest(t *testing.T) {
+	t.Parallel()
+	directory := filepath.Join(t.TempDir(), "verified subjects")
+	want := []string{
+		"test", "-tags=spice_release_artifacts", "-count=1",
+		"-run=^TestVerifiedNativeReleaseArchive$", "./internal/installedacceptance",
+		"-args", "-spice-release-artifact-dir=" + directory,
+	}
+	if got := releaseArtifactTestArguments(directory); !slices.Equal(got, want) {
+		t.Fatalf("release artifact arguments = %q, want %q", got, want)
+	}
+	if err := verifyReleaseArtifacts(t.Context(), t.TempDir(), "relative"); err == nil {
+		t.Fatal("release artifact gate accepted a relative directory")
 	}
 }
 

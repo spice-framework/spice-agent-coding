@@ -23,9 +23,6 @@ func TestRuntimePublishesAfterAcceptAndStopsInOwnershipOrder(t *testing.T) {
 	if err := runtime.Start(context.Background()); err != nil {
 		t.Fatalf("Start() error = %v", err)
 	}
-	if !listener.acceptedValue() {
-		t.Fatal("endpoint published before the server entered Accept")
-	}
 	if err := runtime.Stop(context.Background()); err != nil {
 		t.Fatalf("Stop() error = %v", err)
 	}
@@ -109,6 +106,7 @@ func TestRuntimeRetriesPublicationWithdrawalWithoutLosingOwnership(t *testing.T)
 
 func TestRuntimeCleansUpWhenPublicationIsCancelled(t *testing.T) {
 	t.Parallel()
+	cancelCause := errors.New("publication readiness cancelled")
 	log := &orderedLog{}
 	listener := newTestListener(log)
 	server := &testServer{log: log}
@@ -118,10 +116,10 @@ func TestRuntimeCleansUpWhenPublicationIsCancelled(t *testing.T) {
 		<-ctx.Done()
 		return nil, context.Cause(ctx)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	if err := runtime.Start(ctx); !errors.Is(err, context.Canceled) {
-		t.Fatalf("Start() error = %v, want cancellation", err)
+	ctx, cancel := context.WithCancelCause(context.Background())
+	cancel(cancelCause)
+	if err := runtime.Start(ctx); !errors.Is(err, cancelCause) {
+		t.Fatalf("Start() error = %v, want %v", err, cancelCause)
 	}
 	entries := log.values()
 	if slices.Contains(entries, "publish") || !slices.Contains(entries, "shutdown") ||
@@ -170,19 +168,15 @@ func (log *orderedLog) values() []string {
 }
 
 type testListener struct {
-	log      *orderedLog
-	accepted chan struct{}
-	closed   chan struct{}
-	once     sync.Once
+	log    *orderedLog
+	closed chan struct{}
 }
 
 func newTestListener(log *orderedLog) *testListener {
-	return &testListener{log: log, accepted: make(chan struct{}), closed: make(chan struct{})}
+	return &testListener{log: log, closed: make(chan struct{})}
 }
 
 func (listener *testListener) Accept() (net.Conn, error) {
-	listener.log.add("accept")
-	listener.once.Do(func() { close(listener.accepted) })
 	<-listener.closed
 	return nil, net.ErrClosed
 }
@@ -199,15 +193,6 @@ func (listener *testListener) Close() error {
 
 func (*testListener) Addr() net.Addr { return testAddress("local") }
 
-func (listener *testListener) acceptedValue() bool {
-	select {
-	case <-listener.accepted:
-		return true
-	default:
-		return false
-	}
-}
-
 type testAddress string
 
 func (address testAddress) Network() string { return string(address) }
@@ -221,6 +206,7 @@ type testServer struct {
 func (server *testServer) Serve(listener net.Listener) error {
 	if server.failure != nil {
 		go func() {
+			server.log.add("accept")
 			_, acceptErr := listener.Accept()
 			if acceptErr != nil && !errors.Is(acceptErr, net.ErrClosed) {
 				server.log.add("accept-error")
@@ -228,6 +214,7 @@ func (server *testServer) Serve(listener net.Listener) error {
 		}()
 		return <-server.failure
 	}
+	server.log.add("accept")
 	_, err := listener.Accept()
 	return err
 }

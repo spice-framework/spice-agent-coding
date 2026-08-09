@@ -1091,7 +1091,7 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 244,
+          "line": 247,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|4:Stop"
         },
@@ -1730,7 +1730,7 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 244,
+          "line": 247,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|4:Stop"
         },
@@ -1953,7 +1953,7 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 244,
+          "line": 247,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|4:Stop"
         },
@@ -1984,7 +1984,7 @@
         },
         {
           "path": "internal/daemon/runtime.go",
-          "line": 244,
+          "line": 247,
           "column": 4,
           "symbol": "spice:symbol:v1|method|61:github.com/spice-framework/spice-agent-coding/internal/daemon|7:Runtime|4:Stop"
         },

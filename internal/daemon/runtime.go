@@ -195,6 +195,9 @@ func waitForPublicationReadiness(
 	ready <-chan struct{},
 	serveResult <-chan error,
 ) error {
+	if err := context.Cause(ctx); err != nil {
+		return err
+	}
 	select {
 	case <-ctx.Done():
 		return context.Cause(ctx)

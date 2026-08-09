@@ -42,13 +42,14 @@ func main() {
 }
 
 func execute() int {
-	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, or verify")
+	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, verify, or release-artifacts")
+	artifacts := flag.String("artifacts", "", "absolute independently verified release-subject directory")
 	flag.Parse()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
 	root, err := repositoryRoot()
 	if err == nil {
-		err = run(ctx, root, *mode)
+		err = runConfigured(ctx, root, *mode, *artifacts)
 	}
 	if err == nil {
 		return 0
@@ -65,6 +66,10 @@ type step struct {
 }
 
 func run(ctx context.Context, root, mode string) error {
+	return runConfigured(ctx, root, mode, "")
+}
+
+func runConfigured(ctx context.Context, root, mode, artifacts string) error {
 	if runtime.Version() != requiredGoVersion {
 		return fmt.Errorf("go version is %s; require exactly %s", runtime.Version(), requiredGoVersion)
 	}
@@ -99,6 +104,13 @@ func run(ctx context.Context, root, mode string) error {
 				{"coverage", func() error { return coverage(ctx, root) }},
 				{"offline vendor", func() error { return offline(ctx, root) }},
 			}
+		case "release-artifacts":
+			steps = []step{
+				identity,
+				{"verified release archive", func() error {
+					return verifyReleaseArtifacts(ctx, root, artifacts)
+				}},
+			}
 		default:
 			return fmt.Errorf("unknown mode %q", mode)
 		}
@@ -131,7 +143,31 @@ func checkRepositoryContract(root string) error {
 	if err := checkReleaseEntrypoint(root); err != nil {
 		return err
 	}
+	if err := checkReleaseArtifactEntrypoint(root); err != nil {
+		return err
+	}
 	return checkReleaseWorkflow(root)
+}
+
+func checkReleaseArtifactEntrypoint(root string) error {
+	content, err := os.ReadFile(filepath.Join(root, "Makefile")) // #nosec G304 -- fixed repository build contract.
+	if err != nil {
+		return fmt.Errorf("read Makefile: %w", err)
+	}
+	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
+	const target = "verify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)\"\n"
+	if strings.Count(normalized, target) != 1 {
+		return errors.New("makefile must expose the exact independently verified release-artifact gate")
+	}
+	for line := range strings.SplitSeq(normalized, "\n") {
+		if targets, ok := strings.CutPrefix(line, ".PHONY:"); ok {
+			if !slices.Contains(strings.Fields(targets), "verify-release-artifacts") {
+				return errors.New("makefile must declare verify-release-artifacts phony")
+			}
+			return nil
+		}
+	}
+	return errors.New("makefile has no .PHONY declaration")
 }
 
 func checkReleaseEntrypoint(root string) error {
@@ -493,6 +529,24 @@ func checkGeneratedApplications(ctx context.Context, root string) error {
 		}
 	}
 	return nil
+}
+
+func verifyReleaseArtifacts(ctx context.Context, root, directory string) error {
+	if directory == "" || !filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
+		return errors.New("release artifact gate requires a canonical absolute -artifacts directory")
+	}
+	environment := map[string]string{
+		"GOFLAGS": "-mod=vendor", "GOPROXY": "off", "GOSUMDB": "off", "GOTOOLCHAIN": "local",
+	}
+	return command(ctx, root, environment, "go", releaseArtifactTestArguments(directory)...)
+}
+
+func releaseArtifactTestArguments(directory string) []string {
+	return []string{
+		"test", "-tags=spice_release_artifacts", "-count=1",
+		"-run=^TestVerifiedNativeReleaseArchive$", "./internal/installedacceptance",
+		"-args", "-spice-release-artifact-dir=" + directory,
+	}
 }
 
 func generatedApplicationChecks() [][]string {
