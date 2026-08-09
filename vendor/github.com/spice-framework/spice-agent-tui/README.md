@@ -22,8 +22,10 @@ The implemented slice includes:
   prompt submission, concurrent run cancellation, and clean Ctrl-Q shutdown;
 - public `terminal.NewFixedRenderer` and `terminal.NewShell` factories whose
   signatures expose no Bubble Tea or internal types;
-- canonical `@UIShell` and `@UIRenderer` provider annotations; and
-- explicit `/autoconfigure` fallback beans proven by committed generated Go.
+- canonical `@UIShell` and `@UIRenderer` provider annotations;
+- explicit `/autoconfigure` fallback beans proven by committed generated Go; and
+- an agent-friendly `tuittest` harness for scripted interaction and pixel-perfect
+  goldens (see [`docs/tuittest.md`](docs/tuittest.md)).
 
 ## Session boundary
 
@@ -126,3 +128,18 @@ adopted high-level client and the distribution repository.
 Go 1.26.5 is exact. Run `make tools-bootstrap` once on a fresh clone, `make
 fast` for affected feedback, `make check` for the broad edit loop, and `make
 verify` before a commit. Ordinary verification is offline.
+
+## Release contract
+
+`spice-release.json` is inert, canonical metadata for the centrally authorized
+`go-module-v1` release profile. `make verify-release` runs the repository's
+complete local gate. Tag pushes call the organization-owned keyless Go-module
+release workflow at audited commit
+`0fcd43dc8b41fad56c231d0e136ad8c762276ed5`. The
+caller denies permissions by default, grants only contents, OIDC, attestations,
+and artifact-metadata writes to that reusable job, and passes no secrets. The
+repository quality gate rejects pin drift, excess permissions, local release
+steps, additional jobs, or secret-based signing. The organization release
+authority independently binds the repository name, module path, exact preview
+version, required module graph, commit, and tag before it creates any artifact
+or release.

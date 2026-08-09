@@ -10,10 +10,13 @@ events, logs, manifests, generated files, and test fixtures must not contain API
 keys, authorization headers, prompt bodies, or model output unless the owning
 application explicitly chooses to retain content.
 
-Only HTTPS API endpoints are accepted. Construction performs no network I/O.
-Every request must use a caller-owned context and bounded timeout. Automatic
-retry is limited to failures known to happen before streaming starts; an
-ambiguous or partial stream is never replayed automatically.
+Remote API endpoints require HTTPS. Plain HTTP is accepted only for exact
+`localhost` or a parsed loopback IP literal and is intended solely for trusted
+local test bridges; it provides no transport confidentiality or peer
+authentication. Construction performs no network I/O. Every request must use a
+caller-owned context and bounded timeout. Automatic retry is limited to
+failures known to happen before streaming starts; an ambiguous or partial
+stream is never replayed automatically.
 
 Supported versions receive security fixes on the latest preview line until a
 stable support policy is published.

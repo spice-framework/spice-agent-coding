@@ -24,6 +24,7 @@ func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 
 func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 	t.Parallel()
+	const immediatePriorWorkflowCommit = "6a0ba9f430304c33bf897f4e2d3f393926f42eb9"
 	valid := expectedReleaseWorkflow()
 	for _, test := range []struct {
 		name     string
@@ -32,6 +33,10 @@ func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 	}{
 		{name: "valid", workflow: valid},
 		{name: "missing", omit: true},
+		{
+			name:     "immediate prior authority",
+			workflow: strings.ReplaceAll(valid, releaseWorkflowCommit, immediatePriorWorkflowCommit),
+		},
 		{name: "wrong workflow", workflow: strings.Replace(valid, "go-distribution-release.yml", "go-module-release.yml", 1)},
 		{name: "wrong pin", workflow: strings.Replace(valid, releaseWorkflowCommit, strings.Repeat("0", 40), 1)},
 		{name: "wrong input pin", workflow: strings.Replace(valid, "workflow_commit: "+releaseWorkflowCommit, "workflow_commit: "+strings.Repeat("0", 40), 1)},
@@ -249,8 +254,12 @@ func TestValidateCompatibility(t *testing.T) {
 		{name: "unknown", content: strings.Replace(valid, `}`, `,"extra":true}`, 1), wantErr: "unknown field"},
 		{name: "trailing", content: valid + `{}`, wantErr: "trailing"},
 		{name: "wrong Go", content: strings.Replace(valid, "1.26.5", "1.26.4", 1), wantErr: "Go 1.26.5"},
-		{name: "wrong core", content: strings.Replace(valid, agentVersion, "v1.0.0", 1), wantErr: "spice_agent"},
-		{name: "wrong TUI", content: strings.Replace(valid, agentTUIVersion, "v1.0.0", 1), wantErr: "spice_agent_tui"},
+		{name: "wrong Spice", content: replaceCompatibilitySelection(valid, "spice", spiceVersion), wantErr: "spice"},
+		{name: "wrong toolchain", content: replaceCompatibilitySelection(valid, "spice_toolchain", toolchainVersion), wantErr: "spice_toolchain"},
+		{name: "wrong core", content: replaceCompatibilitySelection(valid, "spice_agent", agentVersion), wantErr: "spice_agent"},
+		{name: "wrong TUI", content: replaceCompatibilitySelection(valid, "spice_agent_tui", agentTUIVersion), wantErr: "spice_agent_tui"},
+		{name: "wrong provider", content: replaceCompatibilitySelection(valid, "spice_agent_provider_openai", providerVersion), wantErr: "spice_agent_provider_openai"},
+		{name: "wrong coding tools", content: replaceCompatibilitySelection(valid, "spice_agent_tools_coding", codingToolsVersion), wantErr: "spice_agent_tools_coding"},
 		{name: "missing selection", content: strings.Replace(valid, `,"spice_agent_tui":"`+agentTUIVersion+`"`, "", 1), wantErr: "spice_agent_tui"},
 	}
 	for _, test := range tests {
@@ -265,6 +274,12 @@ func TestValidateCompatibility(t *testing.T) {
 			}
 		})
 	}
+}
+
+func replaceCompatibilitySelection(content, name, oldVersion string) string {
+	oldSelection := `"` + name + `":"` + oldVersion + `"`
+	newSelection := `"` + name + `":"v1.0.0"`
+	return strings.Replace(content, oldSelection, newSelection, 1)
 }
 
 func TestIdentityAndPins(t *testing.T) {

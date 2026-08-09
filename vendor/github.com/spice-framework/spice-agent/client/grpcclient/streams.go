@@ -59,8 +59,11 @@ func (lifetime *streamLifetime) finish() {
 
 func (lifetime *streamLifetime) finishRPC() {
 	lifetime.rpcOnce.Do(func() {
-		close(lifetime.rpcDone)
 		lifetime.finish()
+		// Joining a stream includes releasing its session ownership. Reconnect
+		// waits on rpcDone before it installs the next epoch, so publishing the
+		// join first can race that install against removal of the prior session.
+		close(lifetime.rpcDone)
 	})
 }
 

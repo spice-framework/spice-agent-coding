@@ -1,0 +1,51 @@
+{
+  "$schema": "https://spiceframework.dev/schemas/spice-docs.schema.json",
+  "schema": 1,
+  "product": {
+    "id": "openai-provider",
+    "title": "OpenAI provider",
+    "family": "agent-extension",
+    "summary": "A Spice Agent provider implementing OpenAI model access, streaming, metadata, and explicit security boundaries.",
+    "maturity": "experimental",
+    "audience": [
+      "application-developer",
+      "extension-author",
+      "operator"
+    ]
+  },
+  "content": [
+    {
+      "source": "README.md",
+      "route": "index",
+      "kind": "how-to",
+      "order": 0,
+      "search": true
+    },
+    {
+      "source": "ARCHITECTURE.md",
+      "route": "architecture",
+      "kind": "concept",
+      "order": 10,
+      "search": true
+    },
+    {
+      "source": "docs/**/*.md",
+      "routeFrom": "docs",
+      "order": 20,
+      "search": true
+    }
+  ],
+  "snippets": [
+    {
+      "root": ".",
+      "include": [
+        "**/*.go"
+      ],
+      "exclude": [
+        "vendor/**",
+        "internal/spicegen/**",
+        ".generated/**"
+      ]
+    }
+  ]
+}

@@ -3,6 +3,6 @@
   "go": "1.26.5",
   "spice_agent_client": null,
   "spice_agent_ui_values": "v0.1.0-dev",
-  "spice_core": "v0.1.0-preview.1.0.20260806200749-524424a04df0",
+  "spice_core": "v0.1.0-preview.2",
   "spice_toolchain": "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6"
 }

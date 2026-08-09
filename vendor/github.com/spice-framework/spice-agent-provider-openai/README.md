@@ -1,5 +1,7 @@
 # Spice Agent OpenAI Provider
 
+Unified documentation: [spiceframework.dev/agent/providers/openai](https://spiceframework.dev/agent/providers/openai/).
+
 `spice-agent-provider-openai` is the explicit OpenAI Responses adapter for
 Spice Agent. It implements the exact `model.Provider` contract, owns no global
 state, and keeps model selection in each `model.Request`.
@@ -24,6 +26,13 @@ provider never reads environment variables itself; the example deliberately
 shows application-owned configuration. A request must choose its model through
 `model.Request.Model`. A zero timeout selects two minutes; configured request
 timeouts must be positive and no greater than thirty minutes.
+
+`BaseURL` must normally be an absolute HTTPS URL without user information.
+Plain HTTP is accepted only for the exact `localhost` host or a parsed IPv4 or
+IPv6 loopback literal, which supports local OpenAI-compatible test bridges
+without weakening remote endpoint validation. Loopback HTTP is plaintext: use
+it only with a trusted local process and local-only credentials. Lookalike
+names, wildcard addresses, and non-loopback hosts fail validation.
 
 Applications may opt into one replaceable fallback bean with an explicit blank
 import:
@@ -94,3 +103,14 @@ from the shell after the run.
 
 See [the dependency review](docs/dependency-review.md),
 [security review](docs/security-review.md), and [support matrix](docs/support.md).
+
+## Release contract
+
+`spice-release.json` is inert, canonical metadata for the centrally authorized
+`go-module-v1` release profile. `make verify-release` runs the repository's
+complete local gate. The organization release authority independently binds
+the repository name, module path, exact preview version, required module graph,
+commit, and tag before it creates any artifact or release. Tag pushes call the
+single-job, secret-free reusable workflow at audited organization commit
+`0fcd43dc8b41fad56c231d0e136ad8c762276ed5`; repository verification rejects
+caller, module, permission, step, job, and secret drift before product tests.

@@ -15,9 +15,9 @@ import (
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
 
 const (
-	agentModuleSelection    = "v0.0.0-20260808000851-55168c1ebaac"
-	providerModuleSelection = "v0.0.0-20260806230257-a6962fe2dabc"
-	toolsModuleSelection    = "v0.0.0-20260807150540-eeacf58875c5"
+	agentModuleSelection    = "v0.1.0-preview.4"
+	providerModuleSelection = "v0.1.0-preview.1"
+	toolsModuleSelection    = "v0.1.0-preview.1"
 
 	// snapshotCompatibilityIdentity is application-owned semantic compatibility,
 	// not a hash of machine paths or timestamps. Changing executable snapshot

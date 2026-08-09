@@ -70,6 +70,16 @@ Bubble Tea program. It proves that a blocked submit lane does not prevent the
 independent cancel lane and that quitting cancels both the receive and submit
 operations before returning a normal exit.
 
+The public `tuittest` package is the deterministic application-test seam. It
+drives the real private model and renderer without a PTY, daemon, network, or
+Bubble Tea event loop; exposes normalized styled, exact plain, cursor, and
+semantic captures; and requires explicit golden refresh. Its synchronous
+driver applies session state through validated `InjectUpdate` calls and never
+arms a blocking receive command. Injected Session values serve only effect
+operations, are cancelled on quit, close, or timeout, and cannot turn a timed
+out operation into apparent success. `ScriptSession` separately remains a
+cancellation-aware receive queue for full shell/facade tests.
+
 `terminal.NewShell` accepts only public interfaces and immutable values. It
 validates the initial view, snapshots the `Theme` SPI through `NewTheme`, copies
 bindings through model construction, adapts the injected Session, and delegates

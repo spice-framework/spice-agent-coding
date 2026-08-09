@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "profile": "go-module-v1",
+  "repository": "spice-agent-provider-openai",
+  "module": "github.com/spice-framework/spice-agent-provider-openai",
+  "version": "v0.1.0-preview.1"
+}

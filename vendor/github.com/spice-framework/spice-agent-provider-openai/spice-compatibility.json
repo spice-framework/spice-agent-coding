@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "minimum": "v0.1.0-preview.1.0.20260806200749-524424a04df0",
-  "current": "v0.1.0-preview.1.0.20260806200749-524424a04df0",
+  "minimum": "v0.1.0-preview.2",
+  "current": "v0.1.0-preview.2",
   "toolchain": "v0.1.0-preview.1.0.20260806203056-d0b9ac086bd6",
-  "spice_agent": "v0.0.0-20260806225954-af79fc7fe4ad",
+  "spice_agent": "v0.1.0-preview.4",
   "openai_go": "v3.50.0",
   "go": "1.26.5"
 }

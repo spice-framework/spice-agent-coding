@@ -32,13 +32,16 @@ func (run *Run) PrepareLocalResume() (*PreparedLocalResume, error) {
 	}
 	run.stateMu.Lock()
 	defer run.stateMu.Unlock()
-	if run.status != LifecycleSuspended || run.resumeSignal == nil || run.localResume != nil || len(run.activeInteractions) != 0 {
-		return nil, &UnsafeSnapshotError{Status: run.status, ActiveInteractions: len(run.activeInteractions)}
-	}
-	if run.ctx != nil {
+	if run.ctx != nil &&
+		run.status != LifecycleCompleted &&
+		run.status != LifecycleFailed &&
+		run.status != LifecycleCancelled {
 		if err := run.ctx.Err(); err != nil {
 			return nil, err
 		}
+	}
+	if run.status != LifecycleSuspended || run.resumeSignal == nil || run.localResume != nil || len(run.activeInteractions) != 0 {
+		return nil, &UnsafeSnapshotError{Status: run.status, ActiveInteractions: len(run.activeInteractions)}
 	}
 	if run.lastSequence == math.MaxUint64 {
 		return nil, errors.New("agent suspended run event sequence is exhausted")

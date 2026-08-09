@@ -83,3 +83,16 @@ See [the dependency review](docs/dependency-review.md),
 On a fresh clone, run `make tools-bootstrap` once to populate the exact product
 and tools module graphs without changing tracked module files. All ordinary
 quality targets remain offline; run the complete suite with `make verify`.
+
+## Release contract
+
+`spice-release.json` is inert, canonical metadata for the centrally authorized
+`go-module-v1` release profile. `make verify-release` runs the repository's
+complete local gate. The organization release authority independently binds
+the repository name, module path, exact preview version, required module graph,
+commit, and tag before it creates any artifact or release.
+The current preview graph selects Spice `v0.1.0-preview.2`, Spice Agent
+`v0.1.0-preview.4`, and the unchanged exact Spice toolchain pseudo-version.
+The release caller is a single step-free reusable-workflow job pinned to the
+reviewed organization authority; repository verification rejects extra jobs,
+permissions, local steps, inherited secrets, or mismatched attestation pins.

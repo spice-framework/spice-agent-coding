@@ -12,16 +12,17 @@ protocol, daemon, and distribution contracts.
 - [x] Enforce Go 1.26.5 with cross-platform fast/check/verify gates.
 - [x] Publish the bounded UI-neutral values needed by real presentation code.
 - [x] Record explicit selected and unselected compatibility boundaries.
-- [x] Pin the exact result-facts Spice core and toolchain revisions and publish the explicit-constructor TUI
-      starter manifest without claiming shell auto-configuration.
+- [x] Pin the immutable Spice core v0.1.0-preview.2 release and the compatible
+      exact toolchain revision, and publish the explicit-constructor TUI starter
+      manifest without claiming shell auto-configuration.
 - [x] Prove generic result facts through the real tool protocol with alias-positive
       and source-positioned negative compiler fixtures.
 - [ ] Register the compatible revisions in the development catalog with the
       first generated application slice.
 
 The checked items describe this repository's scaffold only. Its portion of the
-canonical multi-repository foundation is not complete until the pending pin,
-manifest, and catalog work above can be proved by executable product code.
+canonical multi-repository foundation is not complete until the pending catalog
+registration above is proved by executable product code.
 
 ## Adopted dependencies
 
@@ -50,6 +51,9 @@ manifest, and catalog work above can be proved by executable product code.
       grapheme-safe editing and cursor placement, deterministic resize,
       revisioned snapshot/activity updates, bounded prompt history, keyboard
       navigation, multi-size light/dark goldens, and clean Ctrl-C cancellation.
+- [x] Ship an agent-friendly `tuittest` harness for scripted interaction,
+      Session injection, accessible/normal captures, and pixel-perfect
+      styled/plain golden comparison without a PTY or daemon.
 - [x] Prepare adapter-neutral Phase 4 contracts: injected ordered key bindings,
       semantic submit/cancel/respond/quit actions, bounded command and terminal
       values, command-owned effects with stale-token protection, caller-context

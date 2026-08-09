@@ -17,6 +17,11 @@ var (
 	// ErrLockBusy reports that another process owns the requested stable lock.
 	ErrLockBusy = errors.New("secure user storage lock is busy")
 	errLockBusy = ErrLockBusy
+
+	// BSD flock implementations may merge independently opened locks owned by
+	// one process. Initialization therefore needs a process-local gate in
+	// addition to the platform lock that excludes external processes.
+	initializationMu sync.Mutex
 )
 
 // Directory is one exact absolute current-user directory retained by an OS
@@ -28,9 +33,10 @@ type Directory struct {
 // Lock owns one process-stable exclusive file lock. It is safe to close
 // repeatedly and concurrently.
 type Lock struct {
-	mu     sync.Mutex
-	value  *stableLock
-	closed bool
+	mu            sync.Mutex
+	value         *stableLock
+	processUnlock func()
+	closed        bool
 }
 
 // Bind creates or opens path and proves its complete ancestry and leaf are
@@ -87,17 +93,19 @@ func (directory *Directory) AcquireLock(name string) (*Lock, error) {
 	return &Lock{value: value}, nil
 }
 
-// AcquireInitializationLock waits for the process-stable exclusive lock used
-// to serialize bounded initialization work within a retained directory.
+// AcquireInitializationLock waits for both process-local and operating-system
+// exclusion used to serialize bounded initialization work.
 func (directory *Directory) AcquireInitializationLock(name string) (*Lock, error) {
-	if directory == nil || directory.value == nil {
+	if directory == nil || directory.value == nil || !validRelativeName(name) {
 		return nil, ErrUnavailable
 	}
+	initializationMu.Lock()
 	value, err := directory.value.acquireInitializationLock(name)
 	if err != nil {
+		initializationMu.Unlock()
 		return nil, err
 	}
-	return &Lock{value: value}, nil
+	return &Lock{value: value, processUnlock: initializationMu.Unlock}, nil
 }
 
 // Close releases the retained directory identity. It is idempotent.
@@ -119,7 +127,12 @@ func (lock *Lock) Close() error {
 		return nil
 	}
 	lock.closed = true
-	return lock.value.close()
+	closeErr := lock.value.close()
+	if lock.processUnlock != nil {
+		lock.processUnlock()
+		lock.processUnlock = nil
+	}
+	return closeErr
 }
 
 // ReadFile securely reads an absolute file path whose existing parent is

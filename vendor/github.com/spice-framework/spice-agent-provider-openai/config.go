@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strings"
 	"time"
@@ -25,6 +26,8 @@ const (
 
 // Config is the typed, secret-aware configuration for one provider instance.
 // APIKey is deliberately excluded from String output and validation errors.
+// BaseURL requires HTTPS except for explicit localhost or IP-loopback HTTP test
+// bridges; loopback HTTP provides no transport security.
 // A zero Timeout selects two minutes; explicit values must not exceed thirty
 // minutes.
 type Config struct {
@@ -148,8 +151,8 @@ func (config Config) validate() error {
 		return errors.New("OpenAI API key is required")
 	}
 	endpoint, err := url.Parse(config.BaseURL)
-	if err != nil || endpoint.Scheme != "https" || endpoint.Host == "" || endpoint.User != nil {
-		return errors.New("OpenAI base URL must be an absolute HTTPS URL without user information")
+	if err != nil || endpoint.Host == "" || endpoint.User != nil || !allowedBaseURLScheme(endpoint) {
+		return errors.New("OpenAI base URL must be an absolute HTTPS URL without user information (HTTP is allowed only for loopback test endpoints)")
 	}
 	if config.Timeout <= 0 || config.Timeout > maximumTimeout {
 		return fmt.Errorf("OpenAI timeout must be positive and no greater than %s", maximumTimeout)
@@ -158,4 +161,23 @@ func (config Config) validate() error {
 		return fmt.Errorf("OpenAI max retries must be between 0 and %d", maximumRetries)
 	}
 	return nil
+}
+
+// allowedBaseURLScheme accepts production HTTPS endpoints and loopback-only
+// HTTP for local test bridges. Localhost is retained as an explicit conventional
+// alias; literal addresses are parsed and must belong to an IP loopback range.
+func allowedBaseURLScheme(endpoint *url.URL) bool {
+	switch strings.ToLower(endpoint.Scheme) {
+	case "https":
+		return true
+	case "http":
+		host := strings.ToLower(endpoint.Hostname())
+		if host == "localhost" {
+			return true
+		}
+		address, err := netip.ParseAddr(host)
+		return err == nil && address.Unmap().IsLoopback()
+	default:
+		return false
+	}
 }

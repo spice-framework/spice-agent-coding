@@ -37,3 +37,8 @@ An application-supplied `http.Client` and transport are trusted. Spice supplies
 the bounded request context and calls stream close, but cannot safely force-stop
 a transport that ignores both cancellation and close. Such a transport may
 prevent `Close` from joining and is outside this module's cooperative contract.
+
+Remote endpoints require HTTPS. Plain HTTP is restricted to `localhost` or a
+parsed IP loopback literal for local OpenAI-compatible test bridges. This
+exception is explicit configuration, performs no discovery, and does not make
+the local process or operating-system host mapping trustworthy.

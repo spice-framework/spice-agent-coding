@@ -67,7 +67,7 @@ github.com/openai/openai-go/v3/shared/constant
 # github.com/rivo/uniseg v0.4.7
 ## explicit; go 1.18
 github.com/rivo/uniseg
-# github.com/spice-framework/spice v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0
+# github.com/spice-framework/spice v0.1.0-preview.2
 ## explicit; go 1.26.0
 github.com/spice-framework/spice/annotation
 github.com/spice-framework/spice/annotation/async
@@ -96,7 +96,7 @@ github.com/spice-framework/spice/security
 github.com/spice-framework/spice/starter
 github.com/spice-framework/spice/validation
 github.com/spice-framework/spice/web
-# github.com/spice-framework/spice-agent v0.0.0-20260808000851-55168c1ebaac
+# github.com/spice-framework/spice-agent v0.1.0-preview.4
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent/agent
 github.com/spice-framework/spice-agent/annotation/agent
@@ -126,15 +126,15 @@ github.com/spice-framework/spice-agent/plugin/v1
 github.com/spice-framework/spice-agent/process
 github.com/spice-framework/spice-agent/stage
 github.com/spice-framework/spice-agent/tool
-# github.com/spice-framework/spice-agent-provider-openai v0.0.0-20260806230257-a6962fe2dabc
+# github.com/spice-framework/spice-agent-provider-openai v0.1.0-preview.1
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-provider-openai
 github.com/spice-framework/spice-agent-provider-openai/autoconfigure
-# github.com/spice-framework/spice-agent-tools-coding v0.0.0-20260807150540-eeacf58875c5
+# github.com/spice-framework/spice-agent-tools-coding v0.1.0-preview.1
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-tools-coding
 github.com/spice-framework/spice-agent-tools-coding/autoconfigure
-# github.com/spice-framework/spice-agent-tui v0.0.0-20260807191321-a9c2bc36bc67
+# github.com/spice-framework/spice-agent-tui v0.1.0-preview.1
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-tui
 github.com/spice-framework/spice-agent-tui/annotation/ui

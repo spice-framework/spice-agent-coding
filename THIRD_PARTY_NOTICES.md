@@ -604,7 +604,7 @@ Source: https://github.com/rivo/uniseg
     SOFTWARE.
 
 
-## `github.com/spice-framework/spice` `v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0`
+## `github.com/spice-framework/spice` `v0.1.0-preview.2`
 
 Source: https://github.com/spice-framework/spice
 
@@ -813,7 +813,7 @@ Source: https://github.com/spice-framework/spice
        limitations under the License.
 
 
-## `github.com/spice-framework/spice-agent` `v0.0.0-20260808000851-55168c1ebaac`
+## `github.com/spice-framework/spice-agent` `v0.1.0-preview.4`
 
 Source: https://github.com/spice-framework/spice-agent
 
@@ -1022,7 +1022,7 @@ Source: https://github.com/spice-framework/spice-agent
        limitations under the License.
 
 
-## `github.com/spice-framework/spice-agent-provider-openai` `v0.0.0-20260806230257-a6962fe2dabc`
+## `github.com/spice-framework/spice-agent-provider-openai` `v0.1.0-preview.1`
 
 Source: https://github.com/spice-framework/spice-agent-provider-openai
 
@@ -1231,7 +1231,7 @@ Source: https://github.com/spice-framework/spice-agent-provider-openai
        limitations under the License.
 
 
-## `github.com/spice-framework/spice-agent-tools-coding` `v0.0.0-20260807150540-eeacf58875c5`
+## `github.com/spice-framework/spice-agent-tools-coding` `v0.1.0-preview.1`
 
 Source: https://github.com/spice-framework/spice-agent-tools-coding
 
@@ -1440,7 +1440,7 @@ Source: https://github.com/spice-framework/spice-agent-tools-coding
        limitations under the License.
 
 
-## `github.com/spice-framework/spice-agent-tui` `v0.0.0-20260807191321-a9c2bc36bc67`
+## `github.com/spice-framework/spice-agent-tui` `v0.1.0-preview.1`
 
 Source: https://github.com/spice-framework/spice-agent-tui
 

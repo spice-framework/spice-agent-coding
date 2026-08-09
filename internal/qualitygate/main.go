@@ -26,13 +26,13 @@ const (
 	requiredGoVersion     = "go1.26.5"
 	modulePath            = "github.com/spice-framework/spice-agent-coding"
 	minimumCoverage       = 85.0
-	spiceVersion          = "v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0"
+	spiceVersion          = "v0.1.0-preview.2"
 	toolchainVersion      = "v0.1.0-preview.1.0.20260807044408-6598abca8196"
-	agentVersion          = "v0.0.0-20260808000851-55168c1ebaac"
-	agentTUIVersion       = "v0.0.0-20260807191321-a9c2bc36bc67"
-	providerVersion       = "v0.0.0-20260806230257-a6962fe2dabc"
-	codingToolsVersion    = "v0.0.0-20260807150540-eeacf58875c5"
-	releaseWorkflowCommit = "6a0ba9f430304c33bf897f4e2d3f393926f42eb9"
+	agentVersion          = "v0.1.0-preview.4"
+	agentTUIVersion       = "v0.1.0-preview.1"
+	providerVersion       = "v0.1.0-preview.1"
+	codingToolsVersion    = "v0.1.0-preview.1"
+	releaseWorkflowCommit = "0fcd43dc8b41fad56c231d0e136ad8c762276ed5"
 )
 
 var output io.Writer = os.Stdout
