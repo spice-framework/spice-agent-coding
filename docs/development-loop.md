@@ -76,6 +76,12 @@ rendered semantic output without platform terminal emulation. It also runs the
 generated applications in the test process rather than claiming that released
 archive bytes were installed.
 
+In accessible mode, Escape and Ctrl+X request cancellation of the active run.
+Cancellation uses the TUI session's independent cancel lane, so it remains
+available while a submit or interaction command occupies the ordinary command
+lane. Repeated cancellation is coalesced until the prior request returns.
+Ctrl+C and Ctrl+Q remain quit-only bindings and do not implicitly cancel a run.
+
 `internal/installedacceptance` closes the installed-process gap. It builds the
 committed generated `spice-agentd` and `spice-agent` packages in vendor-only
 mode, starts them as independent operating-system processes, and drives the
@@ -120,3 +126,14 @@ managed mode attaches to that exact process identity, and verifies terminal
 shutdown leaves the externally owned daemon running. This is the process-level
 attach-or-start ownership contract; exact released-archive byte execution
 remains a distinct Phase 6 release gate.
+
+The installed suite also starts a fresh private daemon and real Bubble Tea
+terminal for each cancellation boundary. Escape cancels a provider blocked in
+`Recv`; Ctrl+X cancels the compiled shell tool and its test-owned child process;
+and Escape cancels the one-slot `fixture.block` runtime-plugin call. Exact
+process witnesses prove the shell parent and child exit, canonical terminal
+events prove cancellation is neither failure nor completion, and a second run
+on the same daemon completes. The plugin case additionally executes
+`fixture.echo`, proving that cancellation released its sole admission slot.
+The provider, process helper, and plugin configuration are acceptance-tag or
+test-data surfaces and are absent from production archives.

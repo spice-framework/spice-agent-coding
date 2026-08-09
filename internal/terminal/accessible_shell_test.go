@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -238,6 +239,175 @@ func TestAccessibleModelReceiveAndFailurePaths(t *testing.T) {
 	if _, quit := model.Update(sessionUpdateMessage{update: agenttui.SessionUpdate{}}); quit == nil {
 		t.Fatal("invalid update did not request quit")
 	}
+}
+
+func TestAccessibleModelCancellationBindings(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		key        tea.Key
+		wantCancel bool
+		wantQuit   bool
+	}{
+		{name: "Escape cancels", key: tea.Key{Code: tea.KeyEscape}, wantCancel: true},
+		{name: "Ctrl+X cancels", key: tea.Key{Code: 'x', Mod: tea.ModCtrl}, wantCancel: true},
+		{name: "Ctrl+C only quits", key: tea.Key{Code: 'c', Mod: tea.ModCtrl}, wantQuit: true},
+		{name: "Ctrl+Q only quits", key: tea.Key{Code: 'q', Mod: tea.ModCtrl}, wantQuit: true},
+		{name: "ordinary input does neither", key: tea.Key{Code: 'x', Text: "x"}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			initial := accessibleInitialView(t)
+			session := &accessibleTestSession{updates: make(chan agenttui.SessionUpdate)}
+			model := &accessibleModel{
+				context: func() context.Context { return t.Context() }, session: session,
+				workspace: initial.Workspace(), status: initial.Status(),
+			}
+			_, command := model.updateKey(tea.KeyPressMsg(test.key))
+			if test.wantCancel {
+				if command == nil || !model.cancelling {
+					t.Fatal("cancel binding did not create a cancellation command")
+				}
+				result, ok := command().(commandResultMessage)
+				if !ok || result.lane != commandLaneCancel || result.err != nil {
+					t.Fatalf("cancel command result = %#v", result)
+				}
+				model.Update(result)
+			} else if test.wantQuit != (command != nil) {
+				t.Fatalf("quit command presence = %v, want %v", command != nil, test.wantQuit)
+			}
+			session.mutex.Lock()
+			defer session.mutex.Unlock()
+			if test.wantCancel {
+				if len(session.intents) != 1 || session.intents[0].Kind() != agenttui.IntentCancelActiveRun {
+					t.Fatalf("cancel intents = %#v", session.intents)
+				}
+			} else if len(session.intents) != 0 {
+				t.Fatalf("non-cancel key emitted intents = %#v", session.intents)
+			}
+		})
+	}
+}
+
+func TestAccessibleModelCancellationUsesIndependentLane(t *testing.T) {
+	t.Parallel()
+	initial := accessibleInitialView(t)
+	session := newAccessibleConcurrentSession()
+	model := &accessibleModel{
+		context: func() context.Context { return t.Context() }, session: session,
+		workspace: initial.Workspace(), status: initial.Status(), prompt: "blocked work",
+	}
+
+	_, ordinary := model.submit()
+	if ordinary == nil || !model.performing {
+		t.Fatal("submit did not occupy the ordinary lane")
+	}
+	ordinaryResult := make(chan commandResultMessage, 1)
+	go func() {
+		message, ok := ordinary().(commandResultMessage)
+		if !ok {
+			message = commandResultMessage{lane: commandLaneOrdinary, err: errors.New("unexpected ordinary command result")}
+		}
+		ordinaryResult <- message
+	}()
+	select {
+	case <-session.ordinaryStarted:
+	case <-time.After(time.Second):
+		t.Fatal("ordinary lane did not start")
+	}
+
+	_, cancel := model.updateKey(tea.KeyPressMsg(tea.Key{Code: tea.KeyEscape}))
+	if cancel == nil || !model.cancelling || !model.performing {
+		t.Fatal("Escape did not occupy the independent cancel lane")
+	}
+	cancelResult, ok := cancel().(commandResultMessage)
+	if !ok || cancelResult.lane != commandLaneCancel || cancelResult.err != nil {
+		t.Fatalf("Escape cancellation result = %#v", cancelResult)
+	}
+	model.Update(cancelResult)
+	if model.cancelling || !model.performing {
+		t.Fatal("cancel completion changed the blocked ordinary lane")
+	}
+	if _, secondCancel := model.updateKey(tea.KeyPressMsg(tea.Key{Code: 'x', Mod: tea.ModCtrl})); secondCancel == nil {
+		// The first cancel has completed, so Ctrl+X is a second valid request.
+		t.Fatal("Ctrl+X did not map to active-run cancellation")
+	} else {
+		result, resultOK := secondCancel().(commandResultMessage)
+		if !resultOK || result.lane != commandLaneCancel || result.err != nil {
+			t.Fatalf("Ctrl+X cancellation result = %#v", result)
+		}
+		model.Update(result)
+	}
+	model.cancelling = true
+	if _, duplicate := model.updateKey(tea.KeyPressMsg(tea.Key{Code: tea.KeyEscape})); duplicate != nil {
+		t.Fatal("a busy cancel lane accepted a duplicate request")
+	}
+	model.cancelling = false
+
+	if _, quit := model.updateKey(tea.KeyPressMsg(tea.Key{Code: 'c', Mod: tea.ModCtrl})); quit == nil {
+		t.Fatal("Ctrl+C did not remain a quit-only binding")
+	}
+	if got := session.intentKinds(); !slices.Equal(got, []agenttui.IntentKind{
+		agenttui.IntentSubmit, agenttui.IntentCancelActiveRun, agenttui.IntentCancelActiveRun,
+	}) {
+		t.Fatalf("intent order before ordinary release = %v", got)
+	}
+	close(session.releaseOrdinary)
+	select {
+	case result := <-ordinaryResult:
+		if result.lane != commandLaneOrdinary || result.err != nil {
+			t.Fatalf("ordinary result = %#v", result)
+		}
+		model.Update(result)
+	case <-time.After(time.Second):
+		t.Fatal("ordinary lane did not finish")
+	}
+	if model.performing || model.cancelling {
+		t.Fatal("accessible command lanes remained busy")
+	}
+}
+
+type accessibleConcurrentSession struct {
+	mu              sync.Mutex
+	intents         []agenttui.IntentKind
+	ordinaryStarted chan struct{}
+	releaseOrdinary chan struct{}
+	ordinaryOnce    sync.Once
+}
+
+func newAccessibleConcurrentSession() *accessibleConcurrentSession {
+	return &accessibleConcurrentSession{
+		ordinaryStarted: make(chan struct{}), releaseOrdinary: make(chan struct{}),
+	}
+}
+
+func (*accessibleConcurrentSession) Receive(context.Context) (agenttui.SessionUpdate, error) {
+	return agenttui.SessionUpdate{}, errors.New("concurrent test session does not receive")
+}
+
+func (session *accessibleConcurrentSession) Perform(
+	ctx context.Context,
+	intent agenttui.Intent,
+) (agenttui.CommandResult, error) {
+	session.mu.Lock()
+	session.intents = append(session.intents, intent.Kind())
+	session.mu.Unlock()
+	if intent.Kind() == agenttui.IntentSubmit {
+		session.ordinaryOnce.Do(func() { close(session.ordinaryStarted) })
+		select {
+		case <-session.releaseOrdinary:
+		case <-ctx.Done():
+			return agenttui.CommandResult{}, context.Cause(ctx)
+		}
+	}
+	return agenttui.CommandResult{}, nil
+}
+
+func (session *accessibleConcurrentSession) intentKinds() []agenttui.IntentKind {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	return slices.Clone(session.intents)
 }
 
 func accessibleInitialView(t *testing.T) agenttui.ViewData {

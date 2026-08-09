@@ -33,6 +33,12 @@ const (
 	acceptanceDiagnosticEnvironment   = "SPICE_AGENT_ACCEPTANCE_DIAGNOSTIC"
 	acceptanceProviderEnvironment     = "SPICE_AGENT_ACCEPTANCE_PROVIDER_DIRECTORY"
 	acceptanceResponseEnvironment     = "SPICE_AGENT_ACCEPTANCE_RESPONSE_PREFIX"
+	acceptanceCancellationEnvironment = "SPICE_AGENT_ACCEPTANCE_CANCELLATION_SCENARIO"
+	acceptanceShellHelperEnvironment  = "SPICE_AGENT_ACCEPTANCE_SHELL_HELPER"
+	acceptanceCancellationProvider    = "provider"
+	acceptanceCancellationShell       = "shell"
+	acceptanceCancellationPlugin      = "plugin"
+	acceptanceRecoveryText            = "cancellation-recovery-complete"
 )
 
 func acceptanceApplicationOptions(options spicegen.ApplicationOptions) (spicegen.ApplicationOptions, error) {
@@ -58,14 +64,38 @@ func acceptanceApplicationOptions(options spicegen.ApplicationOptions) (spicegen
 	}
 	providerDirectory := os.Getenv(acceptanceProviderEnvironment)
 	responsePrefix := os.Getenv(acceptanceResponseEnvironment)
-	if providerDirectory != "" || responsePrefix != "" {
-		if !filepath.IsAbs(providerDirectory) || responsePrefix == "" || strings.TrimSpace(responsePrefix) != responsePrefix {
+	cancellationScenario := os.Getenv(acceptanceCancellationEnvironment)
+	shellHelper := os.Getenv(acceptanceShellHelperEnvironment)
+	if providerDirectory != "" || responsePrefix != "" || cancellationScenario != "" || shellHelper != "" {
+		if !validAcceptanceProviderConfiguration(
+			providerDirectory, responsePrefix, cancellationScenario, shellHelper,
+		) {
 			return spicegen.ApplicationOptions{}, errors.New("acceptance provider configuration is invalid")
 		}
-		provider := &acceptanceProvider{directory: providerDirectory, prefix: responsePrefix}
+		provider := &acceptanceProvider{
+			directory: providerDirectory, prefix: responsePrefix,
+			cancellationScenario: cancellationScenario, shellHelper: shellHelper,
+		}
 		options.Overrides.OpenAIModelProvider = spicebean.Replace[model.Provider](provider)
 	}
 	return options, nil
+}
+
+func validAcceptanceProviderConfiguration(directory, prefix, scenario, shellHelper string) bool {
+	if !filepath.IsAbs(directory) || strings.TrimSpace(prefix) != prefix ||
+		strings.TrimSpace(scenario) != scenario {
+		return false
+	}
+	switch scenario {
+	case "":
+		return prefix != "" && shellHelper == ""
+	case acceptanceCancellationProvider, acceptanceCancellationPlugin:
+		return prefix == "" && shellHelper == ""
+	case acceptanceCancellationShell:
+		return prefix == "" && filepath.IsAbs(shellHelper) && filepath.Clean(shellHelper) == shellHelper
+	default:
+		return false
+	}
 }
 
 func acceptanceDaemonRunner(runner daemoncommand.Runner) daemoncommand.Runner {
@@ -186,13 +216,20 @@ func (connection *faultingConnection) Close() error {
 var _ daemon.ListenerFactory = (*faultingListenerFactory)(nil)
 
 type acceptanceProvider struct {
-	directory string
-	prefix    string
+	directory            string
+	prefix               string
+	cancellationScenario string
+	shellHelper          string
+	mu                   sync.Mutex
+	initialRequests      int
 }
 
 func (provider *acceptanceProvider) Stream(ctx context.Context, request model.Request) (model.Stream, error) {
 	if ctx == nil || provider == nil {
 		return nil, errors.New("acceptance provider is unavailable")
+	}
+	if provider.cancellationScenario != "" {
+		return provider.cancellationStream(request)
 	}
 	toolResult := false
 	for _, current := range request.Messages() {
@@ -243,6 +280,112 @@ func (provider *acceptanceProvider) Stream(ctx context.Context, request model.Re
 		checkpoint: filepath.Join(provider.directory, "checkpoint"),
 		release:    filepath.Join(provider.directory, "release"),
 	}, nil
+}
+
+func (provider *acceptanceProvider) cancellationStream(request model.Request) (model.Stream, error) {
+	toolResult := requestHasToolResult(request)
+	if toolResult {
+		return recoveryStream()
+	}
+	provider.mu.Lock()
+	provider.initialRequests++
+	requestNumber := provider.initialRequests
+	provider.mu.Unlock()
+	if requestNumber > 1 {
+		if provider.cancellationScenario == acceptanceCancellationPlugin {
+			return acceptanceToolStream(
+				"acceptance-plugin-recovery", "fixture.echo", json.RawMessage(`{"value":"slot-reused"}`),
+			)
+		}
+		return recoveryStream()
+	}
+	switch provider.cancellationScenario {
+	case acceptanceCancellationProvider:
+		return newBlockingAcceptanceStream(provider.directory), nil
+	case acceptanceCancellationShell:
+		arguments, err := json.Marshal(struct {
+			Argv []string `json:"argv"`
+		}{Argv: []string{provider.shellHelper, "root", provider.directory}})
+		if err != nil {
+			return nil, err
+		}
+		return acceptanceToolStream("acceptance-shell-cancel", "shell", arguments)
+	case acceptanceCancellationPlugin:
+		return acceptanceToolStream("acceptance-plugin-cancel", "fixture.block", json.RawMessage(`{}`))
+	default:
+		return nil, errors.New("acceptance cancellation scenario is unsupported")
+	}
+}
+
+func requestHasToolResult(request model.Request) bool {
+	for _, current := range request.Messages() {
+		for _, part := range current.Parts() {
+			if part.Kind() == message.PartToolResult {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func acceptanceToolStream(id, name string, arguments json.RawMessage) (model.Stream, error) {
+	call, err := tool.NewCall(tool.CallID(id), name, arguments)
+	if err != nil {
+		return nil, err
+	}
+	callEvent, err := model.ToolCallEvent(call)
+	if err != nil {
+		return nil, err
+	}
+	completed, err := model.Completed(model.NewUsage(1, 1))
+	if err != nil {
+		return nil, err
+	}
+	return &acceptanceStream{events: []model.StreamEvent{callEvent, completed}}, nil
+}
+
+func recoveryStream() (model.Stream, error) {
+	textEvent, err := model.TextDelta(acceptanceRecoveryText)
+	if err != nil {
+		return nil, err
+	}
+	completed, err := model.Completed(model.NewUsage(1, 1))
+	if err != nil {
+		return nil, err
+	}
+	return &acceptanceStream{events: []model.StreamEvent{textEvent, completed}}, nil
+}
+
+type blockingAcceptanceStream struct {
+	directory  string
+	closed     chan struct{}
+	closeOnce  sync.Once
+	readyOnce  sync.Once
+	cancelOnce sync.Once
+}
+
+func newBlockingAcceptanceStream(directory string) *blockingAcceptanceStream {
+	return &blockingAcceptanceStream{directory: directory, closed: make(chan struct{})}
+}
+
+func (stream *blockingAcceptanceStream) Recv(ctx context.Context) (model.StreamEvent, error) {
+	stream.readyOnce.Do(func() {
+		_ = os.WriteFile(filepath.Join(stream.directory, "provider.ready"), []byte("ready\n"), 0o600)
+	})
+	select {
+	case <-ctx.Done():
+		stream.cancelOnce.Do(func() {
+			_ = os.WriteFile(filepath.Join(stream.directory, "provider.cancelled"), []byte("cancelled\n"), 0o600)
+		})
+		return model.StreamEvent{}, context.Cause(ctx)
+	case <-stream.closed:
+		return model.StreamEvent{}, io.EOF
+	}
+}
+
+func (stream *blockingAcceptanceStream) Close() error {
+	stream.closeOnce.Do(func() { close(stream.closed) })
+	return nil
 }
 
 type acceptanceStream struct {
@@ -314,4 +457,5 @@ func waitForAcceptanceRelease(ctx context.Context, path string) error {
 var (
 	_ model.Provider = (*acceptanceProvider)(nil)
 	_ model.Stream   = (*acceptanceStream)(nil)
+	_ model.Stream   = (*blockingAcceptanceStream)(nil)
 )

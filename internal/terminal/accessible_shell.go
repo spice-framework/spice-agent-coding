@@ -91,7 +91,17 @@ type sessionUpdateMessage struct {
 	err    error
 }
 
-type commandResultMessage struct{ err error }
+type commandLane uint8
+
+const (
+	commandLaneOrdinary commandLane = iota + 1
+	commandLaneCancel
+)
+
+type commandResultMessage struct {
+	lane commandLane
+	err  error
+}
 
 type accessibleModel struct {
 	context    func() context.Context
@@ -105,6 +115,7 @@ type accessibleModel struct {
 	revision   uint64
 	ready      bool
 	performing bool
+	cancelling bool
 	terminals  uint64
 }
 
@@ -123,7 +134,12 @@ func (model *accessibleModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return model, model.receive
 	case commandResultMessage:
-		model.performing = false
+		switch current.lane {
+		case commandLaneOrdinary:
+			model.performing = false
+		case commandLaneCancel:
+			model.cancelling = false
+		}
 		if current.err != nil {
 			model.appendActivity("operation failed; inspect application diagnostics")
 		}
@@ -138,6 +154,8 @@ func (model *accessibleModel) updateKey(message tea.KeyPressMsg) (tea.Model, tea
 	switch key {
 	case "ctrl+c", "ctrl+q":
 		return model, tea.Quit
+	case "esc", "ctrl+x":
+		return model.cancelActiveRun()
 	case "enter":
 		return model.submit()
 	case "backspace":
@@ -153,6 +171,22 @@ func (model *accessibleModel) updateKey(message tea.KeyPressMsg) (tea.Model, tea
 		}
 	}
 	return model, nil
+}
+
+func (model *accessibleModel) cancelActiveRun() (tea.Model, tea.Cmd) {
+	if model.cancelling {
+		return model, nil
+	}
+	intent, err := agenttui.NewIntent(agenttui.IntentCancelActiveRun, nil)
+	if err != nil {
+		model.appendActivity("cancel is unavailable")
+		return model, nil
+	}
+	model.cancelling = true
+	return model, func() tea.Msg {
+		_, performErr := model.session.Perform(model.context(), intent)
+		return commandResultMessage{lane: commandLaneCancel, err: performErr}
+	}
 }
 
 func (model *accessibleModel) submit() (tea.Model, tea.Cmd) {
@@ -174,7 +208,7 @@ func (model *accessibleModel) submit() (tea.Model, tea.Cmd) {
 	model.performing = true
 	return model, func() tea.Msg {
 		_, performErr := model.session.Perform(model.context(), intent)
-		return commandResultMessage{err: performErr}
+		return commandResultMessage{lane: commandLaneOrdinary, err: performErr}
 	}
 }
 
