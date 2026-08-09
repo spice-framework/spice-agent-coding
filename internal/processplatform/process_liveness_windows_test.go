@@ -6,8 +6,23 @@ import (
 	"testing"
 	"time"
 
+	agentprocess "github.com/spice-framework/spice-agent/process"
 	"golang.org/x/sys/windows"
 )
+
+func waitForChildOwnership(t *testing.T, process agentprocess.Process, _ int) {
+	t.Helper()
+	owned, ok := process.(*windowsProcess)
+	if !ok {
+		t.Fatalf("owned process = %T, want *windowsProcess", process)
+	}
+	owned.mu.Lock()
+	assigned := owned.assigned
+	owned.mu.Unlock()
+	if !assigned {
+		t.Fatal("root process is not assigned to its containment job")
+	}
+}
 
 func assertPlatformProcessStopped(t *testing.T, pid int) {
 	t.Helper()

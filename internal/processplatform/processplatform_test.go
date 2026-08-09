@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -66,7 +67,9 @@ func TestProcessPlatformHelper(t *testing.T) {
 		if _, err := fmt.Fprintf(os.Stdout, "child=%d\n", command.Process.Pid); err != nil {
 			os.Exit(96)
 		}
-		time.Sleep(75 * time.Millisecond)
+		if _, err := io.Copy(io.Discard, os.Stdin); err != nil {
+			os.Exit(97)
+		}
 	default:
 		os.Exit(94)
 	}
@@ -146,16 +149,24 @@ func TestLauncherPreservesExactProcessIntentWithoutShell(t *testing.T) {
 	executable := installProcessHelper(t, root, "fixture")
 	var stdout, stderr bytes.Buffer
 	injection := `; echo injected && $(private-command)`
-	spec := helperSpec(t, executable, root, "echo", strings.NewReader("exact-stdin"), &stdout, &stderr,
+	input := newGatedInput("exact-stdin")
+	t.Cleanup(input.Release)
+	spec := helperSpec(t, executable, root, "echo", input, &stdout, &stderr,
 		[]string{"--", injection})
 	launcher := mustLauncher(t)
 	owned, err := launcher.Start(t.Context(), spec)
 	if err != nil {
 		t.Fatal(err)
 	}
+	select {
+	case <-input.blocked:
+	case <-time.After(5 * time.Second):
+		t.Fatal("helper did not consume exact input")
+	}
 	if _, resultErr := owned.Result(); resultErr == nil {
 		t.Fatal("running process exposed a stable result")
 	}
+	input.Release()
 	wait, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
 	if err = owned.Wait(wait); err != nil {
@@ -184,13 +195,89 @@ func TestLauncherPreservesExactProcessIntentWithoutShell(t *testing.T) {
 	}
 }
 
+type gatedInput struct {
+	reader      *strings.Reader
+	blocked     chan struct{}
+	release     chan struct{}
+	blockedOnce sync.Once
+	releaseOnce sync.Once
+}
+
+func newGatedInput(value string) *gatedInput {
+	return &gatedInput{
+		reader:  strings.NewReader(value),
+		blocked: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+}
+
+func (input *gatedInput) Read(target []byte) (int, error) {
+	read, err := input.reader.Read(target)
+	if read > 0 {
+		return read, nil
+	}
+	input.blockedOnce.Do(func() { close(input.blocked) })
+	<-input.release
+	return 0, err
+}
+
+func (input *gatedInput) Release() {
+	input.releaseOnce.Do(func() { close(input.release) })
+}
+
+type signalingBuffer struct {
+	mu     sync.Mutex
+	buffer bytes.Buffer
+	ready  chan struct{}
+	once   sync.Once
+}
+
+func newSignalingBuffer() *signalingBuffer {
+	return &signalingBuffer{ready: make(chan struct{})}
+}
+
+func (buffer *signalingBuffer) Write(value []byte) (int, error) {
+	buffer.mu.Lock()
+	defer buffer.mu.Unlock()
+	written, err := buffer.buffer.Write(value)
+	if written > 0 {
+		buffer.once.Do(func() { close(buffer.ready) })
+	}
+	return written, err
+}
+
+func (buffer *signalingBuffer) String() string {
+	buffer.mu.Lock()
+	defer buffer.mu.Unlock()
+	return buffer.buffer.String()
+}
+
 func TestRootOutcomeIsSeparateFromTreeContainment(t *testing.T) {
 	root := testpath.TempDir(t)
 	executable := installProcessHelper(t, root, "tree")
-	var stdout bytes.Buffer
-	spec := helperSpec(t, executable, root, "tree-exit", strings.NewReader(""), &stdout, io.Discard, nil)
+	input, releaseRoot := io.Pipe()
+	t.Cleanup(func() {
+		if closeErr := input.Close(); closeErr != nil {
+			t.Errorf("close root input: %v", closeErr)
+		}
+		if closeErr := releaseRoot.Close(); closeErr != nil {
+			t.Errorf("close root input writer: %v", closeErr)
+		}
+	})
+	stdout := newSignalingBuffer()
+	spec := helperSpec(t, executable, root, "tree-exit", input, stdout, io.Discard, nil)
 	owned, err := mustLauncher(t).Start(t.Context(), spec)
 	if err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-stdout.ready:
+	case <-time.After(5 * time.Second):
+		t.Fatal("root helper did not report its child")
+	}
+	childPID := parseChildPID(t, stdout.String())
+	waitForChildOwnership(t, owned, childPID)
+	if err = releaseRoot.Close(); err != nil {
 		t.Fatal(err)
 	}
 	waitForDone(t, owned.Done())
@@ -198,7 +285,6 @@ func TestRootOutcomeIsSeparateFromTreeContainment(t *testing.T) {
 	if err != nil || !outcome.Successful() {
 		t.Fatalf("root outcome = %#v, %v", outcome, err)
 	}
-	childPID := parseChildPID(t, stdout.String())
 	short, cancelShort := context.WithTimeout(t.Context(), 25*time.Millisecond)
 	err = owned.Wait(short)
 	cancelShort()

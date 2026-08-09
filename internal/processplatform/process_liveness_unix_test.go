@@ -7,8 +7,28 @@ import (
 	"testing"
 	"time"
 
+	agentprocess "github.com/spice-framework/spice-agent/process"
 	"golang.org/x/sys/unix"
 )
+
+func waitForChildOwnership(t *testing.T, process agentprocess.Process, pid int) {
+	t.Helper()
+	owned, ok := process.(*unixProcess)
+	if !ok {
+		t.Fatalf("owned process = %T, want *unixProcess", process)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		owned.stateMu.Lock()
+		identity, tracked := owned.children[pid]
+		owned.stateMu.Unlock()
+		if tracked && !identity.IsZero() {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatalf("child process %d was not tracked", pid)
+}
 
 func assertPlatformProcessStopped(t *testing.T, pid int) {
 	t.Helper()
