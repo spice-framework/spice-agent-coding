@@ -24,7 +24,7 @@ func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 
 func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 	t.Parallel()
-	const immediatePriorWorkflowCommit = "6a0ba9f430304c33bf897f4e2d3f393926f42eb9"
+	const immediatePriorWorkflowCommit = "0fcd43dc8b41fad56c231d0e136ad8c762276ed5"
 	valid := expectedReleaseWorkflow()
 	for _, test := range []struct {
 		name     string
