@@ -117,6 +117,15 @@ fingerprints for each run. Generated code
 lives only under `internal/spicegen/architectureproof`; the ownership manifest
 and source mappings live in `.spice/architectureproof.manifest.json`.
 
+`internal/architecturee2e` composes the generated daemon and terminal graphs
+over authenticated local IPC. Its deterministic TLS Responses fixture drives
+the real OpenAI adapter through a compiled read, a digest-pinned runtime-plugin
+tool, model continuation, and the final response. The generated terminal's
+line-oriented accessible mode runs the real Bubble Tea event loop with
+pipe-backed input and output, proves prompt-history navigation, and exercises
+generated rollback and reverse cleanup. This is an application-graph and
+Bubble Tea proof, not a PTY/ConPTY presentation or released-archive claim.
+
 ## Compatibility
 
 `compatibility.json` records Go 1.26.5 plus the exact immutable Spice,

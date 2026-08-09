@@ -58,12 +58,23 @@ process tree. This process-heavy workflow runs in `make check` and `make
 verify`; `make fast` retains the sub-30-second edit-loop budget by excluding
 only this package.
 
-`internal/architecturee2e` separately exercises the generated daemon component
-graph over authenticated local IPC. It holds the final provider response while
-ownership reconnects, then proves compiled and runtime-plugin tool events,
-production-budget replay, credential redaction, and generated reverse cleanup.
-It deliberately drives the generated components on a private endpoint rather
-than claiming coverage of the installed command and Bubble Tea processes.
+`internal/architecturee2e` separately exercises both generated application
+graphs over authenticated local IPC. Its reconnect path holds the final
+provider response while ownership changes, then proves compiled and
+runtime-plugin tool events, production-budget replay, credential redaction, and
+generated reverse cleanup. Its terminal path injects that same authenticated
+connector into the generated terminal graph and drives the real Bubble Tea
+event loop through line-oriented accessible pipes. One prompt crosses the real
+local-TLS OpenAI adapter, compiled read tool, digest-pinned runtime-plugin tool,
+and model continuation before Bubble Tea renders the final response, exact
+terminal count, and retained prompt history. A separate negative construction
+case proves generated rollback closes private endpoint state.
+
+The accessible test is intentionally not a PTY, ConPTY, or terminal-emulator
+presentation claim. It proves Bubble Tea commands, updates, input bindings, and
+rendered semantic output without platform terminal emulation. It also runs the
+generated applications in the test process rather than claiming that released
+archive bytes were installed.
 
 `internal/installedacceptance` closes the installed-process gap. It builds the
 committed generated `spice-agentd` and `spice-agent` packages in vendor-only
