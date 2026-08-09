@@ -68,15 +68,7 @@ func run(ctx context.Context, root, mode string) error {
 	if runtime.Version() != requiredGoVersion {
 		return fmt.Errorf("go version is %s; require exactly %s", runtime.Version(), requiredGoVersion)
 	}
-	identity := step{"repository identity", func() error {
-		if err := checkIdentity(root); err != nil {
-			return err
-		}
-		if err := checkReleaseMetadata(root); err != nil {
-			return err
-		}
-		return checkReleaseWorkflow(root)
-	}}
+	identity := step{"repository identity", func() error { return checkRepositoryContract(root) }}
 	bootstrap := step{"explicit dependency bootstrap", func() error { return bootstrapDependencies(ctx, root, networkCommand) }}
 	formatting := step{"formatting", func() error { return format(ctx, root, false) }}
 	modules := step{"module and vendor", func() error { return checkModule(ctx, root) }}
@@ -128,6 +120,50 @@ func run(ctx context.Context, root, mode string) error {
 }
 
 func networkAllowed(mode string) bool { return mode == "tools-bootstrap" }
+
+func checkRepositoryContract(root string) error {
+	if err := checkIdentity(root); err != nil {
+		return err
+	}
+	if err := checkReleaseMetadata(root); err != nil {
+		return err
+	}
+	if err := checkReleaseEntrypoint(root); err != nil {
+		return err
+	}
+	return checkReleaseWorkflow(root)
+}
+
+func checkReleaseEntrypoint(root string) error {
+	content, err := os.ReadFile(filepath.Join(root, "Makefile")) // #nosec G304 -- fixed repository build contract.
+	if err != nil {
+		return fmt.Errorf("read Makefile: %w", err)
+	}
+	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
+	lines := strings.Split(normalized, "\n")
+	definitions := 0
+	exact := -1
+	for index, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "verify-release:") {
+			definitions++
+			if line == "verify-release: verify" {
+				exact = index
+			}
+		}
+	}
+	if definitions != 1 || exact < 0 || exact+1 >= len(lines) || lines[exact+1] != "" {
+		return errors.New("makefile must expose verify-release exactly once as an alias of verify")
+	}
+	for _, line := range lines {
+		if targets, ok := strings.CutPrefix(line, ".PHONY:"); ok {
+			if !slices.Contains(strings.Fields(targets), "verify-release") {
+				return errors.New("makefile must declare verify-release phony")
+			}
+			return nil
+		}
+	}
+	return errors.New("makefile has no .PHONY declaration")
+}
 
 func checkReleaseWorkflow(root string) error {
 	content, err := os.ReadFile(filepath.Join(root, ".github", "workflows", "release.yml")) // #nosec G304 -- fixed repository workflow path.

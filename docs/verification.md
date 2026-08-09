@@ -27,6 +27,9 @@ not an older `go` that may appear first on `PATH`.
   zero-statement, process-heavy acceptance packages: `make check`, shuffled,
   race, and vendor-offline gates already execute them, and their child-process
   work cannot contribute in-process statement coverage.
+- `make verify-release` is the unconditional alias consumed by the central
+  distribution workflow. The repository identity gate requires this exact
+  alias before any release tag is considered valid.
 
 The architecture-proof acceptance additionally runs `spice generate --check`,
 `spice generate --diff`, and `spice beans --explain` against the selected

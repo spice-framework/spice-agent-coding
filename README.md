@@ -83,6 +83,9 @@ authorized `go-distribution-v1` release profile. It cannot select dependencies,
 payloads, commands, or permissions; those remain fail-closed in the development
 catalog and organization release authority.
 
+Immutable attempts and their recovery evidence are recorded in
+[the release history](docs/release-history.md).
+
 Release tags invoke the separately pinned `go-distribution-v1` authority. The
 candidate has no publication credentials; a trusted renderer produces the
 archives, an independently pinned verifier authenticates and relists them, and

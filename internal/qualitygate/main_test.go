@@ -64,6 +64,39 @@ func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 	}
 }
 
+func TestReleaseEntrypointRequiresExactVerifyAlias(t *testing.T) {
+	t.Parallel()
+	valid := ".PHONY: fast verify verify-release\n\nverify:\n\tgo run ./internal/qualitygate -mode=verify\n\nverify-release: verify\n"
+	for _, test := range []struct {
+		name, content string
+		wantErr       bool
+	}{
+		{name: "valid", content: valid},
+		{name: "missing alias", content: strings.Replace(valid, "\nverify-release: verify\n", "\n", 1), wantErr: true},
+		{name: "wrong dependency", content: strings.Replace(valid, "verify-release: verify", "verify-release: check", 1), wantErr: true},
+		{name: "duplicate alias", content: valid + "verify-release: verify\n", wantErr: true},
+		{name: "lookalike alias", content: strings.Replace(valid, "verify-release: verify", "notverify-release: verify", 1), wantErr: true},
+		{name: "alias recipe", content: strings.Replace(valid, "verify-release: verify\n", "verify-release: verify\n\tgo run ./internal/qualitygate -mode=fast\n", 1), wantErr: true},
+		{name: "not phony", content: strings.Replace(valid, " verify-release", "", 1), wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			writeFile(t, root, "Makefile", test.content)
+			err := checkReleaseEntrypoint(root)
+			if test.wantErr && err == nil {
+				t.Fatal("checkReleaseEntrypoint() error = nil")
+			}
+			if !test.wantErr && err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+	if err := checkReleaseEntrypoint(t.TempDir()); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("missing Makefile error = %v", err)
+	}
+}
+
 func TestExactGoExecutable(t *testing.T) {
 	t.Parallel()
 	if goExecutableName("windows") != "go.exe" || goExecutableName("linux") != "go" {
