@@ -110,3 +110,13 @@ The installed proof also link-injects the shared
 checks both executables' `--version` output, and verifies that the daemon
 advertises the same identity in protected endpoint metadata. Ordinary local
 builds retain the honest `0.1.0-preview.1-dev` / `development` defaults.
+
+The installed suite also invokes `spice-agent` with no arguments. With an empty
+private endpoint it proves the terminal locates and starts its exact sibling
+`spice-agentd`, attaches through protected discovery, and does not exit until
+generated cleanup has stopped the owned daemon and withdrawn its endpoint. A
+separate case publishes an explicitly started compatible daemon first, proves
+managed mode attaches to that exact process identity, and verifies terminal
+shutdown leaves the externally owned daemon running. This is the process-level
+attach-or-start ownership contract; exact released-archive byte execution
+remains a distinct Phase 6 release gate.
