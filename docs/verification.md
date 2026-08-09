@@ -23,7 +23,10 @@ not an older `go` that may appear first on `PATH`.
 - `make verify` adds lint, NilAway, gosec, govulncheck, race tests, coverage, and
   vendor-offline tests/builds. It compiles and executes committed Spice output
   while excluding canonical generated statements from the handwritten 85%
-  coverage denominator.
+  coverage denominator. The coverage invocation does not re-run the two
+  zero-statement, process-heavy acceptance packages: `make check`, shuffled,
+  race, and vendor-offline gates already execute them, and their child-process
+  work cannot contribute in-process statement coverage.
 
 The architecture-proof acceptance additionally runs `spice generate --check`,
 `spice generate --diff`, and `spice beans --explain` against the selected

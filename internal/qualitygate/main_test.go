@@ -324,6 +324,26 @@ func TestExcludeGeneratedCoverage(t *testing.T) {
 	}
 }
 
+func TestCoverageTestPackagesExcludeOnlyProcessAcceptance(t *testing.T) {
+	t.Parallel()
+	packages := []string{
+		modulePath + "/internal/daemon",
+		modulePath + "/internal/devacceptance",
+		modulePath + "/internal/installedacceptance",
+		modulePath + "/internal/processcontainment",
+	}
+	want := []string{
+		modulePath + "/internal/daemon",
+		modulePath + "/internal/processcontainment",
+	}
+	if got := coverageTestPackages(packages); !slices.Equal(got, want) {
+		t.Fatalf("coverage test packages = %v, want %v", got, want)
+	}
+	if len(packages) != 4 {
+		t.Fatalf("coverage package selection mutated caller input: %v", packages)
+	}
+}
+
 func TestEnvironmentAndCancellation(t *testing.T) {
 	t.Parallel()
 	offline := commandEnvironment(false, map[string]string{"GOFLAGS": "-mod=vendor"})

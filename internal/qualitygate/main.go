@@ -533,10 +533,7 @@ func tests(ctx context.Context, root string, race, includeAcceptance bool) error
 		return err
 	}
 	if !includeAcceptance {
-		packages = slices.DeleteFunc(packages, func(candidate string) bool {
-			return candidate == modulePath+"/internal/devacceptance" ||
-				candidate == modulePath+"/internal/installedacceptance"
-		})
+		packages = coverageTestPackages(packages)
 	}
 	arguments := []string{"test"}
 	if race {
@@ -564,8 +561,11 @@ func coverage(ctx context.Context, root string) (resultErr error) {
 		return closeErr
 	}
 	defer func() { resultErr = errors.Join(resultErr, os.Remove(path)) }()
-	arguments := []string{"test", "-covermode=atomic", "-coverpkg=" + strings.Join(packages, ","), "-coverprofile=" + path}
-	if coverageErr := command(ctx, root, nil, "go", append(arguments, packages...)...); coverageErr != nil {
+	testPackages := coverageTestPackages(packages)
+	arguments := []string{
+		"test", "-covermode=atomic", "-coverpkg=" + strings.Join(testPackages, ","), "-coverprofile=" + path,
+	}
+	if coverageErr := command(ctx, root, nil, "go", append(arguments, testPackages...)...); coverageErr != nil {
 		return coverageErr
 	}
 	if err = excludeGeneratedCoverage(path); err != nil {
@@ -594,6 +594,13 @@ func coverage(ctx context.Context, root string) (resultErr error) {
 		return fmt.Errorf("product coverage %.1f%% is below %.1f%%", percentage, minimumCoverage)
 	}
 	return nil
+}
+
+func coverageTestPackages(packages []string) []string {
+	return slices.DeleteFunc(slices.Clone(packages), func(candidate string) bool {
+		return candidate == modulePath+"/internal/devacceptance" ||
+			candidate == modulePath+"/internal/installedacceptance"
+	})
 }
 
 func excludeGeneratedCoverage(path string) error {
