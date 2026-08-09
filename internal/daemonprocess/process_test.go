@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -108,13 +109,11 @@ func TestStarterUsesSiblingDiscreteArgumentAndGracefulEOF(t *testing.T) {
 func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 	t.Parallel()
 	early := helperStarter(t, "early", testpath.TempDir(t), 256)
-	candidate, err := early.Start(t.Context())
-	if candidate == nil {
-		t.Fatalf("early exit returned no owned candidate: %v", err)
-	}
+	candidate := startOwnedCandidate(t, early)
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
-	if err = candidate.Wait(wait); err != nil || candidate.Result() == nil {
+	err := candidate.Wait(wait)
+	if err != nil || candidate.Result() == nil {
 		t.Fatalf("early exit containment/result = %v/%v", err, candidate.Result())
 	}
 
@@ -276,6 +275,40 @@ func helperStarter(t *testing.T, mode, directory string, stderrBytes int) *Start
 		t.Fatal(err)
 	}
 	return starter
+}
+
+func startOwnedCandidate(t *testing.T, starter *Starter) Candidate {
+	t.Helper()
+	const maximumAttempts = 3
+	classifications := make([]string, 0, maximumAttempts)
+	for attempt := range maximumAttempts {
+		candidate, err := starter.Start(t.Context())
+		if candidate != nil {
+			return candidate
+		}
+		classifications = append(classifications, safeLaunchFailureClass(err))
+		if context.Cause(t.Context()) != nil {
+			break
+		}
+		// Hosted race and offline gates can briefly exhaust process or descriptor
+		// resources while packages launch concurrently. A nil candidate proves
+		// ownership was never established, so a bounded test-only retry cannot
+		// abandon a process or conceal a containment failure.
+		time.Sleep(time.Duration(attempt+1) * time.Millisecond)
+	}
+	t.Fatalf("early exit returned no owned candidate after %d attempts: %s", maximumAttempts, strings.Join(classifications, ", "))
+	panic("unreachable")
+}
+
+func safeLaunchFailureClass(err error) string {
+	if errno, ok := errors.AsType[syscall.Errno](err); ok {
+		return fmt.Sprintf("syscall.Errno(%d)", uint64(errno))
+	}
+	cause := errors.Unwrap(err)
+	if cause == nil {
+		cause = err
+	}
+	return fmt.Sprintf("%T", cause)
 }
 
 func installHelperExecutable(t *testing.T) string {

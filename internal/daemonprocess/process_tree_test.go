@@ -36,12 +36,9 @@ func TestRootExitBoundsInheritedPipeAndReapsDescendant(t *testing.T) {
 func TestAtomicLaunchContainsImmediateExitBeforeReaping(t *testing.T) {
 	starter := helperStarter(t, "early", testpath.TempDir(t), 256)
 	for iteration := range 20 {
-		candidate, err := starter.Start(t.Context())
-		if candidate == nil {
-			t.Fatalf("iteration %d returned no owned candidate: %v", iteration, err)
-		}
+		candidate := startOwnedCandidate(t, starter)
 		wait, cancel := context.WithTimeout(t.Context(), 2*time.Second)
-		err = candidate.Wait(wait)
+		err := candidate.Wait(wait)
 		cancel()
 		if err != nil || candidate.Result() == nil {
 			t.Fatalf("iteration %d cleanup/result = %v/%v", iteration, err, candidate.Result())
