@@ -82,7 +82,9 @@ func startProcess(spec processSpec) (launchedProcess, error) {
 
 	// The process outlives its launch context and is canceled through the
 	// platform containment boundary, not by killing only its root PID.
-	command := exec.Command(spec.executable, spec.argument) //nolint:noctx // #nosec G204 -- validated sibling and fixed argument.
+	// #nosec G204 -- executable is the validated distribution sibling and the
+	// sole argument is the fixed daemon serve argument; no shell is used.
+	command := exec.Command(spec.executable, spec.argument) //nolint:noctx // The owned process outlives its launch context.
 	command.Dir = spec.directory
 	command.Env = withDescendantRegistry(spec.environment)
 	command.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -627,7 +629,12 @@ func (registry *DescendantRegistry) exchange(pid int) error {
 }
 
 func (registry *DescendantRegistry) exchangeLocked(pid int) error {
+	if pid <= 0 {
+		return errors.New("managed daemon descendant registration PID is invalid")
+	}
 	request := make([]byte, descendantRegistrationBytes)
+	// #nosec G115 -- the preceding positive check makes the OS PID exactly
+	// representable by uint64 on every supported Go architecture.
 	binary.BigEndian.PutUint64(request, uint64(pid))
 	if _, err := registry.file.Write(request); err != nil {
 		return fmt.Errorf("submit managed daemon descendant registration: %w", err)

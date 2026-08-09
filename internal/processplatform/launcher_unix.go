@@ -63,6 +63,8 @@ func startUnixProcess(
 	registrar ChildRegistrar,
 	snapshot func() ([]processcontainment.Record, error),
 ) (agentprocess.Process, error) {
+	// #nosec G204 -- Process Spec construction validates an absolute executable;
+	// arguments are the caller-authorized coding-tool invocation and no shell is used.
 	command := exec.Command(spec.Executable(), spec.Arguments()...) //nolint:noctx // Launch context bounds Start, not the owned process lifetime.
 	command.Dir = spec.WorkingDirectory()
 	environment := spec.Environment()

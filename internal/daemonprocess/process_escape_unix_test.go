@@ -279,6 +279,15 @@ func TestRegistryStartRejectsCallerSelectedProcessGroup(t *testing.T) {
 	}
 }
 
+func TestRegistryRejectsNonpositiveProcessIdentityBeforeWriting(t *testing.T) {
+	registry := &DescendantRegistry{}
+	for _, pid := range []int{0, -1} {
+		if err := registry.exchangeLocked(pid); err == nil || !strings.Contains(err.Error(), "PID is invalid") {
+			t.Fatalf("exchangeLocked(%d) error = %v", pid, err)
+		}
+	}
+}
+
 func TestAdoptRootRegistryExplicitServeAndMalformedManagedEndpoint(t *testing.T) {
 	original, existed := os.LookupEnv(descendantRegistryEnvironment)
 	if err := os.Unsetenv(descendantRegistryEnvironment); err != nil {

@@ -310,6 +310,9 @@ func installHelperExecutable(t *testing.T) string {
 	if err = os.Rename(staging, target); err != nil {
 		t.Fatal(err)
 	}
+	if err = os.Chmod(target, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	return target
 }
 

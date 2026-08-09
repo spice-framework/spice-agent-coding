@@ -14,6 +14,7 @@ import (
 	"time"
 
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent"
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
 	agenttui "github.com/spice-framework/spice-agent-tui"
 	spicebean "github.com/spice-framework/spice/bean"
 	spiceconfig "github.com/spice-framework/spice/config"
@@ -158,10 +159,9 @@ func runTerminalSpice(t *testing.T, root string, arguments ...string) (string, s
 	// #nosec G204,G702 -- executable and arguments are fixed terminal generation checks.
 	command := exec.CommandContext(ctx, terminalGoExecutable(), commandArguments...)
 	command.Dir = root
-	command.Env = append(
-		os.Environ(),
-		"GOWORK=off", "GOPROXY=off", "GOFLAGS=-mod=vendor", "GOTOOLCHAIN=local",
-	)
+	command.Env = testpath.Environment(map[string]string{
+		"GOFLAGS": "-mod=vendor", "GOPROXY": "off", "GOTOOLCHAIN": "local", "GOWORK": "off",
+	})
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	command.Stdout = &stdout

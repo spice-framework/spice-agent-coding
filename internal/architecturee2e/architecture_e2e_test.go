@@ -836,7 +836,10 @@ func buildFixture(t *testing.T, root string) (string, string) {
 		name += ".exe"
 	}
 	path := filepath.Join(testpath.TempDir(t), name)
-	ctx, cancel := context.WithTimeout(t.Context(), 45*time.Second)
+	// Hosted runners build all repository packages concurrently. Keep the
+	// fixture bounded while allowing a cold vendor-only compile to finish under
+	// that expected contention.
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
 	defer cancel()
 	command := exec.CommandContext( // #nosec G204,G702 -- exact Go and fixed repository fixture.
 		ctx, exactGoExecutable(), "build", "-mod=vendor", "-trimpath", "-buildvcs=false",

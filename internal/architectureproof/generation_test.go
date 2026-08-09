@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/spice-framework/spice-agent-coding/internal/testpath"
 )
 
 const spiceTool = "github.com/spice-framework/toolchain/cmd/spice"
@@ -114,10 +116,9 @@ func runSpice(t *testing.T, root string, arguments ...string) (string, string, e
 	// #nosec G204,G702 -- executable and arguments are fixed architecture-proof commands.
 	command := exec.CommandContext(ctx, exactGoExecutable(), commandArguments...)
 	command.Dir = root
-	command.Env = append(
-		os.Environ(),
-		"GOWORK=off", "GOPROXY=off", "GOFLAGS=-mod=vendor", "GOTOOLCHAIN=local",
-	)
+	command.Env = testpath.Environment(map[string]string{
+		"GOFLAGS": "-mod=vendor", "GOPROXY": "off", "GOTOOLCHAIN": "local", "GOWORK": "off",
+	})
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	command.Stdout = &stdout

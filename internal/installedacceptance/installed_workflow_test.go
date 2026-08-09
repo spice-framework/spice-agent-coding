@@ -220,12 +220,14 @@ func (buffer *synchronizedBuffer) String() string {
 }
 
 type process struct {
-	command *exec.Cmd
-	stdin   io.WriteCloser
-	stdout  *synchronizedBuffer
-	stderr  *synchronizedBuffer
-	done    chan error
-	once    sync.Once
+	command  *exec.Cmd
+	stdin    io.WriteCloser
+	stdout   *synchronizedBuffer
+	stderr   *synchronizedBuffer
+	done     chan struct{}
+	result   error
+	resultMu sync.Mutex
+	once     sync.Once
 }
 
 func startProcess(t *testing.T, binary string, arguments []string, environment map[string]string) *process {
@@ -243,14 +245,20 @@ func startProcess(t *testing.T, binary string, arguments []string, environment m
 		stdin:   stdin,
 		stdout:  &synchronizedBuffer{},
 		stderr:  &synchronizedBuffer{},
-		done:    make(chan error, 1),
+		done:    make(chan struct{}),
 	}
 	command.Stdout = result.stdout
 	command.Stderr = result.stderr
 	if err = command.Start(); err != nil {
 		t.Fatalf("start %s: %v", filepath.Base(binary), err)
 	}
-	go func() { result.done <- command.Wait() }()
+	go func() {
+		waitErr := command.Wait()
+		result.resultMu.Lock()
+		result.result = waitErr
+		result.resultMu.Unlock()
+		close(result.done)
+	}()
 	return result
 }
 
@@ -277,7 +285,8 @@ func (process *process) stop(t *testing.T, graceful bool) {
 			}
 		}
 		select {
-		case err := <-process.done:
+		case <-process.done:
+			err := process.waitResult()
 			if graceful && err != nil {
 				t.Errorf("process shutdown: %v\nstderr: %s", err, process.stderr.String())
 			}
@@ -319,14 +328,17 @@ func (process *process) latestFrame() string {
 
 func (process *process) assertRunning(t *testing.T) {
 	t.Helper()
-	if process.command.ProcessState != nil && process.command.ProcessState.Exited() {
-		t.Fatalf("terminal process exited\nstderr: %s", process.stderr.String())
-	}
 	select {
-	case err := <-process.done:
-		t.Fatalf("terminal process exited early: %v\nstderr: %s", err, process.stderr.String())
+	case <-process.done:
+		t.Fatalf("terminal process exited early: %v\nstderr: %s", process.waitResult(), process.stderr.String())
 	default:
 	}
+}
+
+func (process *process) waitResult() error {
+	process.resultMu.Lock()
+	defer process.resultMu.Unlock()
+	return process.result
 }
 
 func buildApplications(t *testing.T, root string) (string, string) {
