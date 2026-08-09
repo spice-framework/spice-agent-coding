@@ -24,6 +24,8 @@ enforcement boundary. Candidate processes are verified before atomic
 activation, existing runs retain generation leases, and a failed candidate
 cannot replace the active generation.
 
-Review release checksums, signatures, the SBOM, `THIRD_PARTY_NOTICES.md`, and
-`protocol-descriptors.pb` before deployment. Do not run this preview against an
-untrusted workspace or install an untrusted runtime plugin.
+Review release checksums, GitHub artifact attestations, the SBOM,
+`THIRD_PARTY_NOTICES.md`, and `protocol-descriptors.pb` before deployment. The
+release path uses separate protected attestation and publication environments;
+candidate code never receives OIDC or write authority. Do not run this preview
+against an untrusted workspace or install an untrusted runtime plugin.

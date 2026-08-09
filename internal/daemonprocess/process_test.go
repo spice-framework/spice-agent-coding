@@ -270,7 +270,7 @@ func helperStarter(t *testing.T, mode, directory string, stderrBytes int) *Start
 
 func requireOwnedCandidate(t *testing.T, starter *Starter) Candidate {
 	t.Helper()
-	const maximumAttempts = 3
+	const maximumAttempts = 8
 	classifications := make([]string, 0, maximumAttempts)
 	for attempt := range maximumAttempts {
 		candidate, err := starter.Start(t.Context())
@@ -282,10 +282,11 @@ func requireOwnedCandidate(t *testing.T, starter *Starter) Candidate {
 			break
 		}
 		// Hosted race and offline gates can briefly exhaust process or descriptor
-		// resources while packages launch concurrently. A nil candidate proves
-		// ownership was never established, so a bounded test-only retry cannot
-		// abandon a process or conceal a containment failure.
-		time.Sleep(time.Duration(attempt+1) * time.Millisecond)
+		// resources, and Linux overlay-backed workspaces can transiently report
+		// ETXTBSY immediately after the test helper is atomically installed. A nil
+		// candidate proves ownership was never established, so a bounded test-only
+		// retry cannot abandon a process or conceal a containment failure.
+		time.Sleep(time.Duration(attempt+1) * 10 * time.Millisecond)
 	}
 	t.Fatalf("starter returned no owned candidate after %d attempts: %s", maximumAttempts, strings.Join(classifications, ", "))
 	panic("unreachable")

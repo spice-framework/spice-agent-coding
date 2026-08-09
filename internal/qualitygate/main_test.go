@@ -22,6 +22,43 @@ func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 	}
 }
 
+func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
+	t.Parallel()
+	valid := expectedReleaseWorkflow()
+	for _, test := range []struct {
+		name     string
+		workflow string
+		omit     bool
+	}{
+		{name: "valid", workflow: valid},
+		{name: "missing", omit: true},
+		{name: "wrong workflow", workflow: strings.Replace(valid, "go-distribution-release.yml", "go-module-release.yml", 1)},
+		{name: "wrong pin", workflow: strings.Replace(valid, releaseWorkflowCommit, strings.Repeat("0", 40), 1)},
+		{name: "wrong input pin", workflow: strings.Replace(valid, "workflow_commit: "+releaseWorkflowCommit, "workflow_commit: "+strings.Repeat("0", 40), 1)},
+		{name: "wrong module", workflow: strings.Replace(valid, modulePath, "example.com/wrong", 1)},
+		{name: "secret", workflow: valid + "    secrets: inherit\n"},
+		{name: "local step", workflow: valid + "    steps:\n      - run: echo unsafe\n"},
+		{name: "extra permission", workflow: strings.Replace(valid, "      contents: write\n", "      contents: write\n      actions: write\n", 1)},
+		{name: "missing attestation permission", workflow: strings.Replace(valid, "      attestations: write\n", "", 1)},
+		{name: "extra job", workflow: valid + "  publish-again:\n    uses: example.invalid/workflow.yml@deadbeef\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			if !test.omit {
+				writeFile(t, root, ".github/workflows/release.yml", test.workflow)
+			}
+			err := checkReleaseWorkflow(root)
+			if test.name == "valid" && err != nil {
+				t.Fatal(err)
+			}
+			if test.name != "valid" && err == nil {
+				t.Fatal("checkReleaseWorkflow() error = nil")
+			}
+		})
+	}
+}
+
 func TestExactGoExecutable(t *testing.T) {
 	t.Parallel()
 	if goExecutableName("windows") != "go.exe" || goExecutableName("linux") != "go" {

@@ -23,3 +23,10 @@ Runtime dependencies and their exact compatible versions are declared in
 `go.mod`, verified by `go.sum`, and committed in `vendor`. Verification tools
 are isolated and pinned in `tools/go.mod`; dependency preparation is explicit,
 and analysis thereafter is offline and workspace-isolated.
+
+Distribution releases use no long-lived signing key. Candidate validation is
+uncredentialed, deterministic construction is owned by the pinned development
+renderer, and a separately pinned toolchain verifier authenticates the exact
+files before they enter protected keyless attestation and publication jobs.
+Only GitHub OIDC provenance from the exact organization workflow, source tag,
+and commit is accepted.

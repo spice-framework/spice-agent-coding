@@ -23,15 +23,16 @@ import (
 )
 
 const (
-	requiredGoVersion  = "go1.26.5"
-	modulePath         = "github.com/spice-framework/spice-agent-coding"
-	minimumCoverage    = 85.0
-	spiceVersion       = "v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0"
-	toolchainVersion   = "v0.1.0-preview.1.0.20260807044408-6598abca8196"
-	agentVersion       = "v0.0.0-20260808000851-55168c1ebaac"
-	agentTUIVersion    = "v0.0.0-20260807191321-a9c2bc36bc67"
-	providerVersion    = "v0.0.0-20260806230257-a6962fe2dabc"
-	codingToolsVersion = "v0.0.0-20260807150540-eeacf58875c5"
+	requiredGoVersion     = "go1.26.5"
+	modulePath            = "github.com/spice-framework/spice-agent-coding"
+	minimumCoverage       = 85.0
+	spiceVersion          = "v0.1.0-preview.1.0.20260807202519-bfddbd47d2d0"
+	toolchainVersion      = "v0.1.0-preview.1.0.20260807044408-6598abca8196"
+	agentVersion          = "v0.0.0-20260808000851-55168c1ebaac"
+	agentTUIVersion       = "v0.0.0-20260807191321-a9c2bc36bc67"
+	providerVersion       = "v0.0.0-20260806230257-a6962fe2dabc"
+	codingToolsVersion    = "v0.0.0-20260807150540-eeacf58875c5"
+	releaseWorkflowCommit = "6a0ba9f430304c33bf897f4e2d3f393926f42eb9"
 )
 
 var output io.Writer = os.Stdout
@@ -71,7 +72,10 @@ func run(ctx context.Context, root, mode string) error {
 		if err := checkIdentity(root); err != nil {
 			return err
 		}
-		return checkReleaseMetadata(root)
+		if err := checkReleaseMetadata(root); err != nil {
+			return err
+		}
+		return checkReleaseWorkflow(root)
 	}}
 	bootstrap := step{"explicit dependency bootstrap", func() error { return bootstrapDependencies(ctx, root, networkCommand) }}
 	formatting := step{"formatting", func() error { return format(ctx, root, false) }}
@@ -124,6 +128,42 @@ func run(ctx context.Context, root, mode string) error {
 }
 
 func networkAllowed(mode string) bool { return mode == "tools-bootstrap" }
+
+func checkReleaseWorkflow(root string) error {
+	content, err := os.ReadFile(filepath.Join(root, ".github", "workflows", "release.yml")) // #nosec G304 -- fixed repository workflow path.
+	if err != nil {
+		return fmt.Errorf("read release workflow: %w", err)
+	}
+	if strings.ReplaceAll(string(content), "\r\n", "\n") != expectedReleaseWorkflow() {
+		return errors.New("release workflow must be the exact keyless distribution caller with no secrets or local steps")
+	}
+	return nil
+}
+
+func expectedReleaseWorkflow() string {
+	return `name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]*.[0-9]*.[0-9]*"
+
+permissions: {}
+
+jobs:
+  release:
+    name: Keylessly attest and publish distribution
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    uses: spice-framework/.github/.github/workflows/go-distribution-release.yml@` + releaseWorkflowCommit + `
+    with:
+      module: ` + modulePath + `
+      workflow_commit: ` + releaseWorkflowCommit + `
+`
+}
 
 func checkIdentity(root string) error {
 	content, err := os.ReadFile(filepath.Join(root, "go.mod")) // #nosec G304 -- root is repository-owned.

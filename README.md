@@ -82,3 +82,9 @@ descriptor set compiled into the applications.
 authorized `go-distribution-v1` release profile. It cannot select dependencies,
 payloads, commands, or permissions; those remain fail-closed in the development
 catalog and organization release authority.
+
+Release tags invoke the separately pinned `go-distribution-v1` authority. The
+candidate has no publication credentials; a trusted renderer produces the
+archives, an independently pinned verifier authenticates and relists them, and
+separate protected environments approve keyless GitHub attestation and final
+publication. The caller forwards no repository secret.

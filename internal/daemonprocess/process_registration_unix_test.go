@@ -66,8 +66,8 @@ func TestDescendantRegistrationReadFailure(t *testing.T) {
 	}
 	supervisor := os.NewFile(uintptr(fds[0]), "descendant-supervisor-test")
 	if supervisor == nil {
-		_ = unix.Close(fds[0])
-		_ = unix.Close(fds[1])
+		_ = unix.Close(fds[0]) //nolint:errcheck // Fatal cleanup after file-wrapper construction failure.
+		_ = unix.Close(fds[1]) //nolint:errcheck // Fatal cleanup after file-wrapper construction failure.
 		t.Fatal("construct supervisor gate file")
 	}
 	t.Setenv(descendantGateEnvironment, strconv.Itoa(fds[1]))
@@ -107,10 +107,10 @@ func TestUnixBoundaryFormattingKillAndRegistryClose(t *testing.T) {
 	peer := os.NewFile(uintptr(fds[1]), "descendant-registry-peer-test")
 	if registryFile == nil || peer == nil {
 		if registryFile != nil {
-			_ = registryFile.Close()
+			_ = registryFile.Close() //nolint:errcheck // Fatal cleanup after peer-wrapper construction failure.
 		}
 		if peer != nil {
-			_ = peer.Close()
+			_ = peer.Close() //nolint:errcheck // Fatal cleanup after peer-wrapper construction failure.
 		}
 		t.Fatal("construct descendant registry files")
 	}
@@ -132,13 +132,13 @@ func exchangeDescendantGate(t *testing.T, release byte) error {
 	}
 	supervisor := os.NewFile(uintptr(fds[0]), "descendant-supervisor-test")
 	if supervisor == nil {
-		_ = unix.Close(fds[0])
-		_ = unix.Close(fds[1])
+		_ = unix.Close(fds[0]) //nolint:errcheck // Fatal cleanup after file-wrapper construction failure.
+		_ = unix.Close(fds[1]) //nolint:errcheck // Fatal cleanup after file-wrapper construction failure.
 		t.Fatal("construct supervisor gate file")
 	}
 	if err = os.Setenv(descendantGateEnvironment, strconv.Itoa(fds[1])); err != nil {
-		_ = supervisor.Close()
-		_ = unix.Close(fds[1])
+		_ = supervisor.Close() //nolint:errcheck // Fatal cleanup after environment setup failure.
+		_ = unix.Close(fds[1]) //nolint:errcheck // Fatal cleanup after environment setup failure.
 		t.Fatal(err)
 	}
 

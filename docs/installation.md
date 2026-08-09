@@ -25,5 +25,7 @@ server or terminal session.
 
 The architecture-proof release accepts only current-user Unix sockets on
 Linux/macOS and current-user Windows named pipes. It has no remote listener.
-Verify the published checksum and signature before extracting an archive; the
-release also publishes an SBOM for independent dependency inspection.
+Verify every published file against `checksums.txt` and its GitHub artifact
+attestation before extracting an archive. The attestation is bound to the
+exact source tag, commit, and centrally pinned distribution workflow. The
+release also publishes an SPDX SBOM for independent dependency inspection.
