@@ -193,10 +193,7 @@ func escapedLeafCommand() *exec.Cmd {
 func TestEscapedProcessGroupDescendantIsKilled(t *testing.T) {
 	starter := unixHelperStarter(t, "escaped-root")
 	starter.graceful = 20 * time.Millisecond
-	candidate, err := starter.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
+	candidate := requireOwnedCandidate(t, starter)
 	process := requireProcess(t, candidate)
 	waitHelperReady(t, process)
 	child, found := childPID(process.ProtectedStderr())
@@ -209,7 +206,7 @@ func TestEscapedProcessGroupDescendantIsKilled(t *testing.T) {
 	if rootErr != nil || childErr != nil || rootGroup == childGroup || childGroup != child {
 		t.Fatalf("process groups root=%d child=%d rootErr=%v childErr=%v", rootGroup, childGroup, rootErr, childErr)
 	}
-	if err = candidate.BeginShutdown(); err != nil {
+	if err := candidate.BeginShutdown(); err != nil {
 		t.Fatal(err)
 	}
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
@@ -217,7 +214,7 @@ func TestEscapedProcessGroupDescendantIsKilled(t *testing.T) {
 	// The root is intentionally terminated after ignoring EOF; only its root
 	// outcome is non-nil. Containment completion is observed through Done and
 	// the escaped process check.
-	if err = candidate.Wait(wait); err != nil || candidate.Result() == nil {
+	if err := candidate.Wait(wait); err != nil || candidate.Result() == nil {
 		t.Fatalf("terminated root cleanup/result = %v/%v", err, candidate.Result())
 	}
 	select {
@@ -230,10 +227,7 @@ func TestEscapedProcessGroupDescendantIsKilled(t *testing.T) {
 
 func TestRegisteredEscapedOrphanIsKilledAfterRootExit(t *testing.T) {
 	starter := unixHelperStarter(t, "registered-root")
-	candidate, err := starter.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
+	candidate := requireOwnedCandidate(t, starter)
 	process := requireProcess(t, candidate)
 	waitHelperReady(t, process)
 	child, found := childPID(process.ProtectedStderr())
@@ -242,7 +236,7 @@ func TestRegisteredEscapedOrphanIsKilledAfterRootExit(t *testing.T) {
 	}
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
-	if err = candidate.Wait(wait); err != nil {
+	if err := candidate.Wait(wait); err != nil {
 		t.Fatalf("registered containment failed: %v, root=%v", err, candidate.Result())
 	}
 	assertProcessStopped(t, child)
@@ -252,18 +246,15 @@ func TestMissingRootRegistryHandshakeFailsContainment(t *testing.T) {
 	starter := unixHelperStarter(t, "")
 	starter.environment = replaceEnvironment(starter.environment, helperModeEnvironment, "eof")
 	starter.environment = replaceEnvironment(starter.environment, skipRootRegistryEnvironment, "1")
-	candidate, err := starter.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
+	candidate := requireOwnedCandidate(t, starter)
 	process := requireProcess(t, candidate)
 	waitHelperReady(t, process)
-	if err = candidate.BeginShutdown(); err != nil {
+	if err := candidate.BeginShutdown(); err != nil {
 		t.Fatal(err)
 	}
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
-	if err = candidate.Wait(wait); err == nil || candidate.Result() != nil {
+	if err := candidate.Wait(wait); err == nil || candidate.Result() != nil {
 		t.Fatalf("missing root handshake cleanup/root = %v/%v, want containment failure and nil root", err, candidate.Result())
 	}
 }

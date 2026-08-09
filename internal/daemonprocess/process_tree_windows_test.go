@@ -42,10 +42,7 @@ func init() { //nolint:gochecknoinits // Process-launch fixture must run before 
 
 func TestWindowsJobShutdownTerminatesProcessTree(t *testing.T) {
 	starter := helperStarter(t, "tree", testpath.TempDir(t), 1024)
-	candidate, err := starter.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
+	candidate := requireOwnedCandidate(t, starter)
 	process := requireProcess(t, candidate)
 	var child int
 	deadline := time.Now().Add(3 * time.Second)
@@ -58,12 +55,12 @@ func TestWindowsJobShutdownTerminatesProcessTree(t *testing.T) {
 	if child == 0 {
 		t.Fatalf("helper did not report child: %q", process.ProtectedStderr())
 	}
-	if err = candidate.BeginShutdown(); err != nil {
+	if err := candidate.BeginShutdown(); err != nil {
 		t.Fatal(err)
 	}
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
-	if err = candidate.Wait(wait); err != nil {
+	if err := candidate.Wait(wait); err != nil {
 		t.Fatalf("job containment cleanup failed: %v", err)
 	}
 	assertProcessStopped(t, child)
@@ -75,17 +72,14 @@ func TestWindowsSuspendedLaunchContainsImmediateDescendant(t *testing.T) {
 	starter.terminate = 100 * time.Millisecond
 
 	for iteration := range 12 {
-		candidate, err := starter.Start(t.Context())
-		if err != nil {
-			t.Fatalf("iteration %d start: %v", iteration, err)
-		}
+		candidate := requireOwnedCandidate(t, starter)
 		process := requireProcess(t, candidate)
 		child := waitForChildPID(t, process)
-		if err = candidate.BeginShutdown(); err != nil {
+		if err := candidate.BeginShutdown(); err != nil {
 			t.Fatalf("iteration %d shutdown: %v", iteration, err)
 		}
 		wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
-		err = candidate.Wait(wait)
+		err := candidate.Wait(wait)
 		cancel()
 		if err != nil {
 			t.Fatalf("iteration %d containment cleanup: %v", iteration, err)
@@ -122,10 +116,7 @@ func TestWindowsControlFailureReachesContainmentWait(t *testing.T) {
 	starter := helperStarter(t, "blocked", testpath.TempDir(t), 1024)
 	starter.graceful = 10 * time.Millisecond
 	starter.terminate = 10 * time.Millisecond
-	candidate, err := starter.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
+	candidate := requireOwnedCandidate(t, starter)
 	t.Cleanup(func() {
 		_ = candidate.BeginShutdown() //nolint:errcheck // Best-effort cleanup after the authoritative assertions.
 		wait, cancel := context.WithTimeout(context.Background(), 3*time.Second)

@@ -84,24 +84,21 @@ func copyStdinOrExit(exitCode int) {
 func TestStarterUsesSiblingDiscreteArgumentAndGracefulEOF(t *testing.T) {
 	t.Parallel()
 	starter := helperStarter(t, "eof", testpath.TempDir(t), 256)
-	candidate, err := starter.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
+	candidate := requireOwnedCandidate(t, starter)
 	if candidate == nil || candidate.Done() == nil {
 		t.Fatal("starter returned an invalid candidate")
 	}
 	process := requireProcess(t, candidate)
 	waitHelperReady(t, process)
-	if err = candidate.BeginShutdown(); err != nil {
+	if err := candidate.BeginShutdown(); err != nil {
 		t.Fatal(err)
 	}
-	if err = candidate.BeginShutdown(); err != nil {
+	if err := candidate.BeginShutdown(); err != nil {
 		t.Fatalf("idempotent shutdown: %v", err)
 	}
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
-	if err = candidate.Wait(wait); err != nil || candidate.Result() != nil {
+	if err := candidate.Wait(wait); err != nil || candidate.Result() != nil {
 		t.Fatalf("graceful candidate = %v, result=%v, stderr=%q", err, candidate.Result(), process.ProtectedStderr())
 	}
 }
@@ -109,7 +106,7 @@ func TestStarterUsesSiblingDiscreteArgumentAndGracefulEOF(t *testing.T) {
 func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 	t.Parallel()
 	early := helperStarter(t, "early", testpath.TempDir(t), 256)
-	candidate := startOwnedCandidate(t, early)
+	candidate := requireOwnedCandidate(t, early)
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
 	err := candidate.Wait(wait)
@@ -118,10 +115,7 @@ func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 	}
 
 	blocked := helperStarter(t, "blocked", testpath.TempDir(t), 256)
-	candidate, err = blocked.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
+	candidate = requireOwnedCandidate(t, blocked)
 	waitHelperReady(t, requireProcess(t, candidate))
 	short, stop := context.WithTimeout(t.Context(), 10*time.Millisecond)
 	defer stop()
@@ -147,18 +141,15 @@ func TestStarterPreservesWorkingDirectoryEnvironmentAndBoundsStderr(t *testing.T
 	t.Parallel()
 	directory := testpath.TempDir(t)
 	starter := helperStarter(t, "report", directory, 1024)
-	candidate, err := starter.Start(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
+	candidate := requireOwnedCandidate(t, starter)
 	process := requireProcess(t, candidate)
 	waitHelperReady(t, process)
-	if err = candidate.BeginShutdown(); err != nil {
+	if err := candidate.BeginShutdown(); err != nil {
 		t.Fatal(err)
 	}
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
-	if err = candidate.Wait(wait); err != nil {
+	if err := candidate.Wait(wait); err != nil {
 		t.Fatalf("report candidate = %v, stderr=%q", err, process.ProtectedStderr())
 	}
 	diagnostics := string(process.ProtectedStderr())
@@ -277,7 +268,7 @@ func helperStarter(t *testing.T, mode, directory string, stderrBytes int) *Start
 	return starter
 }
 
-func startOwnedCandidate(t *testing.T, starter *Starter) Candidate {
+func requireOwnedCandidate(t *testing.T, starter *Starter) Candidate {
 	t.Helper()
 	const maximumAttempts = 3
 	classifications := make([]string, 0, maximumAttempts)
@@ -296,7 +287,7 @@ func startOwnedCandidate(t *testing.T, starter *Starter) Candidate {
 		// abandon a process or conceal a containment failure.
 		time.Sleep(time.Duration(attempt+1) * time.Millisecond)
 	}
-	t.Fatalf("early exit returned no owned candidate after %d attempts: %s", maximumAttempts, strings.Join(classifications, ", "))
+	t.Fatalf("starter returned no owned candidate after %d attempts: %s", maximumAttempts, strings.Join(classifications, ", "))
 	panic("unreachable")
 }
 
