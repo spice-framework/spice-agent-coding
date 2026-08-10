@@ -1,5 +1,20 @@
 # Release history
 
+## `v0.1.0-preview.4` candidate
+
+Preview 4 advances only the inert distribution identity and exact reusable
+release authority after the immutable preview 3 attempt exposed two
+candidate-side installed-byte gate defects. It retains the dependency graph,
+generated applications, compatibility contract, release payloads, binary
+packages, build identity, targets, and corrected candidate-derived
+installed-byte verification unchanged.
+
+The recovery candidate is authorized independently by Development commit
+`ed7e58a7493a44ba60df881b9bf9b24edcbc99ee`, Toolchain commit
+`01478163ce5282f9b71d7da19016f721b911f909`, and organization workflow commit
+`3bf54b986b68d386a90e418776b35ca08f234d20`. This section does not claim that
+an immutable preview 4 tag or release exists.
+
 ## `v0.1.0-preview.3`
 
 Preview 3 advances only the inert distribution identity and the exact reusable
