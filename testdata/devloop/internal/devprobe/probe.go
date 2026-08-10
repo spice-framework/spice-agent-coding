@@ -115,8 +115,10 @@ func publishAddress(path, address, instance string) (resultErr error) {
 	if err = temporary.Close(); err != nil {
 		return err
 	}
-	// #nosec G703 -- both paths are confined to the validated test-owned directory.
-	return os.Rename(temporaryPath, path)
+	// Both paths are confined to the validated test-owned directory. The
+	// platform helper preserves replacement semantics when the previous probe
+	// metadata is concurrently observed on Windows.
+	return replacePublishedAddress(temporaryPath, path)
 }
 
 // Stop drains the probe before the generated application process exits.
