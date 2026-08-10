@@ -7,31 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"time"
 
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent"
 	"github.com/spice-framework/spice-agent-coding/internal/terminal"
 	"github.com/spice-framework/spice-agent-coding/internal/terminalcommand"
-	agenttui "github.com/spice-framework/spice-agent-tui"
 	spiceconfig "github.com/spice-framework/spice/config"
 )
-
-type terminalApplication interface {
-	Start(context.Context) error
-	Stop(context.Context) error
-	ShutdownTimeout() time.Duration
-	Shell() agenttui.Shell
-}
-
-type generatedApplication struct {
-	*spicegen.Application
-}
-
-func (application generatedApplication) Shell() agenttui.Shell {
-	return application.Components().TerminalShell
-}
-
-type applicationFactory func(context.Context, spicegen.ApplicationOptions) (terminalApplication, error)
 
 type generatedRunner struct {
 	options        spicegen.ApplicationOptions
@@ -54,23 +35,23 @@ func (runner *generatedRunner) Run(ctx context.Context, options terminalcommand.
 		return errors.New("generated terminal factory returned no application")
 	}
 	if options.Mode() == terminalcommand.ModeCheck {
-		return stopTerminalApplication(application)
+		return runner.stop(application)
 	}
 	if options.Mode() != terminalcommand.ModeManaged && options.Mode() != terminalcommand.ModeAttach {
-		return errors.Join(errors.New("generated terminal mode is unsupported"), stopTerminalApplication(application))
+		return errors.Join(errors.New("generated terminal mode is unsupported"), runner.stop(application))
 	}
 	if err = application.Start(ctx); err != nil {
-		return errors.Join(fmt.Errorf("start generated terminal: %w", err), stopTerminalApplication(application))
+		return errors.Join(fmt.Errorf("start generated terminal: %w", err), runner.stop(application))
 	}
 	shell := application.Shell()
 	if shell == nil {
-		return errors.Join(errors.New("generated terminal shell is unavailable"), stopTerminalApplication(application))
+		return errors.Join(errors.New("generated terminal shell is unavailable"), runner.stop(application))
 	}
 	runErr := shell.Run(ctx)
 	if context.Cause(ctx) != nil && errors.Is(runErr, context.Cause(ctx)) {
 		runErr = nil
 	}
-	return errors.Join(runErr, stopTerminalApplication(application))
+	return errors.Join(runErr, runner.stop(application))
 }
 
 func (runner *generatedRunner) optionsFor(options terminalcommand.Options) (spicegen.ApplicationOptions, error) {
@@ -97,7 +78,7 @@ func (runner *generatedRunner) optionsFor(options terminalcommand.Options) (spic
 	return result, nil
 }
 
-func stopTerminalApplication(application terminalApplication) error {
+func (*generatedRunner) stop(application terminalApplication) error {
 	if application == nil {
 		return errors.New("generated terminal application is unavailable")
 	}

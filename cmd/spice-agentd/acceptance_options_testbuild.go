@@ -41,7 +41,11 @@ const (
 	acceptanceRecoveryText            = "cancellation-recovery-complete"
 )
 
-func acceptanceApplicationOptions(options spicegen.ApplicationOptions) (spicegen.ApplicationOptions, error) {
+type acceptanceAdapter struct{}
+
+func (acceptanceAdapter) applicationOptions(
+	options spicegen.ApplicationOptions,
+) (spicegen.ApplicationOptions, error) {
 	directory := os.Getenv(acceptanceScopeEnvironment)
 	if directory == "" {
 		return spicegen.ApplicationOptions{}, errors.New("acceptance endpoint scope directory is required")
@@ -98,7 +102,9 @@ func validAcceptanceProviderConfiguration(directory, prefix, scenario, shellHelp
 	}
 }
 
-func acceptanceDaemonRunner(runner daemoncommand.Runner) daemoncommand.Runner {
+func (acceptanceAdapter) daemonRunner(
+	runner daemoncommand.Runner,
+) daemoncommand.Runner {
 	path := os.Getenv(acceptanceDiagnosticEnvironment)
 	if path == "" {
 		return runner

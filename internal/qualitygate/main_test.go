@@ -3,12 +3,47 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 )
+
+func TestFormattingBatchesPreserveEveryFileWithinWindowsCommandBounds(t *testing.T) {
+	t.Parallel()
+	files := make([]string, 0, 1000)
+	for index := range 1000 {
+		files = append(files, filepath.Join(
+			strings.Repeat("long-directory-", 8),
+			fmt.Sprintf("source-%04d.go", index),
+		))
+	}
+	for _, option := range []string{"-l", "-w"} {
+		batches := formattingBatches(option, files)
+		var flattened []string
+		for _, batch := range batches {
+			if len(batch) == 0 || len(batch) > maximumFormattingBatchFiles {
+				t.Fatalf("formatting batch file count = %d", len(batch))
+			}
+			bytes := len(option)
+			for _, file := range batch {
+				bytes += len(file) + 3
+			}
+			if bytes > maximumFormattingBatchBytes {
+				t.Fatalf("formatting batch bytes = %d", bytes)
+			}
+			flattened = append(flattened, batch...)
+		}
+		if !slices.Equal(flattened, files) {
+			t.Fatal("formatting batches omitted, duplicated, or reordered files")
+		}
+	}
+	if batches := formattingBatches("-l", nil); len(batches) != 0 {
+		t.Fatalf("empty formatting batches = %#v", batches)
+	}
+}
 
 func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 	t.Parallel()
@@ -199,6 +234,15 @@ func TestExactGoExecutable(t *testing.T) {
 		qualityExecutable("go") != exactGoExecutable() ||
 		qualityExecutable("gofumpt") != "gofumpt" {
 		t.Fatalf("exact Go executable = %q", exactGoExecutable())
+	}
+}
+
+func TestStyleArgumentsAreStrictAndRepositoryWide(t *testing.T) {
+	t.Parallel()
+
+	want := []string{"-spicestyle.config=.spice/style.json", "./..."}
+	if got := styleArguments(); !slices.Equal(got, want) {
+		t.Fatalf("style arguments = %#v, want %#v", got, want)
 	}
 }
 

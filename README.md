@@ -47,7 +47,9 @@ commands now drive independently generated applications. See
 Go 1.26.5 is exact. On a fresh clone, run `make tools-bootstrap` once to
 populate the exact product and tools module graphs without changing tracked
 module files. All ordinary quality targets remain offline. Use `make fast`,
-`make check`, and `make verify`.
+`make check`, and `make verify`. Application-owned Go is also checked against
+the pinned Spice `java-structured` profile; see [the code-style
+contract](docs/code-style.md).
 
 Generated applications are committed for inspection. Do not edit them
 directly. Change the corresponding handwritten composition and run:

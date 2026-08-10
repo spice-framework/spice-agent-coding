@@ -10,6 +10,9 @@ boundaries without inventing the APIs.
 ## Invariants
 
 - Go 1.26.5 is mandatory.
+- Application-owned Go follows the normative Spice `java-structured` profile.
+  Migrate packages before adding them to `.spice/style.json`; never remove an
+  enforced source root or weaken the strict rules to accommodate legacy code.
 - This repository owns distribution composition, configuration, packaging,
   compatibility evidence, and end-to-end acceptance—not the daemon protocol,
   terminal widget system, compiler, or framework runtime.

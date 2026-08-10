@@ -11,7 +11,11 @@ import (
 	spicebean "github.com/spice-framework/spice/bean"
 )
 
-func acceptanceApplicationOptions(options spicegen.ApplicationOptions) (spicegen.ApplicationOptions, error) {
+type acceptanceAdapter struct{}
+
+func (acceptanceAdapter) applicationOptions(
+	options spicegen.ApplicationOptions,
+) (spicegen.ApplicationOptions, error) {
 	directory := os.Getenv("SPICE_AGENT_ACCEPTANCE_SCOPE_DIRECTORY")
 	if directory == "" {
 		return spicegen.ApplicationOptions{}, errors.New("acceptance endpoint scope directory is required")

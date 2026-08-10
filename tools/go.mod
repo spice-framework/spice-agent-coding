@@ -7,6 +7,7 @@ toolchain go1.26.5
 tool (
 	github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 	github.com/securego/gosec/v2/cmd/gosec
+	github.com/spice-framework/toolchain/cmd/spicestyle
 	go.uber.org/nilaway/cmd/nilaway
 	golang.org/x/tools/cmd/goimports
 	golang.org/x/vuln/cmd/govulncheck
@@ -205,6 +206,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.12.0 // indirect
+	github.com/spice-framework/toolchain v0.1.0-preview.2.0.20260810170203-57cf59f2d895 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/standard-webhooks/standard-webhooks/libraries v0.0.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.3.1 // indirect

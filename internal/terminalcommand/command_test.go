@@ -55,7 +55,7 @@ func TestExecuteAcceptedModesPreserveArgumentsEndpointAndContext(t *testing.T) {
 				}
 				return nil
 			})
-			if code := terminalcommand.Execute(ctx, arguments, io.Discard, &stderr, runner); code != terminalcommand.ExitSuccess {
+			if code := (terminalcommand.Command{}).Execute(ctx, arguments, io.Discard, &stderr, runner); code != terminalcommand.ExitSuccess {
 				t.Fatalf("exit code = %d, stderr = %q", code, stderr.String())
 			}
 			if calls != 1 {
@@ -79,7 +79,7 @@ func TestExecuteAcceptsOpaqueLocalEndpointForms(t *testing.T) {
 		`\\.\pipe\spice-agent`,
 	} {
 		captured := ""
-		code := terminalcommand.Execute(context.Background(), []string{"attach", "--endpoint", endpoint}, io.Discard, io.Discard,
+		code := (terminalcommand.Command{}).Execute(context.Background(), []string{"attach", "--endpoint", endpoint}, io.Discard, io.Discard,
 			terminalcommand.RunnerFunc(func(_ context.Context, options terminalcommand.Options) error {
 				captured = options.Endpoint()
 				return nil
@@ -117,7 +117,7 @@ func TestExecuteRejectsRemoteLookingAndMalformedEndpointsWithoutReflection(t *te
 	for _, endpoint := range endpoints {
 		var stderr bytes.Buffer
 		called := false
-		code := terminalcommand.Execute(context.Background(), []string{"attach", "--endpoint", endpoint}, io.Discard, &stderr,
+		code := (terminalcommand.Command{}).Execute(context.Background(), []string{"attach", "--endpoint", endpoint}, io.Discard, &stderr,
 			terminalcommand.RunnerFunc(func(context.Context, terminalcommand.Options) error { called = true; return nil }))
 		if code != terminalcommand.ExitUsage || called {
 			t.Fatalf("endpoint %q = code %d, called %v", endpoint, code, called)
@@ -141,7 +141,7 @@ func TestExecuteRejectsInvalidGrammar(t *testing.T) {
 		{"--check", secret},
 	} {
 		var stderr bytes.Buffer
-		code := terminalcommand.Execute(context.Background(), arguments, io.Discard, &stderr,
+		code := (terminalcommand.Command{}).Execute(context.Background(), arguments, io.Discard, &stderr,
 			terminalcommand.RunnerFunc(func(context.Context, terminalcommand.Options) error {
 				t.Fatal("runner called for invalid grammar")
 				return nil
@@ -156,7 +156,7 @@ func TestExecuteHelpDoesNotRequireRunner(t *testing.T) {
 	t.Parallel()
 	for _, arguments := range [][]string{{"help"}, {"--help"}, {"-h"}} {
 		var stdout, stderr bytes.Buffer
-		code := terminalcommand.Execute(context.Background(), arguments, &stdout, &stderr, nil)
+		code := (terminalcommand.Command{}).Execute(context.Background(), arguments, &stdout, &stderr, nil)
 		if code != terminalcommand.ExitSuccess || !strings.Contains(stdout.String(), "attach --endpoint") ||
 			!strings.Contains(stdout.String(), "WARNING:") || stderr.Len() != 0 {
 			t.Fatalf("help %q = code %d, stdout %q, stderr %q", arguments, code, stdout.String(), stderr.String())
@@ -172,7 +172,7 @@ func TestExecutePropagatesCancellationAndRedactsRunnerError(t *testing.T) {
 	secret := "runner-secret-must-not-appear"
 	var stderr bytes.Buffer
 	go func() {
-		done <- terminalcommand.Execute(ctx, nil, io.Discard, &stderr,
+		done <- (terminalcommand.Command{}).Execute(ctx, nil, io.Discard, &stderr,
 			terminalcommand.RunnerFunc(func(callContext context.Context, _ terminalcommand.Options) error {
 				close(started)
 				<-callContext.Done()
@@ -204,7 +204,7 @@ func TestExecuteContainsRunnerPanicAndTypedNil(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			var stderr bytes.Buffer
-			code := terminalcommand.Execute(context.Background(), nil, io.Discard, &stderr, test.runner)
+			code := (terminalcommand.Command{}).Execute(context.Background(), nil, io.Discard, &stderr, test.runner)
 			if code != terminalcommand.ExitFailure || strings.Contains(stderr.String(), secret) ||
 				!strings.Contains(stderr.String(), "operation failed") {
 				t.Fatalf("contained runner = code %d, stderr %q", code, stderr.String())
@@ -243,22 +243,22 @@ func TestExecuteRejectsUnavailableExecutionAndOutput(t *testing.T) {
 			if test.nilRunner {
 				runner = nil
 			}
-			if code := terminalcommand.Execute(ctx, []string{"--check"}, nil, io.Discard, runner); code != terminalcommand.ExitFailure {
+			if code := (terminalcommand.Command{}).Execute(ctx, []string{"--check"}, nil, io.Discard, runner); code != terminalcommand.ExitFailure {
 				t.Fatalf("exit code = %d, want %d", code, terminalcommand.ExitFailure)
 			}
 		})
 	}
-	if code := terminalcommand.Execute(context.Background(), []string{"help"}, errorWriter{}, io.Discard, nil); code != terminalcommand.ExitFailure {
+	if code := (terminalcommand.Command{}).Execute(context.Background(), []string{"help"}, errorWriter{}, io.Discard, nil); code != terminalcommand.ExitFailure {
 		t.Fatalf("help output failure code = %d", code)
 	}
-	if code := terminalcommand.Execute(context.Background(), []string{"invalid"}, io.Discard, errorWriter{}, nil); code != terminalcommand.ExitFailure {
+	if code := (terminalcommand.Command{}).Execute(context.Background(), []string{"invalid"}, io.Discard, errorWriter{}, nil); code != terminalcommand.ExitFailure {
 		t.Fatalf("usage output failure code = %d", code)
 	}
-	if code := terminalcommand.Execute(context.Background(), []string{"help"}, shortWriter{}, io.Discard, nil); code != terminalcommand.ExitFailure {
+	if code := (terminalcommand.Command{}).Execute(context.Background(), []string{"help"}, shortWriter{}, io.Discard, nil); code != terminalcommand.ExitFailure {
 		t.Fatalf("short help output code = %d", code)
 	}
 	runtimeCalled := false
-	if code := terminalcommand.Execute(context.Background(), []string{"--check"}, io.Discard, errorWriter{},
+	if code := (terminalcommand.Command{}).Execute(context.Background(), []string{"--check"}, io.Discard, errorWriter{},
 		terminalcommand.RunnerFunc(func(context.Context, terminalcommand.Options) error {
 			runtimeCalled = true
 			return errors.New("runtime failed")
@@ -266,7 +266,7 @@ func TestExecuteRejectsUnavailableExecutionAndOutput(t *testing.T) {
 		t.Fatalf("runtime output failure = code %d, called %v", code, runtimeCalled)
 	}
 	called := false
-	if code := terminalcommand.Execute(context.Background(), nil, io.Discard, errorWriter{},
+	if code := (terminalcommand.Command{}).Execute(context.Background(), nil, io.Discard, errorWriter{},
 		terminalcommand.RunnerFunc(func(context.Context, terminalcommand.Options) error { called = true; return nil })); code != terminalcommand.ExitFailure || called {
 		t.Fatalf("warning output failure = code %d, called %v", code, called)
 	}

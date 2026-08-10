@@ -133,24 +133,25 @@ func TestGeneratedRunnerRejectsInvalidBoundaries(t *testing.T) {
 	if err := runner.Run(t.Context(), options); err == nil {
 		t.Fatal("runner accepted nil application")
 	}
-	if err := stopTerminalApplication(nil); err == nil {
+	if err := (&generatedRunner{}).stop(nil); err == nil {
 		t.Fatal("stop accepted nil application")
 	}
 	application := newFakeTerminalApplication()
 	application.timeout = 0
-	if err := stopTerminalApplication(application); err == nil || application.stops != 0 {
+	if err := (&generatedRunner{}).stop(application); err == nil || application.stops != 0 {
 		t.Fatalf("invalid timeout error=%v stops=%d", err, application.stops)
 	}
 }
 
 func TestExecuteHelpAndGeneratedCheck(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	if code := execute(t.Context(), []string{"help"}, bytes.NewReader(nil), &stdout, &stderr); code != terminalcommand.ExitSuccess || stdout.Len() == 0 || stderr.Len() != 0 {
+	applicationCommand := command{input: bytes.NewReader(nil), stdout: &stdout, stderr: &stderr}
+	if code := applicationCommand.execute(t.Context(), []string{"help"}); code != terminalcommand.ExitSuccess || stdout.Len() == 0 || stderr.Len() != 0 {
 		t.Fatalf("help code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	stdout.Reset()
 	stderr.Reset()
-	if code := execute(t.Context(), []string{"--check"}, bytes.NewReader(nil), &stdout, &stderr); code != terminalcommand.ExitSuccess {
+	if code := applicationCommand.execute(t.Context(), []string{"--check"}); code != terminalcommand.ExitSuccess {
 		t.Fatalf("check code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 }
@@ -158,7 +159,8 @@ func TestExecuteHelpAndGeneratedCheck(t *testing.T) {
 func TestExecuteRejectsUnavailableTerminalStreams(t *testing.T) {
 	t.Parallel()
 	var stderr bytes.Buffer
-	if code := execute(t.Context(), nil, nil, nil, &stderr); code != terminalcommand.ExitFailure ||
+	applicationCommand := command{stderr: &stderr}
+	if code := applicationCommand.execute(t.Context(), nil); code != terminalcommand.ExitFailure ||
 		!strings.Contains(stderr.String(), "terminal is unavailable") {
 		t.Fatalf("unavailable terminal code=%d stderr=%q", code, stderr.String())
 	}
@@ -176,7 +178,7 @@ func testTerminalRunner(application terminalApplication) *generatedRunner {
 func capturedTerminalOptions(t *testing.T, arguments []string) terminalcommand.Options {
 	t.Helper()
 	var captured terminalcommand.Options
-	code := terminalcommand.Execute(
+	code := (terminalcommand.Command{}).Execute(
 		t.Context(),
 		arguments,
 		io.Discard,

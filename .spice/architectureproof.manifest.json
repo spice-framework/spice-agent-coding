@@ -10,7 +10,7 @@
   },
   "generator_version": "0.1.0-dev",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:3bee11984e458ea772ff818748116c9d9637653b9eb7abdd728d8c46514d4933",
+  "input_sha256": "sha256:0918477aed00e88a859081a27c647b68f5c28a0cf7e80ffb377be3baf157a699",
   "files": [
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/application_spice_gen.go",
@@ -101,11 +101,11 @@
     },
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/architecture_proof_id_source_bean_spice_gen.go",
-      "sha256": "sha256:1f522beaccbf94fbcca19d91333c7b18308f36de954395d527e9dcc20ceb9a23",
+      "sha256": "sha256:14f3614fff5d39d943b73ffe9f2c4624d5a88b38d66e2d12c9784f7f6a1fe11d",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/architectureproof/architecture_proof_id_source_bean.go",
-        "line": 13,
+        "line": 15,
         "column": 4,
         "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource"
       },
@@ -115,14 +115,14 @@
           "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource",
           "source": {
             "path": "internal/architectureproof/architecture_proof_id_source_bean.go",
-            "line": 13,
+            "line": 15,
             "column": 4,
             "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource"
           },
           "generated": {
-            "start_line": 14,
+            "start_line": 16,
             "start_column": 4,
-            "end_line": 14,
+            "end_line": 16,
             "end_column": 47
           }
         }
@@ -475,7 +475,7 @@
         },
         {
           "path": "internal/architectureproof/architecture_proof_id_source_bean.go",
-          "line": 13,
+          "line": 15,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource"
         },
@@ -604,7 +604,7 @@
         },
         {
           "path": "internal/architectureproof/architecture_proof_id_source_bean.go",
-          "line": 13,
+          "line": 15,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource"
         },
@@ -720,7 +720,7 @@
         },
         {
           "path": "internal/architectureproof/architecture_proof_id_source_bean.go",
-          "line": 13,
+          "line": 15,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|11:NewIDSource"
         },

@@ -2,6 +2,7 @@ package runidentity
 
 import (
 	"bytes"
+	"crypto/rand"
 	"io"
 	"regexp"
 	"strings"
@@ -11,7 +12,7 @@ import (
 
 func TestSourceDeterministicShapeAndReaderFailure(t *testing.T) {
 	t.Parallel()
-	source, err := New(bytes.NewReader(make([]byte, entropyBytes)))
+	source, err := NewSource(bytes.NewReader(make([]byte, entropyBytes)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +23,7 @@ func TestSourceDeterministicShapeAndReaderFailure(t *testing.T) {
 	if id != "run-"+strings.Repeat("A", 32) {
 		t.Fatalf("deterministic ID = %q", id)
 	}
-	failing, err := New(failingReader{})
+	failing, err := NewSource(failingReader{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +34,7 @@ func TestSourceDeterministicShapeAndReaderFailure(t *testing.T) {
 
 func TestSourceRejectsNonCanonicalPrefixes(t *testing.T) {
 	t.Parallel()
-	source, err := New(bytes.NewReader(make([]byte, entropyBytes*16)))
+	source, err := NewSource(bytes.NewReader(make([]byte, entropyBytes*16)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,8 +46,8 @@ func TestSourceRejectsNonCanonicalPrefixes(t *testing.T) {
 			t.Fatalf("Next(%q) = %q, %v; want rejection", prefix, id, nextErr)
 		}
 	}
-	if source, err = New(nil); source != nil || err == nil {
-		t.Fatalf("New(nil) = %v, %v", source, err)
+	if source, err = NewSource(nil); source != nil || err == nil {
+		t.Fatalf("NewSource(nil) = %v, %v", source, err)
 	}
 	var nilSource *Source
 	if id, nextErr := nilSource.Next("run"); id != "" || nextErr == nil {
@@ -57,7 +58,10 @@ func TestSourceRejectsNonCanonicalPrefixes(t *testing.T) {
 func TestCryptoSourceConcurrentIDsAreCanonicalAndUnique(t *testing.T) {
 	t.Parallel()
 	const count = 128
-	source := NewCrypto()
+	source, err := NewSource(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
 	pattern := regexp.MustCompile(`^run-[A-Za-z0-9_-]{32}$`)
 	ids := make(chan string, count)
 	errorsFound := make(chan error, count)

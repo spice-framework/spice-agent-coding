@@ -49,7 +49,7 @@ func TestExecuteAcceptedModesPreserveArgumentsAndContext(t *testing.T) {
 				return nil
 			})
 
-			if code := daemoncommand.Execute(ctx, arguments, io.Discard, &stderr, runner); code != daemoncommand.ExitSuccess {
+			if code := (daemoncommand.Command{}).Execute(ctx, arguments, io.Discard, &stderr, runner); code != daemoncommand.ExitSuccess {
 				t.Fatalf("exit code = %d, stderr = %q", code, stderr.String())
 			}
 			if calls != 1 {
@@ -66,7 +66,7 @@ func TestExecuteHelpDoesNotRequireRunner(t *testing.T) {
 	t.Parallel()
 	for _, arguments := range [][]string{{"help"}, {"--help"}, {"-h"}} {
 		var stdout, stderr bytes.Buffer
-		code := daemoncommand.Execute(context.Background(), arguments, &stdout, &stderr, nil)
+		code := (daemoncommand.Command{}).Execute(context.Background(), arguments, &stdout, &stderr, nil)
 		if code != daemoncommand.ExitSuccess || !strings.Contains(stdout.String(), "spice-agentd serve") ||
 			!strings.Contains(stdout.String(), "WARNING:") || stderr.Len() != 0 {
 			t.Fatalf("help %q = code %d, stdout %q, stderr %q", arguments, code, stdout.String(), stderr.String())
@@ -86,7 +86,7 @@ func TestExecuteRejectsInvalidArgumentsWithoutReflection(t *testing.T) {
 	} {
 		var stderr bytes.Buffer
 		called := false
-		code := daemoncommand.Execute(context.Background(), arguments, io.Discard, &stderr,
+		code := (daemoncommand.Command{}).Execute(context.Background(), arguments, io.Discard, &stderr,
 			daemoncommand.RunnerFunc(func(context.Context, daemoncommand.Options) error {
 				called = true
 				return nil
@@ -108,7 +108,7 @@ func TestExecutePropagatesCancellationAndRedactsRunnerError(t *testing.T) {
 	secret := "runner-secret-must-not-appear"
 	var stderr bytes.Buffer
 	go func() {
-		done <- daemoncommand.Execute(ctx, []string{"serve"}, io.Discard, &stderr,
+		done <- (daemoncommand.Command{}).Execute(ctx, []string{"serve"}, io.Discard, &stderr,
 			daemoncommand.RunnerFunc(func(callContext context.Context, _ daemoncommand.Options) error {
 				close(started)
 				<-callContext.Done()
@@ -140,7 +140,7 @@ func TestExecuteContainsRunnerPanicAndTypedNil(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			var stderr bytes.Buffer
-			code := daemoncommand.Execute(context.Background(), []string{"serve"}, io.Discard, &stderr, test.runner)
+			code := (daemoncommand.Command{}).Execute(context.Background(), []string{"serve"}, io.Discard, &stderr, test.runner)
 			if code != daemoncommand.ExitFailure || strings.Contains(stderr.String(), secret) ||
 				!strings.Contains(stderr.String(), "operation failed") {
 				t.Fatalf("contained runner = code %d, stderr %q", code, stderr.String())
@@ -179,23 +179,23 @@ func TestExecuteRejectsUnavailableExecutionAndOutput(t *testing.T) {
 			if test.nilRunner {
 				runner = nil
 			}
-			if code := daemoncommand.Execute(ctx, []string{"--check"}, nil, io.Discard, runner); code != daemoncommand.ExitFailure {
+			if code := (daemoncommand.Command{}).Execute(ctx, []string{"--check"}, nil, io.Discard, runner); code != daemoncommand.ExitFailure {
 				t.Fatalf("exit code = %d, want %d", code, daemoncommand.ExitFailure)
 			}
 		})
 	}
 
-	if code := daemoncommand.Execute(context.Background(), []string{"help"}, errorWriter{}, io.Discard, nil); code != daemoncommand.ExitFailure {
+	if code := (daemoncommand.Command{}).Execute(context.Background(), []string{"help"}, errorWriter{}, io.Discard, nil); code != daemoncommand.ExitFailure {
 		t.Fatalf("help output failure code = %d", code)
 	}
-	if code := daemoncommand.Execute(context.Background(), []string{"invalid"}, io.Discard, errorWriter{}, nil); code != daemoncommand.ExitFailure {
+	if code := (daemoncommand.Command{}).Execute(context.Background(), []string{"invalid"}, io.Discard, errorWriter{}, nil); code != daemoncommand.ExitFailure {
 		t.Fatalf("usage output failure code = %d", code)
 	}
-	if code := daemoncommand.Execute(context.Background(), []string{"help"}, shortWriter{}, io.Discard, nil); code != daemoncommand.ExitFailure {
+	if code := (daemoncommand.Command{}).Execute(context.Background(), []string{"help"}, shortWriter{}, io.Discard, nil); code != daemoncommand.ExitFailure {
 		t.Fatalf("short help output code = %d", code)
 	}
 	runtimeCalled := false
-	if code := daemoncommand.Execute(context.Background(), []string{"--check"}, io.Discard, errorWriter{},
+	if code := (daemoncommand.Command{}).Execute(context.Background(), []string{"--check"}, io.Discard, errorWriter{},
 		daemoncommand.RunnerFunc(func(context.Context, daemoncommand.Options) error {
 			runtimeCalled = true
 			return errors.New("runtime failed")
@@ -203,7 +203,7 @@ func TestExecuteRejectsUnavailableExecutionAndOutput(t *testing.T) {
 		t.Fatalf("runtime output failure = code %d, called %v", code, runtimeCalled)
 	}
 	called := false
-	if code := daemoncommand.Execute(context.Background(), []string{"serve"}, io.Discard, errorWriter{},
+	if code := (daemoncommand.Command{}).Execute(context.Background(), []string{"serve"}, io.Discard, errorWriter{},
 		daemoncommand.RunnerFunc(func(context.Context, daemoncommand.Options) error { called = true; return nil })); code != daemoncommand.ExitFailure || called {
 		t.Fatalf("warning output failure = code %d, called %v", code, called)
 	}

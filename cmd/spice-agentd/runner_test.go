@@ -37,7 +37,7 @@ func TestGeneratedApplicationAcceptsDocumentedProcessEnvironment(t *testing.T) {
 		}
 		t.Fatalf("construct generated application from process environment: %v", err)
 	}
-	if err = stopApplication(generatedApplication{Application: application}); err != nil {
+	if err = (&generatedRunner{}).stop(generatedApplication{Application: application}); err != nil {
 		t.Fatalf("stop generated application: %v", err)
 	}
 }
@@ -150,12 +150,12 @@ func TestGeneratedRunnerReportsFactoryAndUnexpectedTransportFailures(t *testing.
 
 func TestStopApplicationRejectsInvalidApplicationAndTimeout(t *testing.T) {
 	t.Parallel()
-	if err := stopApplication(nil); err == nil {
+	if err := (&generatedRunner{}).stop(nil); err == nil {
 		t.Fatal("stopApplication() accepted nil")
 	}
 	application := newFakeApplication()
 	application.shutdownTimeout = 0
-	if err := stopApplication(application); err == nil || application.stops != 0 {
+	if err := (&generatedRunner{}).stop(application); err == nil || application.stops != 0 {
 		t.Fatalf("stopApplication() error=%v stops=%d", err, application.stops)
 	}
 }
@@ -180,7 +180,7 @@ func TestParentControlDrainsUntilEOFAndFailsClosedOnReadError(t *testing.T) {
 		bytes.NewBufferString("data before EOF"),
 		errorReader{},
 	} {
-		ctx, cancel := withParentControl(context.Background(), input, false)
+		ctx, cancel := (command{input: input}).withParentControl(context.Background(), false)
 		select {
 		case <-ctx.Done():
 		case <-time.After(time.Second):
@@ -189,7 +189,7 @@ func TestParentControlDrainsUntilEOFAndFailsClosedOnReadError(t *testing.T) {
 		cancel()
 	}
 
-	ctx, cancel := withParentControl(context.Background(), bytes.NewReader(nil), true)
+	ctx, cancel := (command{input: bytes.NewReader(nil)}).withParentControl(context.Background(), true)
 	defer cancel()
 	select {
 	case <-ctx.Done():
@@ -205,7 +205,8 @@ func (errorReader) Read([]byte) (int, error) { return 0, errors.New("control rea
 func TestExecuteHelpDoesNotExposeConfigurationOrConstructApplication(t *testing.T) {
 	t.Parallel()
 	var stdout, stderr bytes.Buffer
-	if code := execute(context.Background(), []string{"help"}, &stdout, &stderr); code != daemoncommand.ExitSuccess {
+	applicationCommand := command{stdout: &stdout, stderr: &stderr}
+	if code := applicationCommand.execute(context.Background(), []string{"help"}); code != daemoncommand.ExitSuccess {
 		t.Fatalf("execute() code = %d, stderr=%q", code, stderr.String())
 	}
 	if stdout.Len() == 0 || stderr.Len() != 0 {
@@ -219,7 +220,8 @@ func TestExecuteCheckConstructsAndCleansGeneratedGraph(t *testing.T) {
 	t.Setenv("SPICE_AGENT_WORKSPACE", t.TempDir())
 	t.Setenv("SPICE_AGENT_RUN_AUTHORITY_DIRECTORY", "")
 	var stdout, stderr bytes.Buffer
-	if code := execute(context.Background(), []string{"--check"}, &stdout, &stderr); code != daemoncommand.ExitSuccess {
+	applicationCommand := command{stdout: &stdout, stderr: &stderr}
+	if code := applicationCommand.execute(context.Background(), []string{"--check"}); code != daemoncommand.ExitSuccess {
 		t.Fatalf("execute() code = %d, stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
 	if strings.Contains(stdout.String(), "command-check-secret") || strings.Contains(stderr.String(), "command-check-secret") {
@@ -229,7 +231,7 @@ func TestExecuteCheckConstructsAndCleansGeneratedGraph(t *testing.T) {
 
 func TestIsTerminalRejectsNilAndRegularFiles(t *testing.T) {
 	t.Parallel()
-	if isTerminal(nil) {
+	if (command{}).isTerminal() {
 		t.Fatal("isTerminal(nil) = true")
 	}
 	file, err := os.CreateTemp(t.TempDir(), "regular-*")
@@ -241,7 +243,7 @@ func TestIsTerminalRejectsNilAndRegularFiles(t *testing.T) {
 			t.Errorf("close regular file: %v", closeErr)
 		}
 	}()
-	if isTerminal(file) {
+	if (command{input: file}).isTerminal() {
 		t.Fatal("isTerminal(regular file) = true")
 	}
 }
@@ -281,7 +283,7 @@ func testGeneratedRunner(application daemonApplication) *generatedRunner {
 func capturedOptions(t *testing.T, arguments []string) daemoncommand.Options {
 	t.Helper()
 	var captured daemoncommand.Options
-	code := daemoncommand.Execute(
+	code := (daemoncommand.Command{}).Execute(
 		context.Background(), arguments, io.Discard, io.Discard,
 		daemoncommand.RunnerFunc(func(_ context.Context, options daemoncommand.Options) error {
 			captured = options

@@ -25,11 +25,6 @@ type Explicit struct {
 	closeErr error
 }
 
-type explicitDiscovery interface {
-	Discover(context.Context) (client.Connector, error)
-	Close() error
-}
-
 // NewExplicit constructs an I/O-lazy explicit connector.
 func NewExplicit(store *endpoint.Store, address string) (*Explicit, error) {
 	discovery, err := localclient.NewExplicitDiscovery(store, address)
@@ -111,18 +106,3 @@ func (*Explicit) MarshalJSON() ([]byte, error) {
 	return json.Marshal("terminalconnector.Explicit([REDACTED])")
 }
 func (connector *Explicit) LogValue() slog.Value { return slog.StringValue(connector.String()) }
-
-type opaqueError struct {
-	message string
-	cause   error
-}
-
-func (failure *opaqueError) Error() string { return failure.message }
-func (failure *opaqueError) Unwrap() error {
-	if failure == nil {
-		return nil
-	}
-	return failure.cause
-}
-
-var _ client.Connector = (*Explicit)(nil)

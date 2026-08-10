@@ -1,5 +1,7 @@
 package terminal
 
+import _ "github.com/spice-framework/spice-agent-tui/autoconfigure"
+
 // @import { ConfigurationProperties } from "github.com/spice-framework/spice/annotation/core"
 
 const (

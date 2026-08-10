@@ -78,6 +78,7 @@ func runConfigured(ctx context.Context, root, mode, artifacts string) error {
 	formatting := step{"formatting", func() error { return format(ctx, root, false) }}
 	modules := step{"module and vendor", func() error { return checkModule(ctx, root) }}
 	generated := step{"generated applications", func() error { return checkGeneratedApplications(ctx, root) }}
+	style := step{"Spice application style", func() error { return checkStyle(ctx, root) }}
 	vet := step{"go vet", func() error { return command(ctx, root, nil, "go", "vet", "./...") }}
 	fastTest := step{"affected-loop tests", func() error { return tests(ctx, root, false, false) }}
 	test := step{"shuffled tests", func() error { return tests(ctx, root, false, true) }}
@@ -89,14 +90,14 @@ func runConfigured(ctx context.Context, root, mode, artifacts string) error {
 		case "fast":
 			steps = []step{identity, fastTest}
 		case "check":
-			steps = []step{identity, formatting, modules, generated, vet, test}
+			steps = []step{identity, formatting, modules, generated, style, vet, test}
 		case "coverage":
 			steps = []step{identity, {"coverage", func() error { return coverage(ctx, root) }}}
 		case "fmt":
 			steps = []step{identity, {"formatting write", func() error { return format(ctx, root, true) }}}
 		case "verify":
 			steps = []step{
-				identity, formatting, modules, generated, vet,
+				identity, formatting, modules, generated, style, vet,
 				{"lint and nil safety", func() error { return lint(ctx, root) }},
 				{"security", func() error { return security(ctx, root) }},
 				test,
@@ -457,15 +458,55 @@ func format(ctx context.Context, root string, write bool) error {
 		if write {
 			option = "-w"
 		}
-		result, captureErr := capture(ctx, root, executable, append([]string{option}, files...)...)
-		if captureErr != nil {
-			return captureErr
-		}
-		if !write && strings.TrimSpace(result) != "" {
-			return fmt.Errorf("%s requires formatting: %s", name, strings.Join(strings.Fields(result), ", "))
+		for _, batch := range formattingBatches(option, files) {
+			result, captureErr := capture(ctx, root, executable, append([]string{option}, batch...)...)
+			if captureErr != nil {
+				return captureErr
+			}
+			if !write && strings.TrimSpace(result) != "" {
+				return fmt.Errorf("%s requires formatting: %s", name, strings.Join(strings.Fields(result), ", "))
+			}
 		}
 	}
 	return nil
+}
+
+const (
+	maximumFormattingBatchFiles = 128
+	maximumFormattingBatchBytes = 12 << 10
+)
+
+func formattingBatches(option string, files []string) [][]string {
+	result := make([][]string, 0, (len(files)+maximumFormattingBatchFiles-1)/maximumFormattingBatchFiles)
+	current := make([]string, 0, min(len(files), maximumFormattingBatchFiles))
+	currentBytes := len(option)
+	for _, file := range files {
+		fileBytes := len(file) + 3 // argument separator plus a conservative pair of quotes.
+		if len(current) > 0 && (len(current) == maximumFormattingBatchFiles ||
+			currentBytes+fileBytes > maximumFormattingBatchBytes) {
+			result = append(result, current)
+			current = make([]string, 0, min(len(files), maximumFormattingBatchFiles))
+			currentBytes = len(option)
+		}
+		current = append(current, file)
+		currentBytes += fileBytes
+	}
+	if len(current) > 0 {
+		result = append(result, current)
+	}
+	return result
+}
+
+func checkStyle(ctx context.Context, root string) error {
+	executable, err := toolPath(ctx, root, "spicestyle")
+	if err != nil {
+		return err
+	}
+	return command(ctx, root, nil, executable, styleArguments()...)
+}
+
+func styleArguments() []string {
+	return []string{"-spicestyle.config=.spice/style.json", "./..."}
 }
 
 func goFiles(root string) ([]string, error) {

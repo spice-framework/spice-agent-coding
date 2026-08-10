@@ -3,7 +3,6 @@
 package runidentity
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"io"
@@ -23,17 +22,12 @@ type Source struct {
 	mu     sync.Mutex
 }
 
-// New constructs a source from an explicit entropy reader.
-func New(reader io.Reader) (*Source, error) {
+// NewSource constructs a source from an explicit entropy reader.
+func NewSource(reader io.Reader) (*Source, error) {
 	if reader == nil {
 		return nil, errors.New("agent ID source requires an entropy reader")
 	}
 	return &Source{reader: reader}, nil
-}
-
-// NewCrypto constructs the production source backed by crypto/rand.
-func NewCrypto() *Source {
-	return &Source{reader: rand.Reader}
 }
 
 // Next returns prefix plus a 32-character unpadded base64url token. Prefixes
@@ -42,7 +36,7 @@ func (source *Source) Next(prefix string) (string, error) {
 	if source == nil || source.reader == nil {
 		return "", errors.New("agent ID source is unavailable")
 	}
-	if !validPrefix(prefix) {
+	if !source.validPrefix(prefix) {
 		return "", errors.New("agent ID prefix is not canonical")
 	}
 	entropy := make([]byte, entropyBytes)
@@ -55,7 +49,7 @@ func (source *Source) Next(prefix string) (string, error) {
 	return prefix + "-" + base64.RawURLEncoding.EncodeToString(entropy), nil
 }
 
-func validPrefix(prefix string) bool {
+func (*Source) validPrefix(prefix string) bool {
 	if len(prefix) == 0 || len(prefix) > maximumPrefixBytes || prefix[0] < 'a' || prefix[0] > 'z' || prefix[len(prefix)-1] == '-' {
 		return false
 	}

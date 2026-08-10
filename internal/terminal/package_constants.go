@@ -1,10 +1,6 @@
 package terminal
 
-import (
-	"time"
-)
-
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+import "time"
 
 const (
 	endpointPollInterval = 25 * time.Millisecond

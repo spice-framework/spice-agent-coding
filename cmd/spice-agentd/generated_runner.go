@@ -6,33 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/spice-framework/spice-agent-coding/internal/daemoncommand"
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd"
 )
-
-type daemonApplication interface {
-	Start(context.Context) error
-	Stop(context.Context) error
-	ShutdownTimeout() time.Duration
-	RuntimeDone() <-chan struct{}
-	RuntimeErr() error
-}
-
-type generatedApplication struct {
-	*spicegen.Application
-}
-
-func (application generatedApplication) RuntimeDone() <-chan struct{} {
-	return application.Components().DaemonRuntime.Done()
-}
-
-func (application generatedApplication) RuntimeErr() error {
-	return application.Components().DaemonRuntime.Err()
-}
-
-type applicationFactory func(context.Context, spicegen.ApplicationOptions) (daemonApplication, error)
 
 type generatedRunner struct {
 	options        spicegen.ApplicationOptions
@@ -48,13 +25,13 @@ func (runner *generatedRunner) Run(ctx context.Context, options daemoncommand.Op
 		return fmt.Errorf("construct generated daemon: %w", err)
 	}
 	if options.Mode() == daemoncommand.ModeCheck {
-		return stopApplication(application)
+		return runner.stop(application)
 	}
 	if options.Mode() != daemoncommand.ModeServe {
 		return errors.New("generated daemon mode is unsupported")
 	}
 	if err = application.Start(ctx); err != nil {
-		return errors.Join(fmt.Errorf("start generated daemon: %w", err), stopApplication(application))
+		return errors.Join(fmt.Errorf("start generated daemon: %w", err), runner.stop(application))
 	}
 
 	select {
@@ -66,10 +43,10 @@ func (runner *generatedRunner) Run(ctx context.Context, options daemoncommand.Op
 			err = errors.New("generated daemon transport stopped unexpectedly")
 		}
 	}
-	return errors.Join(err, stopApplication(application))
+	return errors.Join(err, runner.stop(application))
 }
 
-func stopApplication(application daemonApplication) error {
+func (*generatedRunner) stop(application daemonApplication) error {
 	if application == nil {
 		return errors.New("generated daemon application is unavailable")
 	}
