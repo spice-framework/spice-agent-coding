@@ -8,16 +8,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"sync"
-	"time"
-
-	openaiprovider "github.com/spice-framework/spice-agent-provider-openai"
-	"github.com/spice-framework/spice-agent/model"
 )
 
-// @import { ModelProvider } from "github.com/spice-framework/spice-agent/annotation/agent"
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
-
-const fixtureSecret = "architecture-proof-secret"
 
 // ResponsesFixture is a local deterministic Responses-compatible endpoint.
 // It records only safe protocol facts and never retains authorization values.
@@ -31,22 +24,6 @@ type ResponsesFixture struct {
 	cancelMode        bool
 	requestStarted    chan struct{}
 	providerCanceled  bool
-}
-
-// NewModelProvider replaces the starter's fallback client with a real adapter
-// configured against the application-owned deterministic endpoint.
-//
-// @ModelProvider(name="architecture-proof-openai")
-func NewModelProvider(fixture *ResponsesFixture) (model.Provider, error) {
-	return openaiprovider.New(
-		openaiprovider.Config{
-			APIKey:     fixtureSecret,
-			BaseURL:    fixture.server.URL + "/v1",
-			Timeout:    5 * time.Second,
-			MaxRetries: 0,
-		},
-		openaiprovider.WithHTTPClient(fixture.server.Client()),
-	)
 }
 
 func (fixture *ResponsesFixture) serveHTTP(writer http.ResponseWriter, request *http.Request) {

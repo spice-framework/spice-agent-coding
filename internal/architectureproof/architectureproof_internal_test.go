@@ -311,7 +311,7 @@ func TestGeneratedExecutionPlanResumesExactStaticSnapshot(t *testing.T) {
 
 func startPlainRun(t *testing.T, proof *Proof) (*agent.Run, *event.Subscription) {
 	t.Helper()
-	input, err := architectureProofInput()
+	input, err := proof.input()
 	if err != nil {
 		t.Fatal(err)
 	}

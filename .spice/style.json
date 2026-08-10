@@ -3,6 +3,7 @@
   "profile": "java-structured",
   "sourceRoots": [
     "cmd",
+    "internal/architectureproof",
     "internal/daemon",
     "internal/daemoncommand",
     "internal/daemonprocess",
@@ -39,6 +40,7 @@
     "**/*_bean.go",
     "**/*_topic.go",
     "**/package_constants.go",
+    "internal/architectureproof/application.go",
     "**/*_test.go",
     "internal/spicegen/**"
   ],
@@ -64,6 +66,12 @@
       "glob": "**/*_test.go",
       "symbolPattern": "^(Test|Benchmark|Fuzz|Example|TestMain)",
       "reason": "Go testing entrypoint"
+    },
+    {
+      "glob": "internal/architectureproof/application.go",
+      "symbol": "ArchitectureProof",
+      "maximum": 1,
+      "reason": "Exact generated-package conformance application marker; not production application precedent"
     }
   ],
   "packageVariableExceptions": []

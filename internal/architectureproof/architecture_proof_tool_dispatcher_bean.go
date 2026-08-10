@@ -14,7 +14,7 @@ import (
 //
 // @Bean(name="architectureProofToolDispatcher")
 func NewToolDispatcher(tools map[string]tool.Tool) (stage.ToolDispatcher, error) {
-	dispatcher, err := newToolDispatcher(tools)
+	dispatcher, err := stage.NewDispatcher(tools)
 	if err != nil {
 		return nil, fmt.Errorf("construct architecture-proof dispatcher: %w", err)
 	}

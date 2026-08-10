@@ -22,28 +22,13 @@ type Proof struct {
 	tools   []string
 }
 
-// Report is inspectable evidence from one architecture-proof run.
-type Report struct {
-	Kinds                         []event.Kind
-	FinalText                     string
-	Tools                         []string
-	CompiledPlanIdentities        []string
-	SnapshotCompatibilityIdentity string
-	ToolPlanID                    string
-	PlanFingerprint               string
-	Requests                      int
-	Authorized                    bool
-	Continuation                  bool
-	SecretSeen                    bool
-}
-
 // Run executes OpenAI translation, a compiled read tool, continuation, and a
 // final text response through the real deterministic kernel.
 func (proof *Proof) Run(ctx context.Context) (Report, error) {
 	if proof == nil || proof.engine == nil || proof.fixture == nil {
 		return Report{}, fmt.Errorf("architecture proof is not initialized")
 	}
-	input, err := architectureProofInput()
+	input, err := proof.input()
 	if err != nil {
 		return Report{}, err
 	}
@@ -60,7 +45,7 @@ func (proof *Proof) Run(ctx context.Context) (Report, error) {
 		run.Cancel()
 		return Report{}, err
 	}
-	report := reportForRun(proof.tools, run)
+	report := proof.reportForRun(run)
 	for envelope := range subscription.Events() {
 		report.Kinds = append(report.Kinds, envelope.Kind())
 		report.SecretSeen = report.SecretSeen || strings.Contains(string(envelope.Data()), fixtureSecret)
@@ -124,7 +109,7 @@ func (proof *Proof) startCancellationRun(ctx context.Context) (
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	input, err := architectureProofInput()
+	input, err := proof.input()
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -152,7 +137,7 @@ func (proof *Proof) finishCancellation(
 	run *agent.Run,
 	subscription *event.Subscription,
 ) (Report, error) {
-	report := reportForRun(proof.tools, run)
+	report := proof.reportForRun(run)
 	for envelope := range subscription.Events() {
 		report.Kinds = append(report.Kinds, envelope.Kind())
 		report.SecretSeen = report.SecretSeen || strings.Contains(string(envelope.Data()), fixtureSecret)
@@ -173,10 +158,10 @@ func (proof *Proof) finishCancellation(
 	return report, nil
 }
 
-func reportForRun(toolNames []string, run *agent.Run) Report {
+func (proof *Proof) reportForRun(run *agent.Run) Report {
 	identity := run.PlanIdentity()
 	return Report{
-		Tools:                         slices.Clone(toolNames),
+		Tools:                         slices.Clone(proof.tools),
 		CompiledPlanIdentities:        identity.CompiledIdentities(),
 		SnapshotCompatibilityIdentity: identity.SnapshotCompatibilityIdentity(),
 		ToolPlanID:                    identity.ToolPlanID().String(),
@@ -184,7 +169,7 @@ func reportForRun(toolNames []string, run *agent.Run) Report {
 	}
 }
 
-func architectureProofInput() (agent.Input, error) {
+func (proof *Proof) input() (agent.Input, error) {
 	part, err := message.Text("Read README.md and report completion.")
 	if err != nil {
 		return agent.Input{}, err

@@ -36,5 +36,8 @@ Removing a governed root, weakening a rule, or adding a broad suppression is a
 policy regression and must fail review.
 
 The architecture proof is a conformance fixture rather than production
-application behavior. Its generated ownership and provider boundaries remain
-verified, but fixture helpers are not used as precedent for application code.
+application behavior, but its handwritten behavior is governed by the same
+profile. Its one exact `@Application` function is a named generated-package
+fixture exception because it is not a command `main`; every provider and helper
+still uses an ordinary dedicated bean or typed owner. That exception is not
+precedent for production application code.
