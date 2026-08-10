@@ -10,10 +10,3 @@ type processIdentity struct {
 func (identity processIdentity) isZero() bool {
 	return identity.startedSeconds == 0 && identity.startedPart == 0
 }
-
-type processRecord struct {
-	pid      int
-	ppid     int
-	pgid     int
-	identity processIdentity
-}

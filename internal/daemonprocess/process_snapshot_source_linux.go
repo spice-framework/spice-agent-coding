@@ -2,31 +2,31 @@
 
 package daemonprocess
 
-import (
-	"github.com/spice-framework/spice-agent-coding/internal/processcontainment"
-)
+import "github.com/spice-framework/spice-agent-coding/internal/processcontainment"
 
-func processSnapshot() ([]processRecord, error) {
+type processSnapshotSource struct{}
+
+func (processSnapshotSource) snapshot() ([]processRecord, error) {
 	snapshot, err := processcontainment.Snapshot()
 	if err != nil {
 		return nil, err
 	}
 	records := make([]processRecord, 0, len(snapshot))
 	for _, record := range snapshot {
-		records = append(records, localProcessRecord(record))
+		records = append(records, (processSnapshotSource{}).localRecord(record))
 	}
 	return records, nil
 }
 
-func parseLinuxProcessStat(pid int, value string) (processRecord, bool) {
+func (processSnapshotSource) parseLinuxStat(pid int, value string) (processRecord, bool) {
 	record, valid := processcontainment.ParseLinuxProcessStat(pid, value)
 	if !valid {
 		return processRecord{}, false
 	}
-	return localProcessRecord(record), true
+	return (processSnapshotSource{}).localRecord(record), true
 }
 
-func localProcessRecord(record processcontainment.Record) processRecord {
+func (processSnapshotSource) localRecord(record processcontainment.Record) processRecord {
 	return processRecord{
 		pid: record.PID, ppid: record.ParentID, pgid: record.GroupID,
 		identity: processIdentity{

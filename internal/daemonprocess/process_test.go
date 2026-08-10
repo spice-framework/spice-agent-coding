@@ -170,18 +170,18 @@ func TestStarterRejectsInvalidConfigurationAndRedactsFailures(t *testing.T) {
 	t.Parallel()
 	directory := testpath.TempDir(t)
 	launcher := filepath.Join(directory, launcherExecutableName())
-	daemon := filepath.Join(directory, daemonExecutableName())
+	daemon := filepath.Join(directory, (&Starter{}).daemonExecutableName())
 	valid := Config{
 		Directory: directory, Environment: []string{"SECRET=credential-material"}, StderrBytes: 64,
 		GracefulTimeout: time.Millisecond, TerminateDelay: time.Millisecond,
 	}
-	if _, err := newStarter(Config{}, daemon, launcher); err == nil {
+	if _, err := newTestStarter(Config{}, daemon, launcher); err == nil {
 		t.Fatal("unbounded process configuration succeeded")
 	}
-	if _, err := newStarter(valid, filepath.Join(testpath.TempDir(t), daemonExecutableName()), launcher); err == nil {
+	if _, err := newTestStarter(valid, filepath.Join(testpath.TempDir(t), (&Starter{}).daemonExecutableName()), launcher); err == nil {
 		t.Fatal("non-sibling daemon executable succeeded")
 	}
-	starter, err := newStarter(valid, daemon, launcher)
+	starter, err := newTestStarter(valid, daemon, launcher)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,7 +258,7 @@ func helperStarter(t *testing.T, mode, directory string, stderrBytes int) *Start
 	executable := installHelperExecutable(t)
 	launcher := filepath.Join(filepath.Dir(executable), launcherExecutableName())
 	environment := append(os.Environ(), helperModeEnvironment+"="+mode, helperValueEnvironment+"=fixture-value")
-	starter, err := newStarter(Config{
+	starter, err := newTestStarter(Config{
 		Directory: directory, Environment: environment, StderrBytes: stderrBytes,
 		GracefulTimeout: 2 * time.Second, TerminateDelay: 100 * time.Millisecond,
 	}, executable, launcher)
@@ -310,7 +310,7 @@ func installHelperExecutable(t *testing.T) string {
 		t.Fatal(err)
 	}
 	directory := testpath.TempDir(t)
-	target := filepath.Join(directory, daemonExecutableName())
+	target := filepath.Join(directory, (&Starter{}).daemonExecutableName())
 	staging := target + ".staging"
 	source, err := os.Open(current)
 	if err != nil {

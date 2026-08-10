@@ -17,8 +17,9 @@ functions fail closed. `make check` and `make verify` execute the analyzer
 offline through that pinned tools graph.
 
 The active migration boundary covers both process entrypoints and the
-application-owned command, identity, terminal, and connector packages listed
-in `.spice/style.json`. Within that boundary:
+application-owned command, daemon lifecycle, daemon-process containment,
+identity, terminal, and connector packages listed in `.spice/style.json`.
+Within that boundary:
 
 - each source file has one primary type and the filename follows that type;
 - behavior belongs to the owning type instead of loose package functions;

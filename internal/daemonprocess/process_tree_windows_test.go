@@ -89,7 +89,7 @@ func TestWindowsSuspendedLaunchContainsImmediateDescendant(t *testing.T) {
 }
 
 func TestWindowsEnvironmentBlockUsesLastValueAndRequiredOrdering(t *testing.T) {
-	block, err := windowsEnvironmentBlock([]string{
+	block, err := (windowsEnvironment{}).block([]string{
 		"beta=two",
 		"ALPHA=old",
 		"=C:=C:\\work",
@@ -107,7 +107,7 @@ func TestWindowsEnvironmentBlockUsesLastValueAndRequiredOrdering(t *testing.T) {
 	if !reflect.DeepEqual(decoded, want) {
 		t.Fatalf("environment = %#v, want %#v", decoded, want)
 	}
-	if _, err = windowsEnvironmentBlock([]string{"missing-separator"}); err == nil {
+	if _, err = (windowsEnvironment{}).block([]string{"missing-separator"}); err == nil {
 		t.Fatal("invalid environment entry succeeded")
 	}
 }
@@ -137,7 +137,7 @@ func TestWindowsControlFailureReachesContainmentWait(t *testing.T) {
 	locallyOwned := true
 	t.Cleanup(func() {
 		if locallyOwned {
-			if closeErr := closeWindowsHandle(wrongTypeJob); closeErr != nil {
+			if closeErr := (windowsHandleOwner{}).close(wrongTypeJob); closeErr != nil {
 				t.Errorf("close locally owned wrong-type job handle: %v", closeErr)
 			}
 		}
@@ -147,7 +147,7 @@ func TestWindowsControlFailureReachesContainmentWait(t *testing.T) {
 	windowsChild.job = wrongTypeJob
 	windowsChild.mu.Unlock()
 	locallyOwned = false
-	if err = closeWindowsHandle(realJob); err != nil {
+	if err = (windowsHandleOwner{}).close(realJob); err != nil {
 		t.Fatal(err)
 	}
 	if err = windowsChild.Terminate(); err == nil {

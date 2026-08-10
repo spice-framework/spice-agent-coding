@@ -29,25 +29,25 @@ func TestAwaitDescendantRegistrationContract(t *testing.T) {
 	if err := os.Unsetenv(descendantGateEnvironment); err != nil {
 		t.Fatal(err)
 	}
-	if err := AwaitDescendantRegistration(); err == nil {
+	if err := (DescendantRegistration{}).Await(); err == nil {
 		t.Fatal("missing descendant gate succeeded")
 	}
 	if err := os.Setenv(descendantGateEnvironment, "invalid"); err != nil {
 		t.Fatal(err)
 	}
-	if err := AwaitDescendantRegistration(); err == nil {
+	if err := (DescendantRegistration{}).Await(); err == nil {
 		t.Fatal("malformed descendant gate succeeded")
 	}
 	if err := os.Setenv(descendantGateEnvironment, "2"); err != nil {
 		t.Fatal(err)
 	}
-	if err := AwaitDescendantRegistration(); err == nil {
+	if err := (DescendantRegistration{}).Await(); err == nil {
 		t.Fatal("reserved descriptor descendant gate succeeded")
 	}
 	if err := os.Setenv(descendantGateEnvironment, "999999"); err != nil {
 		t.Fatal(err)
 	}
-	if err := AwaitDescendantRegistration(); err == nil {
+	if err := (DescendantRegistration{}).Await(); err == nil {
 		t.Fatal("closed descendant gate succeeded")
 	}
 
@@ -78,7 +78,7 @@ func TestDescendantRegistrationReadFailure(t *testing.T) {
 		_, readErr := io.ReadFull(supervisor, ready)
 		received <- errors.Join(readErr, supervisor.Close())
 	}()
-	if err = AwaitDescendantRegistration(); err == nil {
+	if err = (DescendantRegistration{}).Await(); err == nil {
 		t.Fatal("closed supervisor release succeeded")
 	}
 	if exchangeErr := <-received; exchangeErr != nil {
@@ -154,7 +154,7 @@ func exchangeDescendantGate(t *testing.T, release byte) error {
 		}
 		exchanged <- errors.Join(readErr, supervisor.Close())
 	}()
-	awaitErr := AwaitDescendantRegistration()
+	awaitErr := (DescendantRegistration{}).Await()
 	if exchangeErr := <-exchanged; exchangeErr != nil {
 		t.Fatalf("exchange descendant gate: %v", exchangeErr)
 	}

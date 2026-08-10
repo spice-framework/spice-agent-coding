@@ -5,6 +5,7 @@
     "cmd",
     "internal/daemon",
     "internal/daemoncommand",
+    "internal/daemonprocess",
     "internal/processplatform",
     "internal/runidentity",
     "internal/terminal",

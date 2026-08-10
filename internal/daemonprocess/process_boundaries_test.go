@@ -22,12 +22,12 @@ func TestNewAndStarterRejectInvalidProcessBoundaries(t *testing.T) {
 		GracefulTimeout: time.Second,
 		TerminateDelay:  time.Second,
 	}
-	if starter, err := New(valid); err != nil || starter == nil {
-		t.Fatalf("New(valid) = %v, %v", starter, err)
+	if starter, err := NewStarter(valid); err != nil || starter == nil {
+		t.Fatalf("NewStarter(valid) = %v, %v", starter, err)
 	}
 
 	directory := testpath.TempDir(t)
-	executable := filepath.Join(directory, daemonExecutableName())
+	executable := filepath.Join(directory, (&Starter{}).daemonExecutableName())
 	launcher := filepath.Join(directory, launcherExecutableName())
 	valid.Directory = directory
 	tests := []struct {
@@ -47,7 +47,7 @@ func TestNewAndStarterRejectInvalidProcessBoundaries(t *testing.T) {
 			t.Parallel()
 			config := valid
 			test.mutate(&config)
-			if starter, err := newStarter(config, executable, launcher); err == nil || starter != nil {
+			if starter, err := newTestStarter(config, executable, launcher); err == nil || starter != nil {
 				t.Fatalf("newStarter(invalid) = %v, %v", starter, err)
 			}
 		})
@@ -55,7 +55,7 @@ func TestNewAndStarterRejectInvalidProcessBoundaries(t *testing.T) {
 
 	ambient := valid
 	ambient.Environment = nil
-	starter, err := newStarter(ambient, executable, launcher)
+	starter, err := newTestStarter(ambient, executable, launcher)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +145,7 @@ func TestProcessBoundaryFormattingAndBuffers(t *testing.T) {
 		}
 	}
 
-	buffer := newBoundedBuffer(5)
+	buffer := &boundedBuffer{maximum: 5}
 	if written, err := buffer.Write([]byte("ab")); err != nil || written != 2 {
 		t.Fatalf("first write = %d, %v", written, err)
 	}

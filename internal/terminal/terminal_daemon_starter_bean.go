@@ -13,7 +13,7 @@ import (
 //
 // @Bean(name="terminalDaemonStarter")
 func NewDaemonStarter() (*daemonprocess.Starter, error) {
-	return daemonprocess.New(daemonprocess.Config{
+	return daemonprocess.NewStarter(daemonprocess.Config{
 		StderrBytes: 64 << 10, GracefulTimeout: 5 * time.Second,
 		TerminateDelay: 2 * time.Second,
 	})

@@ -19,7 +19,7 @@ import (
 func TestWindowsPlatformBoundaryValidation(t *testing.T) {
 	t.Parallel()
 
-	registry, err := AdoptRootRegistry()
+	registry, err := (RootRegistryFactory{}).Adopt()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestWindowsPlatformBoundaryValidation(t *testing.T) {
 
 	directory := testpath.TempDir(t)
 	valid := processSpec{
-		executable:  filepath.Join(directory, daemonExecutableName()),
+		executable:  filepath.Join(directory, (&Starter{}).daemonExecutableName()),
 		argument:    daemonArgument,
 		directory:   directory,
 		environment: []string{"PATH=value"},
@@ -58,10 +58,10 @@ func TestWindowsPlatformBoundaryValidation(t *testing.T) {
 			t.Parallel()
 			spec := valid
 			test.mutate(&spec)
-			if err := validateWindowsProcessSpec(spec); err == nil {
+			if err := (processFactory{}).validate(spec); err == nil {
 				t.Fatal("invalid Windows process specification succeeded")
 			}
-			if child, err := startProcess(spec); err == nil || child != nil {
+			if child, err := (processFactory{}).start(spec); err == nil || child != nil {
 				t.Fatalf("startProcess(invalid) = %v, %v", child, err)
 			}
 		})
@@ -71,7 +71,7 @@ func TestWindowsPlatformBoundaryValidation(t *testing.T) {
 func TestWindowsParameterAndEnvironmentBoundaries(t *testing.T) {
 	t.Parallel()
 
-	empty, err := windowsEnvironmentBlock(nil)
+	empty, err := (windowsEnvironment{}).block(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,17 +80,17 @@ func TestWindowsParameterAndEnvironmentBoundaries(t *testing.T) {
 	}
 
 	for _, value := range []string{"", "=broken", "missing"} {
-		if key, ok := windowsEnvironmentKey(value); ok || key != "" {
+		if key, ok := (windowsEnvironment{}).key(value); ok || key != "" {
 			t.Fatalf("windowsEnvironmentKey(%q) = %q, %t", value, key, ok)
 		}
 	}
-	if key, ok := windowsEnvironmentKey("EMPTY="); !ok || key != "EMPTY" {
+	if key, ok := (windowsEnvironment{}).key("EMPTY="); !ok || key != "EMPTY" {
 		t.Fatalf("empty-value environment key = %q, %t", key, ok)
 	}
 
 	directory := testpath.TempDir(t)
 	valid := processSpec{
-		executable: filepath.Join(directory, daemonExecutableName()), argument: daemonArgument,
+		executable: filepath.Join(directory, (&Starter{}).daemonExecutableName()), argument: daemonArgument,
 		directory: directory, environment: []string{"A=b"},
 	}
 	parameters := []struct {
@@ -107,7 +107,7 @@ func TestWindowsParameterAndEnvironmentBoundaries(t *testing.T) {
 			t.Parallel()
 			spec := valid
 			test.mutate(&spec)
-			application, command, working, environment, err := windowsProcessParameters(spec)
+			application, command, working, environment, err := (processFactory{}).parameters(spec)
 			if err == nil || application != nil || command != nil || working != nil || environment != nil {
 				t.Fatalf("windowsProcessParameters(invalid) = %v, %v, %v, %v, %v",
 					application, command, working, environment, err)
@@ -120,10 +120,10 @@ func TestWindowsWaitAndJobKernelBoundaries(t *testing.T) {
 	t.Parallel()
 
 	for _, handle := range []windows.Handle{0, windows.InvalidHandle} {
-		if err := waitWindowsHandle(handle, time.Second); err == nil {
+		if err := (windowsHandleOwner{}).wait(handle, time.Second); err == nil {
 			t.Fatalf("waitWindowsHandle(%v) succeeded", handle)
 		}
-		if err := waitWindowsJobEmpty(handle, time.Second); err == nil {
+		if err := (windowsJob{}).waitEmpty(handle, time.Second); err == nil {
 			t.Fatalf("waitWindowsJobEmpty(%v) succeeded", handle)
 		}
 	}
@@ -133,29 +133,29 @@ func TestWindowsWaitAndJobKernelBoundaries(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		if closeErr := closeWindowsHandle(event); closeErr != nil {
+		if closeErr := (windowsHandleOwner{}).close(event); closeErr != nil {
 			t.Errorf("close event: %v", closeErr)
 		}
 	})
-	if err = waitWindowsHandle(event, time.Nanosecond); err == nil || !strings.Contains(err.Error(), "timed out") {
+	if err = (windowsHandleOwner{}).wait(event, time.Nanosecond); err == nil || !strings.Contains(err.Error(), "timed out") {
 		t.Fatalf("unsignaled event wait = %v", err)
 	}
 	if err = windows.SetEvent(event); err != nil {
 		t.Fatal(err)
 	}
-	if err = waitWindowsHandle(event, time.Second); err != nil {
+	if err = (windowsHandleOwner{}).wait(event, time.Second); err != nil {
 		t.Fatalf("signaled event wait = %v", err)
 	}
 
-	job, err := newWindowsJob()
+	job, err := (windowsJob{}).open()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = waitWindowsJobEmpty(job, time.Second); err != nil {
-		closeErr := closeWindowsHandle(job)
+	if err = (windowsJob{}).waitEmpty(job, time.Second); err != nil {
+		closeErr := (windowsHandleOwner{}).close(job)
 		t.Fatalf("empty job wait = %v; close = %v", err, closeErr)
 	}
-	if err = closeWindowsHandle(job); err != nil {
+	if err = (windowsHandleOwner{}).close(job); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -163,23 +163,23 @@ func TestWindowsWaitAndJobKernelBoundaries(t *testing.T) {
 func TestWindowsFailedStartRetainsOwnedCleanup(t *testing.T) {
 	t.Parallel()
 
-	job, err := newWindowsJob()
+	job, err := (windowsJob{}).open()
 	if err != nil {
 		t.Fatal(err)
 	}
-	pipes, err := newWindowsProcessPipes()
+	pipes, err := (&windowsProcessPipes{}).open()
 	if err != nil {
-		closeErr := closeWindowsHandle(job)
+		closeErr := (windowsHandleOwner{}).close(job)
 		t.Fatalf("create process pipes: %v; close job: %v", err, closeErr)
 	}
 	wrongTypeProcess, err := windows.CreateEvent(nil, 1, 1, nil)
 	if err != nil {
 		closeErr := pipes.closeAll()
-		jobErr := closeWindowsHandle(job)
+		jobErr := (windowsHandleOwner{}).close(job)
 		t.Fatalf("create wrong-type process handle: %v; pipe close = %v; job close = %v", err, closeErr, jobErr)
 	}
 	spec := processSpec{stderr: io.Discard, waitDelay: time.Second}
-	child, startErr := finishWindowsProcessStart(job, pipes, windows.ProcessInformation{
+	child, startErr := (processFactory{}).finish(job, pipes, windows.ProcessInformation{
 		Process: wrongTypeProcess,
 	}, spec)
 	if startErr == nil || child == nil {
@@ -226,12 +226,12 @@ func TestWindowsProcessFailureHistoryAndExitStatus(t *testing.T) {
 	locallyOwned := true
 	t.Cleanup(func() {
 		if locallyOwned {
-			if closeErr := closeWindowsHandle(wrongTypeProcess); closeErr != nil {
+			if closeErr := (windowsHandleOwner{}).close(wrongTypeProcess); closeErr != nil {
 				t.Errorf("close locally owned wrong-type handle: %v", closeErr)
 			}
 		}
 	})
-	if outcomeErr := windowsProcessOutcome(wrongTypeProcess); outcomeErr != nil {
+	if outcomeErr := (processFactory{}).outcome(wrongTypeProcess); outcomeErr != nil {
 		t.Fatalf("signaled wrong-type process outcome = %v", outcomeErr)
 	}
 
@@ -308,7 +308,7 @@ func TestWindowsPipeReleaseAndCloseHelpers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pipes, err := newWindowsProcessPipes()
+	pipes, err := (&windowsProcessPipes{}).open()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -327,10 +327,10 @@ func TestWindowsPipeReleaseAndCloseHelpers(t *testing.T) {
 	}
 	second, err := windows.CreateEvent(nil, 1, 0, nil)
 	if err != nil {
-		closeErr := closeWindowsHandle(first)
+		closeErr := (windowsHandleOwner{}).close(first)
 		t.Fatalf("create second event: %v; close first: %v", err, closeErr)
 	}
-	if err = closeWindowsHandles([]windows.Handle{first, second, 0, windows.InvalidHandle}); err != nil {
+	if err = (windowsHandleOwner{}).closeAll([]windows.Handle{first, second, 0, windows.InvalidHandle}); err != nil {
 		t.Fatal(err)
 	}
 }

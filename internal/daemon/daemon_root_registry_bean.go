@@ -17,7 +17,7 @@ import (
 //
 // @Bean(name="daemonRootRegistry")
 func NewRootRegistry() (daemonprocess.RootRegistry, lifecycle.Cleanup, error) {
-	registry, err := daemonprocess.AdoptRootRegistry()
+	registry, err := (daemonprocess.RootRegistryFactory{}).Adopt()
 	if err != nil {
 		return nil, nil, err
 	}

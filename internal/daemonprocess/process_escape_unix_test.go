@@ -36,7 +36,7 @@ func TestMain(testingMain *testing.M) {
 	}
 	var registry *DescendantRegistry
 	if _, managed := os.LookupEnv(descendantRegistryEnvironment); managed && os.Getenv(skipRootRegistryEnvironment) != "1" {
-		opened, err := OpenDescendantRegistry()
+		opened, err := NewDescendantRegistry()
 		if err == nil {
 			registry = opened
 		} else {
@@ -144,7 +144,7 @@ func runUnixHelper(mode string, registry *DescendantRegistry) int {
 		return 81
 	}
 	if _, gated := os.LookupEnv(descendantGateEnvironment); gated {
-		if err := AwaitDescendantRegistration(); err != nil {
+		if err := (DescendantRegistration{}).Await(); err != nil {
 			return 87
 		}
 	}
@@ -295,7 +295,7 @@ func TestAdoptRootRegistryExplicitServeAndMalformedManagedEndpoint(t *testing.T)
 			t.Errorf("restore registry environment: %v", err)
 		}
 	})
-	registry, err := AdoptRootRegistry()
+	registry, err := (RootRegistryFactory{}).Adopt()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -308,7 +308,7 @@ func TestAdoptRootRegistryExplicitServeAndMalformedManagedEndpoint(t *testing.T)
 	if err = os.Setenv(descendantRegistryEnvironment, "malformed"); err != nil {
 		t.Fatal(err)
 	}
-	if registry, err = AdoptRootRegistry(); err == nil || registry != nil {
+	if registry, err = (RootRegistryFactory{}).Adopt(); err == nil || registry != nil {
 		t.Fatalf("malformed managed endpoint = %T, %v", registry, err)
 	}
 }
@@ -318,7 +318,7 @@ func unixHelperStarter(t *testing.T, mode string) *Starter {
 	executable := installHelperExecutable(t)
 	launcher := filepath.Join(filepath.Dir(executable), launcherExecutableName())
 	environment := replaceEnvironment(os.Environ(), unixHelperModeEnvironment, mode)
-	starter, err := newStarter(Config{
+	starter, err := newTestStarter(Config{
 		Directory: testpath.TempDir(t), Environment: environment, StderrBytes: 1024,
 		GracefulTimeout: 2 * time.Second, TerminateDelay: 100 * time.Millisecond,
 	}, executable, launcher)
