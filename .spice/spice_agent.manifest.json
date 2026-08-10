@@ -44,237 +44,6 @@
       ]
     },
     {
-      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/accessible_shell_spice_gen.go",
-      "sha256": "sha256:e060bd7a17d335c463c070a7a7ee73a72dea4aae8b01e518922e01a03f34b11d",
-      "role": "source-unit",
-      "primary_source": {
-        "path": "internal/terminal/accessible_shell.go",
-        "line": 29,
-        "column": 4,
-        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
-      },
-      "mappings": [
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell",
-          "source": {
-            "path": "internal/terminal/accessible_shell.go",
-            "line": 29,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
-          },
-          "generated": {
-            "start_line": 16,
-            "start_column": 4,
-            "end_line": 16,
-            "end_column": 35
-          }
-        }
-      ]
-    },
-    {
-      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/connection_spice_gen.go",
-      "sha256": "sha256:4d0453e12a74cc29acf43f48ff6cebc4f0537afbc8e3abaee742dad48169188a",
-      "role": "source-unit",
-      "primary_source": {
-        "path": "internal/terminal/connection.go",
-        "line": 22,
-        "column": 4,
-        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
-      },
-      "mappings": [
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild",
-          "source": {
-            "path": "internal/terminal/connection.go",
-            "line": 50,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
-          },
-          "generated": {
-            "start_line": 22,
-            "start_column": 4,
-            "end_line": 22,
-            "end_column": 41
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits",
-          "source": {
-            "path": "internal/terminal/connection.go",
-            "line": 74,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
-          },
-          "generated": {
-            "start_line": 33,
-            "start_column": 4,
-            "end_line": 33,
-            "end_column": 42
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol",
-          "source": {
-            "path": "internal/terminal/connection.go",
-            "line": 63,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
-          },
-          "generated": {
-            "start_line": 44,
-            "start_column": 4,
-            "end_line": 44,
-            "end_column": 44
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector",
-          "source": {
-            "path": "internal/terminal/connection.go",
-            "line": 22,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
-          },
-          "generated": {
-            "start_line": 55,
-            "start_column": 4,
-            "end_line": 55,
-            "end_column": 45
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest",
-          "source": {
-            "path": "internal/terminal/connection.go",
-            "line": 81,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
-          },
-          "generated": {
-            "start_line": 66,
-            "start_column": 4,
-            "end_line": 66,
-            "end_column": 47
-          }
-        }
-      ]
-    },
-    {
-      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/endpoint_spice_gen.go",
-      "sha256": "sha256:e229a81aa258a4290d4b626a0873984425e3214f43d2515127973c0eae1b27b5",
-      "role": "source-unit",
-      "primary_source": {
-        "path": "internal/terminal/endpoint.go",
-        "line": 27,
-        "column": 4,
-        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
-      },
-      "mappings": [
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock",
-          "source": {
-            "path": "internal/terminal/endpoint.go",
-            "line": 56,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
-          },
-          "generated": {
-            "start_line": 24,
-            "start_column": 4,
-            "end_line": 24,
-            "end_column": 41
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter",
-          "source": {
-            "path": "internal/terminal/endpoint.go",
-            "line": 64,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
-          },
-          "generated": {
-            "start_line": 35,
-            "start_column": 4,
-            "end_line": 35,
-            "end_column": 43
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope",
-          "source": {
-            "path": "internal/terminal/endpoint.go",
-            "line": 27,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
-          },
-          "generated": {
-            "start_line": 46,
-            "start_column": 4,
-            "end_line": 46,
-            "end_column": 43
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore",
-          "source": {
-            "path": "internal/terminal/endpoint.go",
-            "line": 34,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
-          },
-          "generated": {
-            "start_line": 57,
-            "start_column": 4,
-            "end_line": 57,
-            "end_column": 43
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector",
-          "source": {
-            "path": "internal/terminal/endpoint.go",
-            "line": 75,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
-          },
-          "generated": {
-            "start_line": 68,
-            "start_column": 4,
-            "end_line": 68,
-            "end_column": 46
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery",
-          "source": {
-            "path": "internal/terminal/endpoint.go",
-            "line": 45,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
-          },
-          "generated": {
-            "start_line": 79,
-            "start_column": 4,
-            "end_line": 79,
-            "end_column": 46
-          }
-        }
-      ]
-    },
-    {
       "path": "internal/spicegen/spice_agent/sources/internal_/terminal/properties_spice_gen.go",
       "sha256": "sha256:75043f9a001534a3936f230e188a936edb31a063831fe8f3894c38865b792186",
       "role": "source-unit",
@@ -304,126 +73,552 @@
       ]
     },
     {
-      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/session_spice_gen.go",
-      "sha256": "sha256:dc0eb263075da7340777ce1d826b038f9bd65eefeb4c1921b0d0213d3281b4f1",
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_client_build_bean_spice_gen.go",
+      "sha256": "sha256:e9711c040e8d982f14291d3328589d4691b12c12a62d2dd6fb7e3e519c75e63c",
       "role": "source-unit",
       "primary_source": {
-        "path": "internal/terminal/session.go",
-        "line": 17,
+        "path": "internal/terminal/terminal_client_build_bean.go",
+        "line": 14,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild",
+          "source": {
+            "path": "internal/terminal/terminal_client_build_bean.go",
+            "line": 14,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 41
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_client_connector_bean_spice_gen.go",
+      "sha256": "sha256:083a8566dbd8c4f698f67d9b8c593f53b2006178f20b1cbf167d250b3d297424",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_client_connector_bean.go",
+        "line": 20,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector",
+          "source": {
+            "path": "internal/terminal/terminal_client_connector_bean.go",
+            "line": 20,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
+          },
+          "generated": {
+            "start_line": 18,
+            "start_column": 4,
+            "end_line": 18,
+            "end_column": 45
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_client_limits_bean_spice_gen.go",
+      "sha256": "sha256:a282fed64fcc6a0a74a6661ed44ac4c9f6ae6dba21ce3d4f116b4935d0658283",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_client_limits_bean.go",
+        "line": 11,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits",
+          "source": {
+            "path": "internal/terminal/terminal_client_limits_bean.go",
+            "line": 11,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 42
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_client_protocol_bean_spice_gen.go",
+      "sha256": "sha256:92895948acdc0fb81e33a073887450bba6391d8c389e99226e7a4e819dd6a9ef",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_client_protocol_bean.go",
+        "line": 12,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol",
+          "source": {
+            "path": "internal/terminal/terminal_client_protocol_bean.go",
+            "line": 12,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 44
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_config_bean_spice_gen.go",
+      "sha256": "sha256:c3fabe741002a061a1ea598df5f685612b896614a81d789accc152f8c886ca34",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_config_bean.go",
+        "line": 12,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig",
+          "source": {
+            "path": "internal/terminal/terminal_config_bean.go",
+            "line": 12,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
+          },
+          "generated": {
+            "start_line": 14,
+            "start_column": 4,
+            "end_line": 14,
+            "end_column": 36
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_daemon_starter_bean_spice_gen.go",
+      "sha256": "sha256:6828055a4a38f6696713597fbeea4b4a8a5d37fd5daca857ab5bec74851598a0",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_daemon_starter_bean.go",
+        "line": 14,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter",
+          "source": {
+            "path": "internal/terminal/terminal_daemon_starter_bean.go",
+            "line": 14,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 43
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_definition_bean_spice_gen.go",
+      "sha256": "sha256:5350582ff17dbebc285fcb83f42f0f4a893a0879de2b88b2e10310ad665ca7c8",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_definition_bean.go",
+        "line": 11,
         "column": 4,
         "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
       },
       "mappings": [
         {
           "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession",
-          "source": {
-            "path": "internal/terminal/session.go",
-            "line": 80,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
-          },
-          "generated": {
-            "start_line": 24,
-            "start_column": 4,
-            "end_line": 24,
-            "end_column": 37
-          }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace",
-          "source": {
-            "path": "internal/terminal/session.go",
-            "line": 24,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
-          },
-          "generated": {
-            "start_line": 35,
-            "start_column": 4,
-            "end_line": 35,
-            "end_column": 39
-          }
-        },
-        {
-          "kind": "provider-construction",
           "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition",
           "source": {
-            "path": "internal/terminal/session.go",
-            "line": 17,
+            "path": "internal/terminal/terminal_definition_bean.go",
+            "line": 11,
             "column": 4,
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
           },
           "generated": {
-            "start_line": 46,
+            "start_line": 16,
             "start_column": 4,
-            "end_line": 46,
+            "end_line": 16,
             "end_column": 40
           }
-        },
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_endpoint_scope_bean_spice_gen.go",
+      "sha256": "sha256:bcac7e4ba8c4e3f6fd5c7dce1b41f9866c85be473662ccf95d3099a424a0c893",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_endpoint_scope_bean.go",
+        "line": 11,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
+      },
+      "mappings": [
         {
           "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope",
           "source": {
-            "path": "internal/terminal/session.go",
-            "line": 39,
+            "path": "internal/terminal/terminal_endpoint_scope_bean.go",
+            "line": 11,
             "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
           },
           "generated": {
-            "start_line": 57,
+            "start_line": 16,
             "start_column": 4,
-            "end_line": 57,
+            "end_line": 16,
             "end_column": 43
           }
-        },
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_endpoint_store_bean_spice_gen.go",
+      "sha256": "sha256:ba6a94f5cf006e5a55d86a4cb59d110007a771d058cfa35e0ddb9bcb65017b1e",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_endpoint_store_bean.go",
+        "line": 15,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
+      },
+      "mappings": [
         {
           "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore",
           "source": {
-            "path": "internal/terminal/session.go",
-            "line": 59,
+            "path": "internal/terminal/terminal_endpoint_store_bean.go",
+            "line": 15,
             "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
           },
           "generated": {
-            "start_line": 68,
+            "start_line": 16,
             "start_column": 4,
-            "end_line": 68,
+            "end_line": 16,
             "end_column": 43
           }
-        },
-        {
-          "kind": "provider-construction",
-          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig",
-          "source": {
-            "path": "internal/terminal/session.go",
-            "line": 51,
-            "column": 4,
-            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
-          },
-          "generated": {
-            "start_line": 79,
-            "start_column": 4,
-            "end_line": 79,
-            "end_column": 36
-          }
-        },
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_identifier_source_bean_spice_gen.go",
+      "sha256": "sha256:d631ec26d063c2b642475c0a6ebe343b2d9710887222a7598a48f6ba8969f2d9",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_identifier_source_bean.go",
+        "line": 12,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
+      },
+      "mappings": [
         {
           "kind": "provider-construction",
           "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource",
           "source": {
-            "path": "internal/terminal/session.go",
-            "line": 72,
+            "path": "internal/terminal/terminal_identifier_source_bean.go",
+            "line": 12,
             "column": 4,
             "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
           },
           "generated": {
-            "start_line": 86,
+            "start_line": 14,
             "start_column": 4,
-            "end_line": 86,
+            "end_line": 14,
             "end_column": 46
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_initial_status_bean_spice_gen.go",
+      "sha256": "sha256:97714b722afc563512479111e262ed5cde087b4d5aff722e8719b883607f07e7",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_initial_status_bean.go",
+        "line": 11,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus",
+          "source": {
+            "path": "internal/terminal/terminal_initial_status_bean.go",
+            "line": 11,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 43
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_initialize_request_bean_spice_gen.go",
+      "sha256": "sha256:f4d3aad22dca64247d9b0cb21a052661d711ed15322d3c4bd81869dbbf49cb05",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_initialize_request_bean.go",
+        "line": 11,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest",
+          "source": {
+            "path": "internal/terminal/terminal_initialize_request_bean.go",
+            "line": 11,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 47
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_managed_connector_bean_spice_gen.go",
+      "sha256": "sha256:c70e4c130fc851729f5f788f2c0601bdb79a6488acba6e08ce97f5404ba9e14e",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_managed_connector_bean.go",
+        "line": 18,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector",
+          "source": {
+            "path": "internal/terminal/terminal_managed_connector_bean.go",
+            "line": 18,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
+          },
+          "generated": {
+            "start_line": 18,
+            "start_column": 4,
+            "end_line": 18,
+            "end_column": 46
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_managed_discovery_bean_spice_gen.go",
+      "sha256": "sha256:5a72d969e844cd33454c2865ace68884bb7d4ee26d243f0e454d12c86b4ace92",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_managed_discovery_bean.go",
+        "line": 15,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery",
+          "source": {
+            "path": "internal/terminal/terminal_managed_discovery_bean.go",
+            "line": 15,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
+          },
+          "generated": {
+            "start_line": 17,
+            "start_column": 4,
+            "end_line": 17,
+            "end_column": 46
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_session_bean_spice_gen.go",
+      "sha256": "sha256:44f7f2be02ac1bd4560a7e94e90fa30b2dc3e5f50a0822944606dbd85184a394",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_session_bean.go",
+        "line": 15,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession",
+          "source": {
+            "path": "internal/terminal/terminal_session_bean.go",
+            "line": 15,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
+          },
+          "generated": {
+            "start_line": 18,
+            "start_column": 4,
+            "end_line": 18,
+            "end_column": 37
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_session_config_bean_spice_gen.go",
+      "sha256": "sha256:4ea10f77f81fb22854cb7e8d7b76a33ab12dda8826921cc895062cea34895d1b",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_session_config_bean.go",
+        "line": 14,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig",
+          "source": {
+            "path": "internal/terminal/terminal_session_config_bean.go",
+            "line": 14,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+          },
+          "generated": {
+            "start_line": 18,
+            "start_column": 4,
+            "end_line": 18,
+            "end_column": 43
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_shell_bean_spice_gen.go",
+      "sha256": "sha256:72a92de6cb92311377bad33a10447836e07425c52740909083f333bc409b94d9",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_shell_bean.go",
+        "line": 19,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell",
+          "source": {
+            "path": "internal/terminal/terminal_shell_bean.go",
+            "line": 19,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 35
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_startup_lock_bean_spice_gen.go",
+      "sha256": "sha256:a78ae21a2ab2a0a5803d422cb481ee3fc931ae915e72fc801b63082cb030bed8",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_startup_lock_bean.go",
+        "line": 12,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock",
+          "source": {
+            "path": "internal/terminal/terminal_startup_lock_bean.go",
+            "line": 12,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
+          },
+          "generated": {
+            "start_line": 17,
+            "start_column": 4,
+            "end_line": 17,
+            "end_column": 41
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agent/sources/internal_/terminal/terminal_workspace_bean_spice_gen.go",
+      "sha256": "sha256:8067081aa01e035e4395e3d461d7facf5f864f3c8afbeea686a0eae92a46b2aa",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/terminal/terminal_workspace_bean.go",
+        "line": 14,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace",
+          "source": {
+            "path": "internal/terminal/terminal_workspace_bean.go",
+            "line": 14,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 39
           }
         }
       ]
@@ -693,78 +888,6 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
         {
-          "path": "internal/terminal/accessible_shell.go",
-          "line": 29,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 22,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 50,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 63,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 74,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 81,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 27,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 34,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 45,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 56,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 64,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 75,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
-        },
-        {
           "path": "internal/terminal/properties.go",
           "line": 15,
           "column": 4,
@@ -795,46 +918,118 @@
           "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalAccessible"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 17,
+          "path": "internal/terminal/terminal_client_build_bean.go",
+          "line": 14,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 24,
+          "path": "internal/terminal/terminal_client_connector_bean.go",
+          "line": 20,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 39,
+          "path": "internal/terminal/terminal_client_limits_bean.go",
+          "line": 11,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 51,
+          "path": "internal/terminal/terminal_client_protocol_bean.go",
+          "line": 12,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
+        },
+        {
+          "path": "internal/terminal/terminal_config_bean.go",
+          "line": 12,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 59,
+          "path": "internal/terminal/terminal_daemon_starter_bean.go",
+          "line": 14,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 72,
+          "path": "internal/terminal/terminal_definition_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
+        },
+        {
+          "path": "internal/terminal/terminal_endpoint_scope_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
+        },
+        {
+          "path": "internal/terminal/terminal_endpoint_store_bean.go",
+          "line": 15,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
+        },
+        {
+          "path": "internal/terminal/terminal_identifier_source_bean.go",
+          "line": 12,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 80,
+          "path": "internal/terminal/terminal_initial_status_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+        },
+        {
+          "path": "internal/terminal/terminal_initialize_request_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
+        },
+        {
+          "path": "internal/terminal/terminal_managed_connector_bean.go",
+          "line": 18,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
+        },
+        {
+          "path": "internal/terminal/terminal_managed_discovery_bean.go",
+          "line": 15,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
+        },
+        {
+          "path": "internal/terminal/terminal_session_bean.go",
+          "line": 15,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
+        },
+        {
+          "path": "internal/terminal/terminal_session_config_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+        },
+        {
+          "path": "internal/terminal/terminal_shell_bean.go",
+          "line": 19,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+        },
+        {
+          "path": "internal/terminal/terminal_startup_lock_bean.go",
+          "line": 12,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
+        },
+        {
+          "path": "internal/terminal/terminal_workspace_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
@@ -996,78 +1191,6 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
         {
-          "path": "internal/terminal/accessible_shell.go",
-          "line": 29,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 22,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 50,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 63,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 74,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 81,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 27,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 34,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 45,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 56,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 64,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 75,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
-        },
-        {
           "path": "internal/terminal/properties.go",
           "line": 15,
           "column": 4,
@@ -1098,46 +1221,118 @@
           "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalAccessible"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 17,
+          "path": "internal/terminal/terminal_client_build_bean.go",
+          "line": 14,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 24,
+          "path": "internal/terminal/terminal_client_connector_bean.go",
+          "line": 20,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 39,
+          "path": "internal/terminal/terminal_client_limits_bean.go",
+          "line": 11,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 51,
+          "path": "internal/terminal/terminal_client_protocol_bean.go",
+          "line": 12,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
+        },
+        {
+          "path": "internal/terminal/terminal_config_bean.go",
+          "line": 12,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 59,
+          "path": "internal/terminal/terminal_daemon_starter_bean.go",
+          "line": 14,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 72,
+          "path": "internal/terminal/terminal_definition_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
+        },
+        {
+          "path": "internal/terminal/terminal_endpoint_scope_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
+        },
+        {
+          "path": "internal/terminal/terminal_endpoint_store_bean.go",
+          "line": 15,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
+        },
+        {
+          "path": "internal/terminal/terminal_identifier_source_bean.go",
+          "line": 12,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 80,
+          "path": "internal/terminal/terminal_initial_status_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+        },
+        {
+          "path": "internal/terminal/terminal_initialize_request_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
+        },
+        {
+          "path": "internal/terminal/terminal_managed_connector_bean.go",
+          "line": 18,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
+        },
+        {
+          "path": "internal/terminal/terminal_managed_discovery_bean.go",
+          "line": 15,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
+        },
+        {
+          "path": "internal/terminal/terminal_session_bean.go",
+          "line": 15,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
+        },
+        {
+          "path": "internal/terminal/terminal_session_config_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+        },
+        {
+          "path": "internal/terminal/terminal_shell_bean.go",
+          "line": 19,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+        },
+        {
+          "path": "internal/terminal/terminal_startup_lock_bean.go",
+          "line": 12,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
+        },
+        {
+          "path": "internal/terminal/terminal_workspace_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
@@ -1256,78 +1451,6 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
         {
-          "path": "internal/terminal/accessible_shell.go",
-          "line": 29,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 22,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 50,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 63,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 74,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
-        },
-        {
-          "path": "internal/terminal/connection.go",
-          "line": 81,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 27,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 34,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 45,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 56,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 64,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
-        },
-        {
-          "path": "internal/terminal/endpoint.go",
-          "line": 75,
-          "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
-        },
-        {
           "path": "internal/terminal/properties.go",
           "line": 15,
           "column": 4,
@@ -1358,46 +1481,118 @@
           "symbol": "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.TerminalAccessible"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 17,
+          "path": "internal/terminal/terminal_client_build_bean.go",
+          "line": 14,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 24,
+          "path": "internal/terminal/terminal_client_connector_bean.go",
+          "line": 20,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 39,
+          "path": "internal/terminal/terminal_client_limits_bean.go",
+          "line": 11,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 51,
+          "path": "internal/terminal/terminal_client_protocol_bean.go",
+          "line": 12,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"
+        },
+        {
+          "path": "internal/terminal/terminal_config_bean.go",
+          "line": 12,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 59,
+          "path": "internal/terminal/terminal_daemon_starter_bean.go",
+          "line": 14,
           "column": 4,
-          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 72,
+          "path": "internal/terminal/terminal_definition_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"
+        },
+        {
+          "path": "internal/terminal/terminal_endpoint_scope_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"
+        },
+        {
+          "path": "internal/terminal/terminal_endpoint_store_bean.go",
+          "line": 15,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"
+        },
+        {
+          "path": "internal/terminal/terminal_identifier_source_bean.go",
+          "line": 12,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"
         },
         {
-          "path": "internal/terminal/session.go",
-          "line": 80,
+          "path": "internal/terminal/terminal_initial_status_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"
+        },
+        {
+          "path": "internal/terminal/terminal_initialize_request_bean.go",
+          "line": 11,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"
+        },
+        {
+          "path": "internal/terminal/terminal_managed_connector_bean.go",
+          "line": 18,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"
+        },
+        {
+          "path": "internal/terminal/terminal_managed_discovery_bean.go",
+          "line": 15,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"
+        },
+        {
+          "path": "internal/terminal/terminal_session_bean.go",
+          "line": 15,
           "column": 4,
           "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"
+        },
+        {
+          "path": "internal/terminal/terminal_session_config_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"
+        },
+        {
+          "path": "internal/terminal/terminal_shell_bean.go",
+          "line": 19,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"
+        },
+        {
+          "path": "internal/terminal/terminal_startup_lock_bean.go",
+          "line": 12,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"
+        },
+        {
+          "path": "internal/terminal/terminal_workspace_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",

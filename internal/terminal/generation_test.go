@@ -140,9 +140,11 @@ func TestGeneratedTerminalIsDirectAndSourceMapped(t *testing.T) {
 		`"layout": "application-package"`,
 		`"entrypoint_package": "github.com/spice-framework/spice-agent-coding/cmd/spice-agent"`,
 		`"bridge_dir": "cmd/spice-agent"`, `"role": "source-unit"`,
-		"cmd/spice-agent/application.go", "internal/terminal/connection.go",
-		"internal/terminal/endpoint.go", "internal/terminal/properties.go",
-		"internal/terminal/session.go",
+		"cmd/spice-agent/application.go",
+		"internal/terminal/terminal_client_connector_bean.go",
+		"internal/terminal/terminal_endpoint_store_bean.go",
+		"internal/terminal/properties.go",
+		"internal/terminal/terminal_session_bean.go",
 		"github.com/spice-framework/spice-agent-tui/autoconfigure/autoconfigure.go",
 	} {
 		if !bytes.Contains(manifest, []byte(expected)) {

@@ -1,7 +1,6 @@
 package architectureproof
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,7 +12,6 @@ import (
 
 	openaiprovider "github.com/spice-framework/spice-agent-provider-openai"
 	"github.com/spice-framework/spice-agent/model"
-	"github.com/spice-framework/spice/lifecycle"
 )
 
 // @import { ModelProvider } from "github.com/spice-framework/spice-agent/annotation/agent"
@@ -33,19 +31,6 @@ type ResponsesFixture struct {
 	cancelMode        bool
 	requestStarted    chan struct{}
 	providerCanceled  bool
-}
-
-// NewResponsesFixture creates a current-process TLS endpoint. No external
-// network or credential is used by the architecture proof.
-//
-// @Bean(name="responsesFixture")
-func NewResponsesFixture() (*ResponsesFixture, lifecycle.Cleanup, error) {
-	fixture := &ResponsesFixture{}
-	fixture.server = httptest.NewTLSServer(http.HandlerFunc(fixture.serveHTTP))
-	return fixture, func(context.Context) error {
-		fixture.server.Close()
-		return nil
-	}, nil
 }
 
 // NewModelProvider replaces the starter's fallback client with a real adapter

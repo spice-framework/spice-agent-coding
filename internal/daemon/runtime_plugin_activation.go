@@ -42,22 +42,6 @@ type RuntimePluginActivation struct {
 	state runtimePluginActivationState
 }
 
-// NewRuntimePluginActivation constructs a side-effect-free lifecycle bean.
-//
-// @Bean(name="runtimePluginActivation")
-func NewRuntimePluginActivation(
-	plan RuntimePluginPlan,
-	host *pluginhost.Host,
-) (*RuntimePluginActivation, error) {
-	if err := plan.Validate(); err != nil {
-		return nil, err
-	}
-	if host == nil {
-		return nil, errors.New("runtime plugin activation requires a host")
-	}
-	return &RuntimePluginActivation{plan: plan, host: host}, nil
-}
-
 // Start activates the configured complete Set once. Optional failure preserves
 // the Host's compiled generation and becomes fixed-code degraded health;
 // required failure prevents the dependent Runtime lifecycle from publishing.
@@ -140,20 +124,6 @@ func (activation *RuntimePluginActivation) healthContribution() agentdaemon.Heal
 type runtimePluginHealthSource struct {
 	activation *RuntimePluginActivation
 	host       *pluginhost.Host
-}
-
-// NewRuntimePluginHealthSource adapts owned in-memory activation/Host state to
-// the daemon's fixed-code passive health contract.
-//
-// @Bean(name="runtimePluginHealthSource")
-func NewRuntimePluginHealthSource(
-	activation *RuntimePluginActivation,
-	host *pluginhost.Host,
-) (agentdaemon.HealthSource, error) {
-	if activation == nil || host == nil {
-		return nil, errors.New("runtime plugin health source requires activation and host")
-	}
-	return &runtimePluginHealthSource{activation: activation, host: host}, nil
 }
 
 func (source *runtimePluginHealthSource) HealthContribution() agentdaemon.HealthContribution {
