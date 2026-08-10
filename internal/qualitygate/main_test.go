@@ -68,7 +68,10 @@ func TestReleaseArtifactGateUsesOneOfflineBuildTaggedTest(t *testing.T) {
 
 func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 	t.Parallel()
-	const immediatePriorWorkflowCommit = "0fcd43dc8b41fad56c231d0e136ad8c762276ed5"
+	const (
+		staleReleaseWorkflowCommit   = "7f41a3ca854d05dca532eb8fc9a1a9a8315ee55c"
+		immediatePriorWorkflowCommit = "e1f1dad30f62387bb11d73f94c626fb20d9ca43e"
+	)
 	valid := expectedReleaseWorkflow()
 	for _, test := range []struct {
 		name     string
@@ -80,6 +83,10 @@ func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 		{
 			name:     "immediate prior authority",
 			workflow: strings.ReplaceAll(valid, releaseWorkflowCommit, immediatePriorWorkflowCommit),
+		},
+		{
+			name:     "stale preview 2 authority",
+			workflow: strings.ReplaceAll(valid, releaseWorkflowCommit, staleReleaseWorkflowCommit),
 		},
 		{name: "wrong workflow", workflow: strings.Replace(valid, "go-distribution-release.yml", "go-module-release.yml", 1)},
 		{name: "wrong pin", workflow: strings.Replace(valid, releaseWorkflowCommit, strings.Repeat("0", 40), 1)},

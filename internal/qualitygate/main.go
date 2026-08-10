@@ -32,7 +32,7 @@ const (
 	agentTUIVersion       = "v0.1.0-preview.1"
 	providerVersion       = "v0.1.0-preview.1"
 	codingToolsVersion    = "v0.1.0-preview.1"
-	releaseWorkflowCommit = "7f41a3ca854d05dca532eb8fc9a1a9a8315ee55c"
+	releaseWorkflowCommit = "a8f9cc6ffd3a2744c5cae3b52c05e6e91cbc875e"
 )
 
 var output io.Writer = os.Stdout

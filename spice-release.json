@@ -3,5 +3,5 @@
   "profile": "go-distribution-v1",
   "repository": "spice-agent-coding",
   "module": "github.com/spice-framework/spice-agent-coding",
-  "version": "v0.1.0-preview.2"
+  "version": "v0.1.0-preview.3"
 }
