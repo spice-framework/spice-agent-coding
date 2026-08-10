@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -81,9 +82,7 @@ func TestSpiceDevPreservesLastKnownGoodAndDebouncesReplacement(t *testing.T) {
 	t.Cleanup(func() { process.cleanup(t) })
 
 	output.waitForText(t, "spice dev: application started (revision 1)")
-	firstEndpoint := waitForPublishedEndpoint(t, addressFile, "")
-	first := waitForProbe(t, firstEndpoint.Address, "one")
-	assertEndpointOwner(t, firstEndpoint, first)
+	firstEndpoint, first := waitForPublishedProbe(t, addressFile, "", "one", output)
 	generatedBefore := generatedHashes(t, workspace)
 
 	brokenApplication := bytes.Replace(
@@ -111,12 +110,15 @@ func TestSpiceDevPreservesLastKnownGoodAndDebouncesReplacement(t *testing.T) {
 		)
 	}
 
+	recoveryOffset := len(output.String())
 	atomicReplace(t, scratch, applicationPath, originalApplication)
-	output.waitForText(t, "spice dev: graceful restart requested for revision 3")
-	output.waitForText(t, "spice dev: application started (revision 3)")
-	thirdEndpoint := waitForPublishedEndpoint(t, addressFile, firstEndpoint.Instance)
-	third := waitForProbe(t, thirdEndpoint.Address, "one")
-	assertEndpointOwner(t, thirdEndpoint, third)
+	recoveryRevision := output.waitForApplicationRevision(t, recoveryOffset, 3)
+	output.waitForText(t, fmt.Sprintf(
+		"spice dev: graceful restart requested for revision %d", recoveryRevision,
+	))
+	thirdEndpoint, third := waitForPublishedProbe(
+		t, addressFile, firstEndpoint.Instance, "one", output,
+	)
 	if third.Instance == first.Instance {
 		t.Fatalf("revision 3 retained process identity %q; expected replacement", third.Instance)
 	}
@@ -137,8 +139,8 @@ func TestSpiceDevPreservesLastKnownGoodAndDebouncesReplacement(t *testing.T) {
 		t.Fatal("fixture revision body was not found")
 	}
 	changeCount := output.Count("spice dev: change detected: internal/devprobe/probe.go")
-	analysisCount := output.Count("spice dev: analysis started")
 	startCount := output.Count("spice dev: application started")
+	burstOffset := len(output.String())
 	atomicReplace(t, scratch, probePath, firstBurst)
 	output.waitForCount(
 		t,
@@ -151,27 +153,34 @@ func TestSpiceDevPreservesLastKnownGoodAndDebouncesReplacement(t *testing.T) {
 		"spice dev: change detected: internal/devprobe/probe.go",
 		changeCount+2,
 	)
-	output.waitForText(t, "spice dev: analysis started (revision 4)")
-	output.waitForText(t, "spice dev: application started (revision 4)")
-	fourthEndpoint := waitForPublishedEndpoint(t, addressFile, thirdEndpoint.Instance)
-	fourth := waitForProbe(t, fourthEndpoint.Address, "latest")
-	assertEndpointOwner(t, fourthEndpoint, fourth)
+	burstRevision := output.waitForApplicationRevision(t, burstOffset, recoveryRevision+1)
+	fourthEndpoint, fourth := waitForPublishedProbe(
+		t, addressFile, thirdEndpoint.Instance, "latest", output,
+	)
 	if fourth.Instance == third.Instance {
 		t.Fatalf("debounced revision retained process identity %q; expected replacement", fourth.Instance)
 	}
-	assertBurstPrecedesAnalysis(t, output.String(), changeCount, 4)
+	if err := validateDebouncedReplacement(
+		output.String()[burstOffset:], recoveryRevision, burstRevision,
+	); err != nil {
+		t.Fatalf("validate debounced replacement: %v\n%s", err, output.String())
+	}
+	settledAnalysisCount := output.Count("spice dev: analysis started")
 	output.requireStableCounts(t, 3*time.Second, map[string]int{
-		"spice dev: analysis started":    analysisCount + 1,
+		"spice dev: analysis started":    settledAnalysisCount,
 		"spice dev: application started": startCount + 1,
 	})
 
+	restoreOffset := len(output.String())
+	restoreAnalysisCount := output.Count("spice dev: analysis started")
+	restoreStartCount := output.Count("spice dev: application started")
 	atomicReplace(t, scratch, probePath, originalProbe)
-	output.waitForCount(t, "spice dev: analysis started", analysisCount+2)
-	output.waitForCount(t, "spice dev: application started", startCount+2)
-	output.waitForText(t, "spice dev: application started (revision 5)")
-	fifthEndpoint := waitForPublishedEndpoint(t, addressFile, fourthEndpoint.Instance)
-	fifth := waitForProbe(t, fifthEndpoint.Address, "one")
-	assertEndpointOwner(t, fifthEndpoint, fifth)
+	output.waitForCount(t, "spice dev: analysis started", restoreAnalysisCount+1)
+	output.waitForCount(t, "spice dev: application started", restoreStartCount+1)
+	output.waitForApplicationRevision(t, restoreOffset, burstRevision+1)
+	fifthEndpoint, fifth := waitForPublishedProbe(
+		t, addressFile, fourthEndpoint.Instance, "one", output,
+	)
 	if fifth.Instance == fourth.Instance {
 		t.Fatalf("restored revision retained process identity %q; expected replacement", fifth.Instance)
 	}
@@ -326,60 +335,65 @@ func environmentContains(values map[string]string, name string) bool {
 	return false
 }
 
-func waitForPublishedEndpoint(t *testing.T, path, previousInstance string) probeEndpoint {
+func waitForPublishedProbe(
+	t *testing.T,
+	path, previousInstance, revision string,
+	output *eventBuffer,
+) (probeEndpoint, probeResponse) {
 	t.Helper()
 	deadline := time.NewTimer(30 * time.Second)
 	defer deadline.Stop()
 	ticker := time.NewTicker(20 * time.Millisecond)
 	defer ticker.Stop()
+	var (
+		content     []byte
+		readErr     error
+		decodeErr   error
+		endpoint    probeEndpoint
+		response    probeResponse
+		responseErr error
+	)
 	for {
-		content, err := os.ReadFile(path)
-		var endpoint probeEndpoint
-		decodeErr := json.Unmarshal(content, &endpoint)
-		if err == nil && decodeErr == nil && endpoint.PID > 0 && endpoint.Instance != "" &&
+		content, readErr = os.ReadFile(path)
+		endpoint = probeEndpoint{}
+		decodeErr = json.Unmarshal(content, &endpoint)
+		response = probeResponse{}
+		responseErr = errors.New("published endpoint is not ready")
+		if readErr == nil && decodeErr == nil && endpoint.PID > 0 && endpoint.Instance != "" &&
 			endpoint.Instance != previousInstance {
 			if host, _, splitErr := net.SplitHostPort(endpoint.Address); splitErr == nil && host == "127.0.0.1" {
-				return endpoint
+				response, responseErr = probe(endpoint.Address)
+				if responseErr == nil && response.PID == endpoint.PID &&
+					response.Instance == endpoint.Instance && response.Revision == revision {
+					return endpoint, response
+				}
 			}
 		}
 		select {
 		case <-ticker.C:
 		case <-deadline.C:
 			t.Fatalf(
-				"probe endpoint was not published after instance %q: content %q, read error %v, decode error %v",
+				"probe endpoint revision %q was not ready after instance %q: "+
+					"content %q, read error %v, decode error %v, response %#v, response error %v\n%s",
+				revision,
 				previousInstance,
 				content,
-				err,
+				readErr,
 				decodeErr,
+				response,
+				responseErr,
+				diagnosticTail(output.String()),
 			)
 		}
 	}
 }
 
-func assertEndpointOwner(t *testing.T, endpoint probeEndpoint, response probeResponse) {
-	t.Helper()
-	if endpoint.PID != response.PID || endpoint.Instance != response.Instance {
-		t.Fatalf("published endpoint %#v served from process %#v", endpoint, response)
+func diagnosticTail(content string) string {
+	const maximum = 16 << 10
+	if len(content) <= maximum {
+		return content
 	}
-}
-
-func waitForProbe(t *testing.T, address, revision string) probeResponse {
-	t.Helper()
-	deadline := time.NewTimer(30 * time.Second)
-	defer deadline.Stop()
-	ticker := time.NewTicker(20 * time.Millisecond)
-	defer ticker.Stop()
-	for {
-		response, err := probe(address)
-		if err == nil && response.PID > 0 && response.Revision == revision {
-			return response
-		}
-		select {
-		case <-ticker.C:
-		case <-deadline.C:
-			t.Fatalf("probe did not reach revision %q: last response %#v, error %v", revision, response, err)
-		}
-	}
+	return "..." + content[len(content)-maximum:]
 }
 
 func readProbe(t *testing.T, address string) probeResponse {
@@ -505,23 +519,142 @@ func (buffer *eventBuffer) requireStableCounts(
 	}
 }
 
-func assertBurstPrecedesAnalysis(t *testing.T, output string, previousChanges, revision int) {
+func (buffer *eventBuffer) waitForApplicationRevision(
+	t *testing.T,
+	after, minimum int,
+) int {
 	t.Helper()
-	change := "spice dev: change detected: internal/devprobe/probe.go"
-	analysis := fmt.Sprintf("spice dev: analysis started (revision %d)", revision)
-	analysisIndex := strings.Index(output, analysis)
-	if analysisIndex < 0 {
-		t.Fatalf("missing %q", analysis)
+	deadline := time.NewTimer(90 * time.Second)
+	defer deadline.Stop()
+	for {
+		content := buffer.String()
+		if len(content) >= after {
+			for _, revision := range applicationRevisions(content[after:], "application started") {
+				if revision >= minimum {
+					return revision
+				}
+			}
+		}
+		select {
+		case <-buffer.updated:
+		case <-deadline.C:
+			t.Fatalf(
+				"timed out waiting for application revision >= %d after byte %d\n%s",
+				minimum,
+				after,
+				content,
+			)
+		}
 	}
-	beforeAnalysis := output[:analysisIndex]
-	if got := strings.Count(beforeAnalysis, change); got != previousChanges+2 {
-		t.Fatalf(
-			"change events before revision %d = %d, want %d\n%s",
-			revision,
-			got,
-			previousChanges+2,
-			output,
+}
+
+func validateDebouncedReplacement(output string, previous, started int) error {
+	const change = "spice dev: change detected: internal/devprobe/probe.go"
+	if count := strings.Count(output, change); count != 2 {
+		return fmt.Errorf("burst change count = %d, want 2", count)
+	}
+	starts := applicationRevisions(output, "application started")
+	if len(starts) != 1 || starts[0] != started || started <= previous {
+		return fmt.Errorf(
+			"burst application revisions = %v after revision %d, want only %d",
+			starts,
+			previous,
+			started,
 		)
+	}
+	analyses := applicationRevisions(output, "analysis started")
+	if len(analyses) < 1 || len(analyses) > 2 || analyses[len(analyses)-1] != started {
+		return fmt.Errorf("burst analysis revisions = %v, want one or two ending at %d", analyses, started)
+	}
+	for _, revision := range analyses[:len(analyses)-1] {
+		discarded := fmt.Sprintf("spice dev: discarded obsolete revision %d", revision)
+		if !strings.Contains(output, discarded) {
+			return fmt.Errorf("superseded analysis revision %d was not discarded", revision)
+		}
+	}
+	if count := strings.Count(output, "spice dev: graceful restart requested"); count != 1 {
+		return fmt.Errorf("burst graceful restart count = %d, want 1", count)
+	}
+	return nil
+}
+
+func applicationRevisions(output, operation string) []int {
+	prefix := "spice dev: " + operation + " (revision "
+	var revisions []int
+	for line := range strings.SplitSeq(output, "\n") {
+		_, value, found := strings.Cut(line, prefix)
+		if !found {
+			continue
+		}
+		end := strings.IndexByte(value, ')')
+		if end < 1 {
+			continue
+		}
+		revision, err := strconv.Atoi(value[:end])
+		if err == nil {
+			revisions = append(revisions, revision)
+		}
+	}
+	return revisions
+}
+
+func TestValidateDebouncedReplacement(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		name, output string
+		started      int
+		wantErr      bool
+	}{
+		{
+			name: "single analysis",
+			output: "spice dev: change detected: internal/devprobe/probe.go\n" +
+				"spice dev: change detected: internal/devprobe/probe.go\n" +
+				"spice dev: analysis started (revision 4)\n" +
+				"spice dev: graceful restart requested for revision 4\n" +
+				"spice dev: application started (revision 4)\n",
+			started: 4,
+		},
+		{
+			name: "obsolete analysis",
+			output: "spice dev: change detected: internal/devprobe/probe.go\n" +
+				"spice dev: analysis started (revision 4)\n" +
+				"spice dev: change detected: internal/devprobe/probe.go\n" +
+				"spice dev: discarded obsolete revision 4\n" +
+				"spice dev: analysis started (revision 5)\n" +
+				"spice dev: graceful restart requested for revision 5\n" +
+				"spice dev: application started (revision 5)\n",
+			started: 5,
+		},
+		{
+			name: "intermediate application started",
+			output: "spice dev: change detected: internal/devprobe/probe.go\n" +
+				"spice dev: application started (revision 4)\n" +
+				"spice dev: change detected: internal/devprobe/probe.go\n" +
+				"spice dev: analysis started (revision 5)\n" +
+				"spice dev: graceful restart requested for revision 5\n" +
+				"spice dev: application started (revision 5)\n",
+			started: 5,
+			wantErr: true,
+		},
+		{
+			name: "missing obsolete discard",
+			output: "spice dev: change detected: internal/devprobe/probe.go\n" +
+				"spice dev: analysis started (revision 4)\n" +
+				"spice dev: change detected: internal/devprobe/probe.go\n" +
+				"spice dev: analysis started (revision 5)\n" +
+				"spice dev: graceful restart requested for revision 5\n" +
+				"spice dev: application started (revision 5)\n",
+			started: 5,
+			wantErr: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			err := validateDebouncedReplacement(test.output, 3, test.started)
+			if (err != nil) != test.wantErr {
+				t.Fatalf("validateDebouncedReplacement() error = %v, wantErr %t", err, test.wantErr)
+			}
+		})
 	}
 }
 
