@@ -6,6 +6,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
@@ -23,8 +24,9 @@ import (
 )
 
 const (
-	releaseProfile = "go-distribution-v1"
-	maximumEntry   = 128 << 20
+	releaseProfile           = "go-distribution-v1"
+	maximumCandidateMetadata = 4 << 10
+	maximumEntry             = 128 << 20
 )
 
 var supportedTargets = []targetExpectation{
@@ -52,6 +54,14 @@ type Expectation struct {
 	Repository string
 	Module     string
 	Version    string
+}
+
+type candidateMetadata struct {
+	Schema     int    `json:"schema"`
+	Profile    string `json:"profile"`
+	Repository string `json:"repository"`
+	Module     string `json:"module"`
+	Version    string `json:"version"`
 }
 
 // Set is a completely validated nine-subject distribution set.
@@ -106,6 +116,67 @@ func Verify(directory string, expectation Expectation) (*Set, error) {
 		set.archives[target.GOOS+"/"+target.GOARCH] = archivePath
 	}
 	return set, nil
+}
+
+// VerifyCandidate binds installed-byte verification to the exact inert
+// release identity committed by the candidate checkout. It does not accept a
+// caller-supplied version and performs no network or Git operations.
+func VerifyCandidate(candidateRoot, directory string) (*Set, error) {
+	expectation, err := candidateExpectation(candidateRoot)
+	if err != nil {
+		return nil, err
+	}
+	return Verify(directory, expectation)
+}
+
+func candidateExpectation(root string) (Expectation, error) {
+	if err := validatePhysicalDirectory(root, "release candidate root"); err != nil {
+		return Expectation{}, err
+	}
+	file := filepath.Join(root, "spice-release.json")
+	info, err := os.Lstat(file)
+	if err != nil {
+		return Expectation{}, fmt.Errorf("inspect candidate release metadata: %w", err)
+	}
+	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 || info.Size() > maximumCandidateMetadata {
+		return Expectation{}, errors.New("candidate release metadata must be a bounded physical regular file")
+	}
+	content, err := os.ReadFile(file) // #nosec G304 -- fixed file beneath a validated physical candidate root.
+	if err != nil {
+		return Expectation{}, fmt.Errorf("read candidate release metadata: %w", err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	decoder.DisallowUnknownFields()
+	var metadata candidateMetadata
+	if err = decoder.Decode(&metadata); err != nil {
+		return Expectation{}, fmt.Errorf("decode candidate release metadata: %w", err)
+	}
+	var trailing json.RawMessage
+	if err = decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
+		return Expectation{}, errors.New("candidate release metadata has trailing JSON values")
+	}
+	expectation := Expectation{
+		Repository: metadata.Repository,
+		Module:     metadata.Module,
+		Version:    metadata.Version,
+	}
+	if metadata.Schema != 1 || metadata.Profile != releaseProfile {
+		return Expectation{}, fmt.Errorf(
+			"candidate release metadata must identify schema 1 profile %q", releaseProfile,
+		)
+	}
+	if err = validateExpectation(expectation); err != nil {
+		return Expectation{}, err
+	}
+	canonical, err := json.MarshalIndent(metadata, "", "  ")
+	if err != nil {
+		return Expectation{}, fmt.Errorf("encode candidate release metadata: %w", err)
+	}
+	canonical = append(canonical, '\n')
+	if !bytes.Equal(content, canonical) {
+		return Expectation{}, errors.New("candidate release metadata is not in canonical deterministic form")
+	}
+	return expectation, nil
 }
 
 // Version returns the exact release version, including its v prefix.
@@ -262,15 +333,19 @@ func validateExpectation(expectation Expectation) error {
 }
 
 func validateDirectory(directory string) error {
+	return validatePhysicalDirectory(directory, "verified artifact directory")
+}
+
+func validatePhysicalDirectory(directory, description string) error {
 	if directory == "" || !filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
-		return errors.New("verified artifact directory must be canonical and absolute")
+		return fmt.Errorf("%s must be canonical and absolute", description)
 	}
 	info, err := os.Lstat(directory)
 	if err != nil {
-		return fmt.Errorf("inspect verified artifact directory: %w", err)
+		return fmt.Errorf("inspect %s: %w", description, err)
 	}
 	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
-		return errors.New("verified artifact directory must be a physical directory")
+		return fmt.Errorf("%s must be a physical directory", description)
 	}
 	return nil
 }

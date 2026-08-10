@@ -53,12 +53,14 @@ func TestReleaseArtifactEntrypointRequiresExactExplicitDirectoryContract(t *test
 func TestReleaseArtifactGateUsesOneOfflineBuildTaggedTest(t *testing.T) {
 	t.Parallel()
 	directory := filepath.Join(t.TempDir(), "verified subjects")
+	root := t.TempDir()
 	want := []string{
 		"test", "-tags=spice_release_artifacts", "-count=1",
 		"-run=^TestVerifiedNativeReleaseArchive$", "./internal/installedacceptance",
-		"-args", "-spice-release-artifact-dir=" + directory,
+		"-args", "-spice-release-candidate-root=" + root,
+		"-spice-release-artifact-dir=" + directory,
 	}
-	if got := releaseArtifactTestArguments(directory); !slices.Equal(got, want) {
+	if got := releaseArtifactTestArguments(root, directory); !slices.Equal(got, want) {
 		t.Fatalf("release artifact arguments = %q, want %q", got, want)
 	}
 	if err := verifyReleaseArtifacts(t.Context(), t.TempDir(), "relative"); err == nil {

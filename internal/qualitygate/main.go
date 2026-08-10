@@ -532,20 +532,22 @@ func checkGeneratedApplications(ctx context.Context, root string) error {
 }
 
 func verifyReleaseArtifacts(ctx context.Context, root, directory string) error {
-	if directory == "" || !filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
-		return errors.New("release artifact gate requires a canonical absolute -artifacts directory")
+	normalized, err := normalizeReleaseArtifactDirectory(directory)
+	if err != nil {
+		return err
 	}
 	environment := map[string]string{
 		"GOFLAGS": "-mod=vendor", "GOPROXY": "off", "GOSUMDB": "off", "GOTOOLCHAIN": "local",
 	}
-	return command(ctx, root, environment, "go", releaseArtifactTestArguments(directory)...)
+	return command(ctx, root, environment, "go", releaseArtifactTestArguments(root, normalized)...)
 }
 
-func releaseArtifactTestArguments(directory string) []string {
+func releaseArtifactTestArguments(root, directory string) []string {
 	return []string{
 		"test", "-tags=spice_release_artifacts", "-count=1",
 		"-run=^TestVerifiedNativeReleaseArchive$", "./internal/installedacceptance",
-		"-args", "-spice-release-artifact-dir=" + directory,
+		"-args", "-spice-release-candidate-root=" + root,
+		"-spice-release-artifact-dir=" + directory,
 	}
 }
 

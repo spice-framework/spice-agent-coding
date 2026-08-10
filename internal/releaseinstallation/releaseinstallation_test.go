@@ -25,6 +25,97 @@ var fixtureExpectation = Expectation{
 
 const fixtureCommit = "0123456789abcdef0123456789abcdef01234567"
 
+func TestVerifyCandidateBindsExactCanonicalMetadata(t *testing.T) {
+	t.Parallel()
+	candidate := t.TempDir()
+	writeCandidateMetadata(t, candidate, candidateMetadata{
+		Schema: 1, Profile: releaseProfile, Repository: fixtureExpectation.Repository,
+		Module: fixtureExpectation.Module, Version: fixtureExpectation.Version,
+	})
+	set, err := VerifyCandidate(candidate, releaseFixture(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if set.Version() != fixtureExpectation.Version {
+		t.Fatalf("verified version = %q", set.Version())
+	}
+
+	staleCandidate := t.TempDir()
+	writeCandidateMetadata(t, staleCandidate, candidateMetadata{
+		Schema: 1, Profile: releaseProfile, Repository: fixtureExpectation.Repository,
+		Module: fixtureExpectation.Module, Version: "v0.1.0-preview.3",
+	})
+	if _, err = VerifyCandidate(staleCandidate, releaseFixture(t)); err == nil {
+		t.Fatal("preview 2 subjects satisfied a preview 3 candidate")
+	}
+
+	mismatchedCandidate := t.TempDir()
+	writeCandidateMetadata(t, mismatchedCandidate, candidateMetadata{
+		Schema: 1, Profile: releaseProfile, Repository: fixtureExpectation.Repository,
+		Module: "example.com/wrong", Version: fixtureExpectation.Version,
+	})
+	if _, err = VerifyCandidate(mismatchedCandidate, releaseFixture(t)); err == nil {
+		t.Fatal("subjects satisfied mismatched candidate module metadata")
+	}
+}
+
+func TestCandidateExpectationRejectsInvalidOrNoncanonicalMetadata(t *testing.T) {
+	t.Parallel()
+	valid := candidateMetadata{
+		Schema: 1, Profile: releaseProfile, Repository: fixtureExpectation.Repository,
+		Module: fixtureExpectation.Module, Version: "v0.1.0-preview.3",
+	}
+	for _, test := range []struct {
+		name    string
+		mutate  func(*candidateMetadata)
+		content func([]byte) []byte
+	}{
+		{name: "wrong schema", mutate: func(value *candidateMetadata) { value.Schema = 2 }},
+		{name: "wrong profile", mutate: func(value *candidateMetadata) { value.Profile = "other" }},
+		{name: "missing repository", mutate: func(value *candidateMetadata) { value.Repository = "" }},
+		{name: "invalid version", mutate: func(value *candidateMetadata) { value.Version = "preview.3" }},
+		{name: "noncanonical", content: func(content []byte) []byte {
+			return bytes.ReplaceAll(content, []byte("  "), nil)
+		}},
+		{name: "trailing JSON", content: func(content []byte) []byte {
+			return append(content, []byte("{}\n")...)
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			candidate := t.TempDir()
+			metadata := valid
+			if test.mutate != nil {
+				test.mutate(&metadata)
+			}
+			content, err := json.MarshalIndent(metadata, "", "  ")
+			if err != nil {
+				t.Fatal(err)
+			}
+			content = append(content, '\n')
+			if test.content != nil {
+				content = test.content(content)
+			}
+			writeTestFile(t, filepath.Join(candidate, "spice-release.json"), content)
+			if _, err = candidateExpectation(candidate); err == nil {
+				t.Fatal("candidateExpectation() error = nil")
+			}
+		})
+	}
+	if _, err := candidateExpectation("relative"); err == nil {
+		t.Fatal("relative candidate root was accepted")
+	}
+}
+
+func writeCandidateMetadata(t *testing.T, root string, metadata candidateMetadata) {
+	t.Helper()
+	content, err := json.MarshalIndent(metadata, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeTestFile(t, filepath.Join(root, "spice-release.json"), append(content, '\n'))
+}
+
 func TestVerifyAndExtractValidatedSubjects(t *testing.T) {
 	t.Parallel()
 	directory := releaseFixture(t)

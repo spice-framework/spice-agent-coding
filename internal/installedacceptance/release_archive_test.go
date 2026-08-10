@@ -25,17 +25,22 @@ var verifiedArtifactDirectory = flag.String(
 	"absolute directory containing the independently verified nine release subjects",
 )
 
+var releaseCandidateRoot = flag.String(
+	"spice-release-candidate-root",
+	"",
+	"absolute repository root containing the candidate's canonical inert release metadata",
+)
+
 // TestVerifiedNativeReleaseArchive executes exact released bytes only after the
 // caller has independently verified and supplied the complete subject set.
 func TestVerifiedNativeReleaseArchive(t *testing.T) {
 	if verifiedArtifactDirectory == nil || *verifiedArtifactDirectory == "" {
 		t.Fatal("-spice-release-artifact-dir is required")
 	}
-	set, err := releaseinstallation.Verify(*verifiedArtifactDirectory, releaseinstallation.Expectation{
-		Repository: "spice-agent-coding",
-		Module:     "github.com/spice-framework/spice-agent-coding",
-		Version:    "v0.1.0-preview.2",
-	})
+	if releaseCandidateRoot == nil || *releaseCandidateRoot == "" {
+		t.Fatal("-spice-release-candidate-root is required")
+	}
+	set, err := releaseinstallation.VerifyCandidate(*releaseCandidateRoot, *verifiedArtifactDirectory)
 	if err != nil {
 		t.Fatalf("validate independently verified release subjects: %v", err)
 	}

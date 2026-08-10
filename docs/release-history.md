@@ -1,14 +1,24 @@
 # Release history
 
-## `v0.1.0-preview.3` candidate
+## `v0.1.0-preview.3`
 
 Preview 3 advances only the inert distribution identity and the exact reusable
 release authority. It retains the dependency graph, generated applications,
-release payloads, and the independently authenticated preview 2 installed-byte
-acceptance boundary. The candidate is authorized independently by Development
+release payloads, and the independently authenticated installed-byte
+acceptance boundary. The candidate was authorized independently by Development
 commit `a15d9406dcf33fddea29830491f5cdbcc1f4be47` and Toolchain commit
-`7d9f7d1d1659e0ddbc5c604666527e68de2f184c`; this section does not claim that
-an immutable preview 3 tag or release exists.
+`7d9f7d1d1659e0ddbc5c604666527e68de2f184c`.
+
+The immutable annotated tag object
+`8d460709e5e9847b586667215218c15ab3e9dd93` points to commit
+`d8d179dee2d24d70eeb3df5f24a4b5a4418d67e3`. Release workflow run
+`31345003119` completed validation, rendering, and independent verification,
+then stopped before attestation or publication. The Linux installed-byte job
+exposed a stale preview-specific test expectation; the Windows job exposed a
+valid mixed-separator absolute runner path that was rejected before the same
+installed-byte test. No GitHub Release or release assets were published. The
+tag remains unchanged as failed immutable history; recovery binds installed
+subjects to candidate metadata and normalizes only safe Windows separators.
 
 ## `v0.1.0-preview.2`
 
