@@ -19,7 +19,6 @@ import (
 )
 
 func TestFixtureCancellationReleasesSingleConcurrencySlotAndProcess(t *testing.T) {
-	t.Parallel()
 	root := repositoryRoot(t)
 	executablePath, digest := buildFixture(t, root)
 	registrar := &cancellationRegistrar{}
@@ -34,7 +33,7 @@ func TestFixtureCancellationReleasesSingleConcurrencySlotAndProcess(t *testing.T
 	plan, err := distributiondaemon.NewRuntimePluginPlan(distributiondaemon.RuntimePluginProperties{
 		Required: true, ID: "distribution-cancellation-fixture", Path: executablePath,
 		SHA256: digest, ManifestName: fixtureManifest, ManifestVersion: fixtureVersion,
-		StartupTimeout: 5 * time.Second, CallTimeout: 5 * time.Second,
+		StartupTimeout: fixtureStartupTimeout, CallTimeout: 5 * time.Second,
 		DrainTimeout: 5 * time.Second, ShutdownTimeout: 5 * time.Second,
 		ContainmentTimeout: 5 * time.Second,
 	})
@@ -72,7 +71,7 @@ func TestFixtureCancellationReleasesSingleConcurrencySlotAndProcess(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	activationContext, cancelActivation := context.WithTimeout(t.Context(), 10*time.Second)
+	activationContext, cancelActivation := context.WithTimeout(t.Context(), fixtureActivationTimeout)
 	err = activation.Start(activationContext)
 	cancelActivation()
 	if err != nil {

@@ -33,10 +33,13 @@ const (
 	fixtureVersion  = "v1"
 	fixtureBlock    = "fixture.block"
 	fixtureTool     = "fixture.echo"
+	// These acceptance-harness budgets absorb cold Windows process scheduling.
+	// Product defaults remain independently asserted by internal/daemon tests.
+	fixtureStartupTimeout    = 30 * time.Second
+	fixtureActivationTimeout = 45 * time.Second
 )
 
 func TestOfflineFixtureActivatesAndShutsDownThroughProductionHost(t *testing.T) {
-	t.Parallel()
 	root := repositoryRoot(t)
 	executablePath, digest := buildFixture(t, root)
 
@@ -51,7 +54,7 @@ func TestOfflineFixtureActivatesAndShutsDownThroughProductionHost(t *testing.T) 
 	plan, err := distributiondaemon.NewRuntimePluginPlan(distributiondaemon.RuntimePluginProperties{
 		Required: true, ID: "distribution-fixture", Path: executablePath,
 		SHA256: digest, ManifestName: fixtureManifest, ManifestVersion: fixtureVersion,
-		StartupTimeout: 5 * time.Second, CallTimeout: 5 * time.Second,
+		StartupTimeout: fixtureStartupTimeout, CallTimeout: 5 * time.Second,
 		DrainTimeout: 5 * time.Second, ShutdownTimeout: 5 * time.Second,
 		ContainmentTimeout: 5 * time.Second,
 	})
@@ -89,7 +92,7 @@ func TestOfflineFixtureActivatesAndShutsDownThroughProductionHost(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	activationContext, cancelActivation := context.WithTimeout(t.Context(), 10*time.Second)
+	activationContext, cancelActivation := context.WithTimeout(t.Context(), fixtureActivationTimeout)
 	err = activation.Start(activationContext)
 	cancelActivation()
 	if err != nil {
@@ -166,7 +169,7 @@ func TestGeneratedDaemonLifecycleActivatesConfiguredFixtureBeforePublication(t *
 		"agent.runtime-plugin.sha256":                      digest,
 		"agent.runtime-plugin.manifest-name":               fixtureManifest,
 		"agent.runtime-plugin.manifest-version":            fixtureVersion,
-		"agent.runtime-plugin.timeouts.startup":            "5s",
+		"agent.runtime-plugin.timeouts.startup":            fixtureStartupTimeout.String(),
 		"agent.runtime-plugin.timeouts.call":               "5s",
 		"agent.runtime-plugin.timeouts.drain":              "5s",
 		"agent.runtime-plugin.timeouts.shutdown":           "5s",
@@ -178,7 +181,7 @@ func TestGeneratedDaemonLifecycleActivatesConfiguredFixtureBeforePublication(t *
 	}
 
 	var application *spicegen.Application
-	startContext, cancelStart := context.WithCancel(t.Context())
+	startContext, cancelStart := context.WithTimeout(t.Context(), fixtureActivationTimeout)
 	defer cancelStart()
 	probe := generatedLifecycleProbe{}
 	observer := func(ctx context.Context, observation spicelifecycle.Observation) {
@@ -341,7 +344,7 @@ func assertGeneratedRuntimePluginConfiguration(
 	if !properties.Required || properties.ID != "distribution-fixture" ||
 		properties.Path != executablePath || properties.SHA256 != digest ||
 		properties.ManifestName != fixtureManifest || properties.ManifestVersion != fixtureVersion ||
-		properties.StartupTimeout != 5*time.Second || properties.CallTimeout != 5*time.Second ||
+		properties.StartupTimeout != fixtureStartupTimeout || properties.CallTimeout != 5*time.Second ||
 		properties.DrainTimeout != 5*time.Second || properties.ShutdownTimeout != 5*time.Second ||
 		properties.ContainmentTimeout != 5*time.Second {
 		t.Fatalf("generated runtime plugin properties = %#v", properties)
@@ -458,6 +461,20 @@ func TestFixtureSourceUsesOnlyPublicSpiceAgentPackages(t *testing.T) {
 	}
 	if !bytes.Contains(mainSource, []byte("pluginv1.WriteReadiness(os.Stdout)")) {
 		t.Fatal("fixture stdout is not owned exclusively by the protocol readiness helper")
+	}
+}
+
+func TestFixtureColdStartBudgetsAreNarrowAndBounded(t *testing.T) {
+	t.Parallel()
+	if fixtureStartupTimeout != 30*time.Second {
+		t.Fatalf("fixture startup timeout = %s", fixtureStartupTimeout)
+	}
+	if fixtureActivationTimeout != 45*time.Second || fixtureActivationTimeout <= fixtureStartupTimeout {
+		t.Fatalf(
+			"fixture activation timeout = %s, startup timeout = %s",
+			fixtureActivationTimeout,
+			fixtureStartupTimeout,
+		)
 	}
 }
 
