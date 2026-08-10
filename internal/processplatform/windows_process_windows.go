@@ -50,47 +50,49 @@ type windowsProcess struct {
 	closed     bool
 }
 
-func startPlatformProcess(
+func (*windowsProcess) start(
 	_ context.Context,
 	spec agentprocess.Spec,
 	registrar ChildRegistrar,
 ) (agentprocess.Process, error) {
-	job, err := newPlatformJob()
+	prototype := &windowsProcess{}
+	job, err := prototype.newPlatformJob()
 	if err != nil {
 		return nil, err
 	}
-	pipes, err := newPlatformPipes()
+	pipes := &platformPipes{}
+	err = pipes.initialize()
 	if err != nil {
-		return nil, errors.Join(err, closeWindowsHandle(job))
+		return nil, errors.Join(err, (windowsHandleSet{}).closeHandle(job))
 	}
 	ownedByChild := false
 	defer func() {
 		if !ownedByChild {
-			_ = pipes.closeAll()        //nolint:errcheck // The launch failure remains authoritative.
-			_ = closeWindowsHandle(job) //nolint:errcheck // The launch failure remains authoritative.
+			_ = pipes.closeAll()                      //nolint:errcheck // The launch failure remains authoritative.
+			_ = (windowsHandleSet{}).closeHandle(job) //nolint:errcheck // The launch failure remains authoritative.
 		}
 	}()
 
-	information, err := createSuspendedWindowsProcess(spec, pipes)
+	information, err := prototype.createSuspendedProcess(spec, pipes)
 	if err != nil {
 		return nil, err
 	}
 	ownedByChild = true
 	if err = windows.AssignProcessToJobObject(job, information.Process); err != nil {
-		return abortWindowsLaunch(job, pipes, information, false, spec, err, nil)
+		return prototype.abortLaunch(job, pipes, information, false, spec, err, nil)
 	}
 	if err = pipes.closeChildEnds(); err != nil {
-		return abortWindowsLaunch(job, pipes, information, true, spec, err, err)
+		return prototype.abortLaunch(job, pipes, information, true, spec, err, err)
 	}
 	previous, resumeErr := windows.ResumeThread(information.Thread)
 	if resumeErr != nil || previous != 1 {
 		if resumeErr == nil {
 			resumeErr = fmt.Errorf("unexpected primary thread suspend count: %d", previous)
 		}
-		return abortWindowsLaunch(job, pipes, information, true, spec, resumeErr, nil)
+		return prototype.abortLaunch(job, pipes, information, true, spec, resumeErr, nil)
 	}
-	if err = closeWindowsHandle(information.Thread); err != nil {
-		return abortWindowsLaunch(job, pipes, information, true, spec, err, err)
+	if err = (windowsHandleSet{}).closeHandle(information.Thread); err != nil {
+		return prototype.abortLaunch(job, pipes, information, true, spec, err, err)
 	}
 
 	owned := &windowsProcess{
@@ -114,11 +116,11 @@ func startPlatformProcess(
 	return owned, nil
 }
 
-func createSuspendedWindowsProcess(
+func (owned *windowsProcess) createSuspendedProcess(
 	spec agentprocess.Spec,
 	pipes *platformPipes,
 ) (windows.ProcessInformation, error) {
-	application, commandLine, directory, environment, err := windowsParameters(spec)
+	application, commandLine, directory, environment, err := owned.parameters(spec)
 	if err != nil {
 		return windows.ProcessInformation{}, err
 	}
@@ -155,7 +157,7 @@ func createSuspendedWindowsProcess(
 	return information, err
 }
 
-func abortWindowsLaunch(
+func (*windowsProcess) abortLaunch(
 	job windows.Handle,
 	pipes *platformPipes,
 	information windows.ProcessInformation,
@@ -206,7 +208,7 @@ func (owned *windowsProcess) copyInput(source io.Reader, destination *os.File) {
 
 func (owned *windowsProcess) copyOutput(destination io.Writer, source *os.File) {
 	_, copyErr := io.Copy(destination, source)
-	closeErr := closeWindowsFile(source)
+	closeErr := (windowsHandleSet{}).closeFile(source)
 	if errors.Is(copyErr, os.ErrClosed) {
 		copyErr = nil
 	}
@@ -217,14 +219,14 @@ func (owned *windowsProcess) copyOutput(destination io.Writer, source *os.File) 
 }
 
 func (owned *windowsProcess) reap() {
-	waitErr := waitWindowsHandle(owned.process, 0)
+	waitErr := (windowsJobMonitor{}).waitHandle(owned.process, 0)
 	var outcome agentprocess.Outcome
 	var resultErr error
 	if waitErr == nil {
 		owned.mu.Lock()
 		terminated := owned.stopSent || owned.killSent
 		owned.mu.Unlock()
-		outcome, resultErr = windowsOutcome(owned.process, terminated)
+		outcome, resultErr = owned.deriveOutcome(owned.process, terminated)
 	} else {
 		resultErr = agentprocess.NewFailure(agentprocess.OperationResult, waitErr)
 	}
@@ -236,7 +238,7 @@ func (owned *windowsProcess) reap() {
 	owned.cleanup()
 }
 
-func windowsOutcome(handle windows.Handle, terminated bool) (agentprocess.Outcome, error) {
+func (*windowsProcess) deriveOutcome(handle windows.Handle, terminated bool) (agentprocess.Outcome, error) {
 	var code uint32
 	if err := windows.GetExitCodeProcess(handle, &code); err != nil {
 		return agentprocess.Outcome{}, agentprocess.NewFailure(agentprocess.OperationResult, err)
@@ -254,7 +256,7 @@ func windowsOutcome(handle windows.Handle, terminated bool) (agentprocess.Outcom
 func (owned *windowsProcess) cleanup() {
 	var jobErr error
 	if owned.assigned {
-		jobErr = waitWindowsJobEmpty(owned.job)
+		jobErr = (windowsJobMonitor{}).waitEmpty(owned.job)
 	}
 	inputErr := owned.closeInput()
 	inputCopyErr := <-owned.inputDone
@@ -268,7 +270,9 @@ func (owned *windowsProcess) cleanup() {
 	owned.closed = true
 	owned.mu.Unlock()
 	handleErr := errors.Join(
-		closeWindowsHandle(threadHandle), closeWindowsHandle(processHandle), closeWindowsHandle(jobHandle),
+		(windowsHandleSet{}).closeHandle(threadHandle),
+		(windowsHandleSet{}).closeHandle(processHandle),
+		(windowsHandleSet{}).closeHandle(jobHandle),
 	)
 
 	owned.mu.Lock()
@@ -281,7 +285,7 @@ func (owned *windowsProcess) cleanup() {
 
 func (owned *windowsProcess) closeInput() error {
 	owned.inputOnce.Do(func() {
-		owned.inputErr = closeWindowsFile(owned.input)
+		owned.inputErr = (windowsHandleSet{}).closeFile(owned.input)
 		if errors.Is(owned.inputErr, os.ErrClosed) {
 			owned.inputErr = nil
 		}
@@ -325,7 +329,7 @@ func (owned *windowsProcess) terminate(
 	operation agentprocess.Operation,
 	force bool,
 ) error {
-	if err := operationContext(ctx, operation); err != nil {
+	if err := (processOperationPolicy{}).context(ctx, operation); err != nil {
 		return err
 	}
 	if owned == nil {
@@ -354,7 +358,7 @@ func (owned *windowsProcess) terminate(
 }
 
 func (owned *windowsProcess) Wait(ctx context.Context) error {
-	if err := operationContext(ctx, agentprocess.OperationWait); err != nil {
+	if err := (processOperationPolicy{}).context(ctx, agentprocess.OperationWait); err != nil {
 		return err
 	}
 	if owned == nil || owned.joined == nil {
@@ -364,75 +368,13 @@ func (owned *windowsProcess) Wait(ctx context.Context) error {
 	case <-owned.joined:
 		owned.mu.Lock()
 		defer owned.mu.Unlock()
-		return terminalContainmentFailure(owned.cleanupErr)
+		return (processOperationPolicy{}).terminalContainmentFailure(owned.cleanupErr)
 	case <-ctx.Done():
 		return agentprocess.NewFailure(agentprocess.OperationWait, context.Cause(ctx))
 	}
 }
 
-type platformPipes struct {
-	childInput, childOutput, childStderr    windows.Handle
-	parentInput, parentOutput, parentStderr *os.File
-}
-
-func newPlatformPipes() (*platformPipes, error) {
-	security := windows.SecurityAttributes{
-		Length:        uint32(unsafe.Sizeof(windows.SecurityAttributes{})), // #nosec G115 -- static Windows structure size.
-		InheritHandle: 1,
-	}
-	var childInput, parentInput windows.Handle
-	if err := windows.CreatePipe(&childInput, &parentInput, &security, 0); err != nil {
-		return nil, err
-	}
-	var parentOutput, childOutput windows.Handle
-	if err := windows.CreatePipe(&parentOutput, &childOutput, &security, 0); err != nil {
-		return nil, errors.Join(err, closeWindowsHandle(childInput), closeWindowsHandle(parentInput))
-	}
-	var parentStderr, childStderr windows.Handle
-	if err := windows.CreatePipe(&parentStderr, &childStderr, &security, 0); err != nil {
-		return nil, errors.Join(err, closeWindowsHandles(childInput, parentInput, parentOutput, childOutput))
-	}
-	if err := errors.Join(
-		windows.SetHandleInformation(parentInput, windows.HANDLE_FLAG_INHERIT, 0),
-		windows.SetHandleInformation(parentOutput, windows.HANDLE_FLAG_INHERIT, 0),
-		windows.SetHandleInformation(parentStderr, windows.HANDLE_FLAG_INHERIT, 0),
-	); err != nil {
-		return nil, errors.Join(err, closeWindowsHandles(
-			childInput, parentInput, parentOutput, childOutput, parentStderr, childStderr,
-		))
-	}
-	return &platformPipes{
-		childInput: childInput, childOutput: childOutput, childStderr: childStderr,
-		parentInput:  os.NewFile(uintptr(parentInput), "process-stdin"),
-		parentOutput: os.NewFile(uintptr(parentOutput), "process-stdout"),
-		parentStderr: os.NewFile(uintptr(parentStderr), "process-stderr"),
-	}, nil
-}
-
-func (pipes *platformPipes) closeChildEnds() error {
-	if pipes == nil {
-		return nil
-	}
-	err := closeWindowsHandles(pipes.childInput, pipes.childOutput, pipes.childStderr)
-	pipes.childInput, pipes.childOutput, pipes.childStderr = 0, 0, 0
-	return err
-}
-
-func (pipes *platformPipes) closeAll() error {
-	if pipes == nil {
-		return nil
-	}
-	return errors.Join(
-		pipes.closeChildEnds(), closeWindowsFile(pipes.parentInput),
-		closeWindowsFile(pipes.parentOutput), closeWindowsFile(pipes.parentStderr),
-	)
-}
-
-func (pipes *platformPipes) releaseParentEnds() {
-	pipes.parentInput, pipes.parentOutput, pipes.parentStderr = nil, nil, nil
-}
-
-func windowsParameters(spec agentprocess.Spec) (*uint16, *uint16, *uint16, []uint16, error) {
+func (owned *windowsProcess) parameters(spec agentprocess.Spec) (*uint16, *uint16, *uint16, []uint16, error) {
 	application, err := windows.UTF16PtrFromString(spec.Executable())
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -446,14 +388,14 @@ func windowsParameters(spec agentprocess.Spec) (*uint16, *uint16, *uint16, []uin
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	environment, err := windowsEnvironmentBlock(spec.Environment())
+	environment, err := owned.environmentBlock(spec.Environment())
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 	return application, commandLine, directory, environment, nil
 }
 
-func windowsEnvironmentBlock(environment []string) ([]uint16, error) {
+func (*windowsProcess) environmentBlock(environment []string) ([]uint16, error) {
 	values := append([]string(nil), environment...)
 	sort.Slice(values, func(left, right int) bool {
 		return strings.ToUpper(values[left]) < strings.ToUpper(values[right])
@@ -473,7 +415,7 @@ func windowsEnvironmentBlock(environment []string) ([]uint16, error) {
 	return block, nil
 }
 
-func newPlatformJob() (windows.Handle, error) {
+func (*windowsProcess) newPlatformJob() (windows.Handle, error) {
 	job, err := windows.CreateJobObject(nil, nil)
 	if err != nil {
 		return 0, err
@@ -486,79 +428,9 @@ func newPlatformJob() (windows.Handle, error) {
 		uint32(unsafe.Sizeof(limits)),    // #nosec G115 -- static Windows structure size.
 	)
 	if err != nil {
-		return 0, errors.Join(err, closeWindowsHandle(job))
+		return 0, errors.Join(err, (windowsHandleSet{}).closeHandle(job))
 	}
 	return job, nil
-}
-
-type windowsJobAccounting struct {
-	TotalUserTime, TotalKernelTime, ThisPeriodTotalUserTime, ThisPeriodTotalKernelTime int64
-	TotalPageFaultCount, TotalProcesses, ActiveProcesses, TotalTerminatedProcesses     uint32
-}
-
-func waitWindowsJobEmpty(job windows.Handle) error {
-	if job == 0 || job == windows.InvalidHandle {
-		return errors.New("windows process job is invalid")
-	}
-	for {
-		accounting := windowsJobAccounting{}
-		err := windows.QueryInformationJobObject(
-			job, windows.JobObjectBasicAccountingInformation,
-			uintptr(unsafe.Pointer(&accounting)), // #nosec G103 -- exact Windows accounting structure.
-			uint32(unsafe.Sizeof(accounting)),    // #nosec G115 -- static Windows structure size.
-			nil,
-		)
-		if err != nil {
-			return err
-		}
-		if accounting.ActiveProcesses == 0 {
-			return nil
-		}
-		time.Sleep(windowsJobPollInterval)
-	}
-}
-
-func waitWindowsHandle(handle windows.Handle, timeout time.Duration) error {
-	if handle == 0 || handle == windows.InvalidHandle {
-		return errors.New("windows process handle is invalid")
-	}
-	milliseconds := uint32(windows.INFINITE)
-	if timeout > 0 {
-		milliseconds = uint32(min(timeout.Milliseconds(), int64(windows.INFINITE-1))) // #nosec G115 -- capped below uint32 maximum.
-	}
-	event, err := windows.WaitForSingleObject(handle, milliseconds)
-	if err != nil {
-		return err
-	}
-	if event == windows.WAIT_OBJECT_0 {
-		return nil
-	}
-	if event == uint32(windows.WAIT_TIMEOUT) {
-		return errors.New("windows process cleanup timed out")
-	}
-	return fmt.Errorf("unexpected Windows process wait result: %d", event)
-}
-
-func closeWindowsHandles(handles ...windows.Handle) error {
-	failures := make([]error, 0, len(handles))
-	for _, handle := range handles {
-		failures = append(failures, closeWindowsHandle(handle))
-	}
-	return errors.Join(failures...)
-}
-
-func closeWindowsHandle(handle windows.Handle) error {
-	if handle == 0 || handle == windows.InvalidHandle {
-		return nil
-	}
-	return windows.CloseHandle(handle)
-}
-
-func closeWindowsFile(file *os.File) error {
-	if file == nil {
-		return nil
-	}
-	return file.Close()
 }
 
 func (*windowsProcess) String() string         { return "processplatform.Process([REDACTED])" }
@@ -567,5 +439,3 @@ func (*windowsProcess) Format(state fmt.State, _ rune) {
 	_, _ = io.WriteString(state, "processplatform.Process([REDACTED])") //nolint:errcheck // fmt.Formatter cannot return an error.
 }
 func (owned *windowsProcess) LogValue() slog.Value { return slog.StringValue(owned.String()) }
-
-var _ agentprocess.Process = (*windowsProcess)(nil)

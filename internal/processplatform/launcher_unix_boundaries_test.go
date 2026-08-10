@@ -70,12 +70,13 @@ func TestUnixProcessBoundaryFormattingAndNilSafety(t *testing.T) {
 			t.Fatalf("process formatting = %q", rendered)
 		}
 	}
-	if !channelClosed(closedProcessChannel()) || channelClosed(make(chan struct{})) {
+	process := &unixProcess{}
+	if !process.channelClosed(closedProcessChannel()) || process.channelClosed(make(chan struct{})) {
 		t.Fatal("channel completion classification changed")
 	}
-	if _, resultErr, cleanupErr := unixOutcome(nil, nil); resultErr == nil || cleanupErr != nil ||
-		strings.Contains(resultErr.Error(), "root process") {
-		t.Fatalf("missing root outcome = %v, %v", resultErr, cleanupErr)
+	if result := process.deriveOutcome(nil, nil); result.resultErr == nil || result.cleanupErr != nil ||
+		strings.Contains(result.resultErr.Error(), "root process") {
+		t.Fatalf("missing root outcome = %v, %v", result.resultErr, result.cleanupErr)
 	}
 }
 
@@ -86,7 +87,7 @@ func TestUnixAnchorFailureAbortsRootAndReturnsTerminalWaitFailure(t *testing.T) 
 	executable := installProcessHelper(t, root, "anchor-failure")
 	spec := helperSpec(t, executable, root, "blocked", strings.NewReader(""), io.Discard, io.Discard, nil)
 	snapshotFailure := errors.New("private process snapshot failure")
-	candidate, startErr := startUnixProcess(
+	candidate, startErr := (&unixProcess{}).startWithSnapshot(
 		spec,
 		noopRegistrar{},
 		func() ([]processcontainment.Record, error) { return nil, snapshotFailure },

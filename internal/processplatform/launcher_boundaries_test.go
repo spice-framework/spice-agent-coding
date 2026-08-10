@@ -36,14 +36,14 @@ func TestAdapterBoundaryFailuresAndFormatting(t *testing.T) {
 	}
 
 	cause := errors.New("private terminal containment cause")
-	failure := terminalContainmentFailure(cause)
+	failure := (processOperationPolicy{}).terminalContainmentFailure(cause)
 	var classified interface{ Retryable() bool }
 	if !errors.As(failure, &classified) || classified.Retryable() || !errors.Is(failure, cause) ||
 		strings.Contains(failure.Error(), "private") {
 		t.Fatalf("terminal containment classification = %T, %v", failure, failure)
 	}
 	var nilContainment *terminalContainmentError
-	if nilContainment.Unwrap() != nil || terminalContainmentFailure(nil) != nil {
+	if nilContainment.Unwrap() != nil || (processOperationPolicy{}).terminalContainmentFailure(nil) != nil {
 		t.Fatal("nil containment failure was not nil-safe")
 	}
 

@@ -50,15 +50,15 @@ type unixProcess struct {
 	killSent    bool
 }
 
-func startPlatformProcess(
+func (owned *unixProcess) start(
 	_ context.Context,
 	spec agentprocess.Spec,
 	registrar ChildRegistrar,
 ) (agentprocess.Process, error) {
-	return startUnixProcess(spec, registrar, processcontainment.Snapshot)
+	return owned.startWithSnapshot(spec, registrar, processcontainment.Snapshot)
 }
 
-func startUnixProcess(
+func (*unixProcess) startWithSnapshot(
 	spec agentprocess.Spec,
 	registrar ChildRegistrar,
 	snapshot func() ([]processcontainment.Record, error),
@@ -120,12 +120,12 @@ func startUnixProcess(
 
 func (owned *unixProcess) reap() {
 	waitErr := owned.command.Wait()
-	outcome, resultErr, cleanupErr := unixOutcome(owned.command.ProcessState, waitErr)
+	result := owned.deriveOutcome(owned.command.ProcessState, waitErr)
 	owned.stateMu.Lock()
 	owned.rootDone = true
-	owned.outcome = outcome
-	owned.resultErr = resultErr
-	owned.cleanupErr = errors.Join(owned.cleanupErr, cleanupErr)
+	owned.outcome = result.outcome
+	owned.resultErr = result.resultErr
+	owned.cleanupErr = errors.Join(owned.cleanupErr, result.cleanupErr)
 	anchored := !owned.root.IsZero()
 	owned.stateMu.Unlock()
 	close(owned.done)
@@ -134,28 +134,32 @@ func (owned *unixProcess) reap() {
 	}
 }
 
-func unixOutcome(state *os.ProcessState, waitErr error) (agentprocess.Outcome, error, error) {
+func (owned *unixProcess) deriveOutcome(state *os.ProcessState, waitErr error) unixProcessResult {
 	if state == nil {
 		if waitErr == nil {
 			waitErr = errors.New("root process produced no outcome")
 		}
-		return agentprocess.Outcome{}, agentprocess.NewFailure(agentprocess.OperationResult, waitErr), nil
+		return unixProcessResult{resultErr: agentprocess.NewFailure(agentprocess.OperationResult, waitErr)}
 	}
 	status, ok := state.Sys().(syscall.WaitStatus)
 	if !ok {
-		return agentprocess.NewUnknownOutcome(), nil, nonExitWaitFailure(waitErr)
+		return unixProcessResult{
+			outcome: agentprocess.NewUnknownOutcome(), cleanupErr: owned.nonExitWaitFailure(waitErr),
+		}
 	}
 	if status.Signaled() {
-		return agentprocess.NewSignaledOutcome(), nil, nonExitWaitFailure(waitErr)
+		return unixProcessResult{
+			outcome: agentprocess.NewSignaledOutcome(), cleanupErr: owned.nonExitWaitFailure(waitErr),
+		}
 	}
 	outcome, err := agentprocess.NewExitedOutcome(int64(status.ExitStatus()))
 	if err != nil {
-		return agentprocess.Outcome{}, agentprocess.NewFailure(agentprocess.OperationResult, err), nil
+		return unixProcessResult{resultErr: agentprocess.NewFailure(agentprocess.OperationResult, err)}
 	}
-	return outcome, nil, nonExitWaitFailure(waitErr)
+	return unixProcessResult{outcome: outcome, cleanupErr: owned.nonExitWaitFailure(waitErr)}
 }
 
-func nonExitWaitFailure(waitErr error) error {
+func (*unixProcess) nonExitWaitFailure(waitErr error) error {
 	if waitErr == nil {
 		return nil
 	}
@@ -197,7 +201,7 @@ func (owned *unixProcess) refreshOwnership() error {
 	if err != nil {
 		return err
 	}
-	byPID := indexProcessRecords(records)
+	byPID := owned.indexProcessRecords(records)
 	owned.stateMu.Lock()
 	defer owned.stateMu.Unlock()
 	owned.discoverLocked(byPID)
@@ -236,7 +240,7 @@ func (owned *unixProcess) discoverLocked(processes map[int]processcontainment.Re
 	}
 }
 
-func indexProcessRecords(records []processcontainment.Record) map[int]processcontainment.Record {
+func (*unixProcess) indexProcessRecords(records []processcontainment.Record) map[int]processcontainment.Record {
 	result := make(map[int]processcontainment.Record, len(records))
 	for _, record := range records {
 		result[record.PID] = record
@@ -287,12 +291,12 @@ func (owned *unixProcess) signal(
 	operation agentprocess.Operation,
 	succeeded *bool,
 ) error {
-	if err := operationContext(ctx, operation); err != nil {
+	if err := (processOperationPolicy{}).context(ctx, operation); err != nil {
 		return err
 	}
 	owned.signalMu.Lock()
 	defer owned.signalMu.Unlock()
-	if *succeeded || channelClosed(owned.joined) {
+	if *succeeded || owned.channelClosed(owned.joined) {
 		*succeeded = true
 		return nil
 	}
@@ -319,7 +323,7 @@ func (owned *unixProcess) signalOwned(signal unix.Signal) error {
 	if err != nil {
 		return err
 	}
-	processes := indexProcessRecords(records)
+	processes := owned.indexProcessRecords(records)
 	owned.stateMu.Lock()
 	owned.discoverLocked(processes)
 	rootIdentity := owned.root
@@ -328,8 +332,8 @@ func (owned *unixProcess) signalOwned(signal unix.Signal) error {
 	owned.stateMu.Unlock()
 
 	return errors.Join(
-		signalUnixOwnedGroup(signal, owned.groupID, rootIdentity, children, processes),
-		signalUnixEscapedChildren(signal, owned.groupID, children, processes),
+		owned.signalOwnedGroup(signal, owned.groupID, rootIdentity, children, processes),
+		owned.signalEscapedChildren(signal, owned.groupID, children, processes),
 	)
 }
 
@@ -344,14 +348,14 @@ func (owned *unixProcess) signalUnanchoredRoot(signal os.Signal) error {
 	return err
 }
 
-func signalUnixOwnedGroup(
+func (owned *unixProcess) signalOwnedGroup(
 	signal unix.Signal,
 	groupID int,
 	rootIdentity processcontainment.Identity,
 	children map[int]processcontainment.Identity,
 	processes map[int]processcontainment.Record,
 ) error {
-	groupOwned := unixGroupIsOwned(groupID, rootIdentity, children, processes)
+	groupOwned := owned.groupIsOwned(groupID, rootIdentity, children, processes)
 	if !groupOwned {
 		return nil
 	}
@@ -361,7 +365,7 @@ func signalUnixOwnedGroup(
 	return nil
 }
 
-func unixGroupIsOwned(
+func (*unixProcess) groupIsOwned(
 	groupID int,
 	rootIdentity processcontainment.Identity,
 	children map[int]processcontainment.Identity,
@@ -380,7 +384,7 @@ func unixGroupIsOwned(
 	return false
 }
 
-func signalUnixEscapedChildren(
+func (*unixProcess) signalEscapedChildren(
 	signal unix.Signal,
 	groupID int,
 	children map[int]processcontainment.Identity,
@@ -400,7 +404,7 @@ func signalUnixEscapedChildren(
 }
 
 func (owned *unixProcess) Wait(ctx context.Context) error {
-	if err := operationContext(ctx, agentprocess.OperationWait); err != nil {
+	if err := (processOperationPolicy{}).context(ctx, agentprocess.OperationWait); err != nil {
 		return err
 	}
 	if owned == nil || owned.joined == nil {
@@ -410,13 +414,13 @@ func (owned *unixProcess) Wait(ctx context.Context) error {
 	case <-owned.joined:
 		owned.stateMu.Lock()
 		defer owned.stateMu.Unlock()
-		return terminalContainmentFailure(owned.cleanupErr)
+		return (processOperationPolicy{}).terminalContainmentFailure(owned.cleanupErr)
 	case <-ctx.Done():
 		return agentprocess.NewFailure(agentprocess.OperationWait, context.Cause(ctx))
 	}
 }
 
-func channelClosed(channel <-chan struct{}) bool {
+func (*unixProcess) channelClosed(channel <-chan struct{}) bool {
 	select {
 	case <-channel:
 		return true
@@ -431,5 +435,3 @@ func (*unixProcess) Format(state fmt.State, _ rune) {
 	_, _ = io.WriteString(state, "processplatform.Process([REDACTED])") //nolint:errcheck // fmt.Formatter cannot return an error.
 }
 func (owned *unixProcess) LogValue() slog.Value { return slog.StringValue(owned.String()) }
-
-var _ agentprocess.Process = (*unixProcess)(nil)

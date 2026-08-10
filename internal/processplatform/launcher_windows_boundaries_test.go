@@ -22,7 +22,7 @@ func TestWindowsKernelWaitAndEnvironmentBoundaries(t *testing.T) {
 	t.Parallel()
 
 	for _, handle := range []windows.Handle{0, windows.InvalidHandle} {
-		if err := waitWindowsHandle(handle, time.Second); err == nil {
+		if err := (windowsJobMonitor{}).waitHandle(handle, time.Second); err == nil {
 			t.Fatalf("waitWindowsHandle(%v) succeeded", handle)
 		}
 	}
@@ -31,43 +31,45 @@ func TestWindowsKernelWaitAndEnvironmentBoundaries(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		if closeErr := closeWindowsHandle(event); closeErr != nil {
+		if closeErr := (windowsHandleSet{}).closeHandle(event); closeErr != nil {
 			t.Errorf("close event: %v", closeErr)
 		}
 	})
-	if err = waitWindowsHandle(event, time.Nanosecond); err == nil || !strings.Contains(err.Error(), "timed out") {
+	if err = (windowsJobMonitor{}).waitHandle(event, time.Nanosecond); err == nil ||
+		!strings.Contains(err.Error(), "timed out") {
 		t.Fatalf("unsignaled event wait = %v", err)
 	}
 	if err = windows.SetEvent(event); err != nil {
 		t.Fatal(err)
 	}
-	if err = waitWindowsHandle(event, time.Second); err != nil {
+	if err = (windowsJobMonitor{}).waitHandle(event, time.Second); err != nil {
 		t.Fatalf("signaled event wait = %v", err)
 	}
 
-	job, err := newPlatformJob()
+	job, err := (&windowsProcess{}).newPlatformJob()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = waitWindowsJobEmpty(job); err != nil {
-		closeErr := closeWindowsHandle(job)
+	if err = (windowsJobMonitor{}).waitEmpty(job); err != nil {
+		closeErr := (windowsHandleSet{}).closeHandle(job)
 		t.Fatalf("empty job wait: %v; close: %v", err, closeErr)
 	}
-	if err = closeWindowsHandle(job); err != nil {
+	if err = (windowsHandleSet{}).closeHandle(job); err != nil {
 		t.Fatal(err)
 	}
-	if err = waitWindowsJobEmpty(0); err == nil {
+	if err = (windowsJobMonitor{}).waitEmpty(0); err == nil {
 		t.Fatal("nil job wait succeeded")
 	}
 
-	empty, err := windowsEnvironmentBlock(nil)
+	empty, err := (&windowsProcess{}).environmentBlock(nil)
 	if err != nil || len(empty) != 2 || empty[0] != 0 || empty[1] != 0 {
 		t.Fatalf("empty environment = %#v, %v", empty, err)
 	}
-	if _, err = windowsEnvironmentBlock([]string{"PRIVATE=before\x00after"}); err == nil {
+	if _, err = (&windowsProcess{}).environmentBlock([]string{"PRIVATE=before\x00after"}); err == nil {
 		t.Fatal("nul environment succeeded")
 	}
-	if err = closeWindowsHandles(0, windows.InvalidHandle); err != nil || closeWindowsFile(nil) != nil {
+	if err = (windowsHandleSet{}).close(0, windows.InvalidHandle); err != nil ||
+		(windowsHandleSet{}).closeFile(nil) != nil {
 		t.Fatalf("empty close helpers = %v", err)
 	}
 }
@@ -80,35 +82,38 @@ func TestWindowsAbortTransfersEveryLiveHandle(t *testing.T) {
 			root := testpath.TempDir(t)
 			executable := installProcessHelper(t, root, "suspended")
 			spec := helperSpec(t, executable, root, "blocked", strings.NewReader(""), io.Discard, io.Discard, nil)
-			job, err := newPlatformJob()
+			job, err := (&windowsProcess{}).newPlatformJob()
 			if err != nil {
 				t.Fatal(err)
 			}
-			pipes, err := newPlatformPipes()
-			if err != nil {
-				closeErr := closeWindowsHandle(job)
+			pipes := &platformPipes{}
+			if err = pipes.initialize(); err != nil {
+				closeErr := (windowsHandleSet{}).closeHandle(job)
 				t.Fatalf("create pipes: %v; close job: %v", err, closeErr)
 			}
-			information, err := createSuspendedWindowsProcess(spec, pipes)
+			information, err := (&windowsProcess{}).createSuspendedProcess(spec, pipes)
 			if err != nil {
 				pipeErr := pipes.closeAll()
-				jobErr := closeWindowsHandle(job)
+				jobErr := (windowsHandleSet{}).closeHandle(job)
 				t.Fatalf("create suspended process: %v; pipes: %v; job: %v", err, pipeErr, jobErr)
 			}
 			if assigned {
 				if err = windows.AssignProcessToJobObject(job, information.Process); err != nil {
 					terminateErr := windows.TerminateProcess(information.Process, windowsKillExitCode)
-					waitErr := waitWindowsHandle(information.Process, 5*time.Second)
+					waitErr := (windowsJobMonitor{}).waitHandle(information.Process, 5*time.Second)
 					closeErr := errors.Join(
-						pipes.closeAll(), closeWindowsHandle(information.Thread),
-						closeWindowsHandle(information.Process), closeWindowsHandle(job),
+						pipes.closeAll(), (windowsHandleSet{}).closeHandle(information.Thread),
+						(windowsHandleSet{}).closeHandle(information.Process),
+						(windowsHandleSet{}).closeHandle(job),
 					)
 					t.Fatalf("assign suspended process: %v; terminate: %v; wait: %v; close: %v",
 						err, terminateErr, waitErr, closeErr)
 				}
 			}
 			sentinel := errors.New("intentional launch abort")
-			candidate, abortErr := abortWindowsLaunch(job, pipes, information, assigned, spec, sentinel, nil)
+			candidate, abortErr := (&windowsProcess{}).abortLaunch(
+				job, pipes, information, assigned, spec, sentinel, nil,
+			)
 			if candidate == nil || !errors.Is(abortErr, sentinel) {
 				t.Fatalf("abort = %T, %v", candidate, abortErr)
 			}

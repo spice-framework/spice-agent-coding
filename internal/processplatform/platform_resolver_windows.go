@@ -8,17 +8,21 @@ import (
 	"strings"
 )
 
-func environmentNameEqual(left, right string) bool { return strings.EqualFold(left, right) }
+type platformResolver struct{}
 
-func executableExtensions(requested string, environment []string) []string {
+func (platformResolver) environmentNameEqual(left, right string) bool {
+	return strings.EqualFold(left, right)
+}
+
+func (platformResolver) executableExtensions(requested string, environment []string) []string {
 	extension := filepath.Ext(requested)
 	if extension != "" {
-		if isShellScriptExtension(extension) {
+		if (platformResolver{}).shellScriptExtension(extension) {
 			return nil
 		}
 		return []string{""}
 	}
-	pathExtensions, found := environmentValue(environment, "PATHEXT")
+	pathExtensions, found := (&Resolver{}).environmentValue(environment, "PATHEXT")
 	if !found {
 		return []string{""}
 	}
@@ -30,7 +34,7 @@ func executableExtensions(requested string, environment []string) []string {
 		if extension[0] != '.' {
 			extension = "." + extension
 		}
-		if isShellScriptExtension(extension) {
+		if (platformResolver{}).shellScriptExtension(extension) {
 			continue
 		}
 		result = append(result, extension)
@@ -38,8 +42,8 @@ func executableExtensions(requested string, environment []string) []string {
 	return append([]string{""}, result...)
 }
 
-func isShellScriptExtension(extension string) bool {
+func (platformResolver) shellScriptExtension(extension string) bool {
 	return strings.EqualFold(extension, ".bat") || strings.EqualFold(extension, ".cmd")
 }
 
-func platformExecutable(os.FileInfo) bool { return true }
+func (platformResolver) executable(os.FileInfo) bool { return true }

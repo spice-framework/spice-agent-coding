@@ -2,7 +2,7 @@
 
 Application-owned Go follows the Spice `java-structured` profile. The
 normative policy is the reviewed `CODE_STYLE.md` whose SHA-256 is
-`c0335176d468045db356c2b4908eb2b25964c1bd880eb4f57a98d8657f158298`.
+`8a58866fe06ff4e6bfc6d5d7cc9b01ef053d8d8dcbee5e4e7bef7f6cdcec15dd`.
 That reviewed document codifies and reconciles the original supplied policy
 document (`0947169de8263c2d3d8971d18a7f8bff4837b62eb3f4aec39de920fdabba0182`)
 with the delivered Spice annotations and executable Toolchain verifier. The
@@ -10,7 +10,7 @@ reviewed policy is the authority; repositories must not carry divergent local
 copies.
 
 The independent tools module pins the exact `spicestyle` verifier at
-`v0.1.0-preview.2.0.20260810170203-57cf59f2d895`. The repository-owned
+`v0.1.0-preview.2.0.20260810184201-7e71c68fa312`. The repository-owned
 `.spice/style.json` is strict schema-one configuration: unknown fields,
 unsupported rules, broad variable exemptions, and unclassified package
 functions fail closed. `make check` and `make verify` execute the analyzer
