@@ -10,7 +10,8 @@
     "internal/runidentity",
     "internal/terminal",
     "internal/terminalcommand",
-    "internal/terminalconnector"
+    "internal/terminalconnector",
+    "internal/tuisession"
   ],
   "generatedRoots": [
     "internal/spicegen"

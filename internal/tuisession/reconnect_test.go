@@ -52,7 +52,7 @@ func TestRetryObservationRestoresExactReconnectClaim(t *testing.T) {
 	current := &fakeClientSession{connection: connection}
 	replacement := &fakeClientSession{connection: connection}
 	connector := &reconnectConnector{outcomes: []reconnectOutcome{{session: replacement}}}
-	session := reconnectTestSession(config, connector, current)
+	session := reconnectTestSession(t, config, connector, current)
 
 	announced := false
 	if !session.retryObservation("event", 17, 1, client.ErrClosed, &announced) {
@@ -104,7 +104,7 @@ func TestRestoreFallsBackToFreshSessionOnlyWithoutActiveRun(t *testing.T) {
 		{err: unavailable},
 		{session: fresh},
 	}}
-	session := reconnectTestSession(config, connector, current)
+	session := reconnectTestSession(t, config, connector, current)
 	session.pending[interactionKey{run: "old-run", id: "old-interaction"}] = client.PendingInteraction{}
 	session.interactionRevision = 4
 	if err := session.restoreConnection(1); err != nil {
@@ -131,7 +131,7 @@ func TestRestoreFallsBackToFreshSessionOnlyWithoutActiveRun(t *testing.T) {
 
 	activeCurrent := &fakeClientSession{connection: connection}
 	activeConnector := &reconnectConnector{outcomes: []reconnectOutcome{{err: unavailable}}}
-	active := reconnectTestSession(config, activeConnector, activeCurrent)
+	active := reconnectTestSession(t, config, activeConnector, activeCurrent)
 	active.hasActiveRun = true
 	active.activeRun = mustRun(t, "active-run")
 	if err := active.restoreConnection(1); err == nil || !strings.Contains(err.Error(), "active run") {
@@ -144,21 +144,21 @@ func TestRestoreRejectsInvalidAndSupersededCandidates(t *testing.T) {
 	config, _, connection := testConfig(t)
 
 	staleConnector := &reconnectConnector{}
-	stale := reconnectTestSession(config, staleConnector, &fakeClientSession{connection: connection})
+	stale := reconnectTestSession(t, config, staleConnector, &fakeClientSession{connection: connection})
 	stale.clientGeneration = 2
 	if err := stale.restoreConnection(1); err != nil || len(staleConnector.capturedRequests()) != 0 {
 		t.Fatalf("stale restore = %v with %d requests", err, len(staleConnector.capturedRequests()))
 	}
 
 	nilConnector := &reconnectConnector{outcomes: []reconnectOutcome{{}}}
-	nilCandidate := reconnectTestSession(config, nilConnector, &fakeClientSession{connection: connection})
+	nilCandidate := reconnectTestSession(t, config, nilConnector, &fakeClientSession{connection: connection})
 	if err := nilCandidate.restoreConnection(1); err == nil || !strings.Contains(err.Error(), "nil restored") {
 		t.Fatalf("nil candidate error = %v", err)
 	}
 
 	invalid := &fakeClientSession{}
 	invalidConnector := &reconnectConnector{outcomes: []reconnectOutcome{{session: invalid}}}
-	invalidCandidate := reconnectTestSession(config, invalidConnector, &fakeClientSession{connection: connection})
+	invalidCandidate := reconnectTestSession(t, config, invalidConnector, &fakeClientSession{connection: connection})
 	if err := invalidCandidate.restoreConnection(1); err == nil || !strings.Contains(err.Error(), "negotiated connection") {
 		t.Fatalf("invalid candidate error = %v", err)
 	}
@@ -169,7 +169,7 @@ func TestRestoreRejectsInvalidAndSupersededCandidates(t *testing.T) {
 		t.Fatal("invalid replacement client was not closed")
 	}
 
-	missing := reconnectTestSession(config, &reconnectConnector{}, nil)
+	missing := reconnectTestSession(t, config, &reconnectConnector{}, nil)
 	if err := missing.restoreConnection(1); err == nil || !strings.Contains(err.Error(), "unavailable") {
 		t.Fatalf("missing current client error = %v", err)
 	}
@@ -178,7 +178,7 @@ func TestRestoreRejectsInvalidAndSupersededCandidates(t *testing.T) {
 func TestReconnectRetryClassificationAndClosedState(t *testing.T) {
 	t.Parallel()
 	config, _, connection := testConfig(t)
-	session := reconnectTestSession(config, &reconnectConnector{}, &fakeClientSession{connection: connection})
+	session := reconnectTestSession(t, config, &reconnectConnector{}, &fakeClientSession{connection: connection})
 	unavailableRetry := reconnectStatusError(t, client.ErrorUnavailable, true)
 	unavailableFinal := reconnectStatusError(t, client.ErrorUnavailable, false)
 	unauthenticated := reconnectStatusError(t, client.ErrorUnauthenticated, true)
@@ -234,17 +234,23 @@ func TestReconnectRetryClassificationAndClosedState(t *testing.T) {
 }
 
 func reconnectTestSession(
+	t *testing.T,
 	config Config,
 	connector client.Connector,
 	current client.Session,
 ) *Session {
-	return &Session{
-		config: config, connector: connector, identifiers: &testIdentifierSource{},
-		closed: make(chan struct{}), initializeDone: make(chan struct{}),
-		clientSession: current, clientGeneration: 1,
-		updates: make(chan delivery, 16), pending: make(map[interactionKey]client.PendingInteraction),
-		closeDone: make(chan struct{}),
+	t.Helper()
+	adapted, _, err := NewSession(config, connector, &testIdentifierSource{})
+	if err != nil {
+		t.Fatal(err)
 	}
+	session, ok := adapted.(*Session)
+	if !ok {
+		t.Fatalf("constructed session = %T", adapted)
+	}
+	session.clientSession = current
+	session.clientGeneration = 1
+	return session
 }
 
 func reconnectStatusError(t *testing.T, code client.ErrorCode, retryable bool) error {

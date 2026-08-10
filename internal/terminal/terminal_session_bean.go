@@ -18,5 +18,5 @@ func NewSession(
 	connector client.Connector,
 	identifiers tuisession.IdentifierSource,
 ) (agenttui.Session, lifecycle.Cleanup, error) {
-	return tuisession.New(config, connector, identifiers)
+	return tuisession.NewSession(config, connector, identifiers)
 }

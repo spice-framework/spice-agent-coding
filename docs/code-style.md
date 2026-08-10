@@ -18,8 +18,8 @@ offline through that pinned tools graph.
 
 The active migration boundary covers both process entrypoints and the
 application-owned command, daemon lifecycle, daemon-process containment,
-identity, terminal, and connector packages listed in `.spice/style.json`.
-Within that boundary:
+identity, terminal, connector, and TUI-session packages listed in
+`.spice/style.json`. Within that boundary:
 
 - each source file has one primary type and the filename follows that type;
 - behavior belongs to the owning type instead of loose package functions;

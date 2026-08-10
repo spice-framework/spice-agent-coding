@@ -324,12 +324,12 @@ func TestConstructionIsLazyAndUnusedCleanupDoesNotConnect(t *testing.T) {
 	t.Parallel()
 	config, _, _ := testConfig(t)
 	connector := &fakeConnector{session: &fakeClientSession{}}
-	uiSession, cleanup, err := New(config, connector, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, connector, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	if uiSession == nil || cleanup == nil {
-		t.Fatal("New() returned a nil session or cleanup")
+		t.Fatal("NewSession() returned a nil session or cleanup")
 	}
 	if got := connector.initializeCount(); got != 0 {
 		t.Fatalf("initialize count after construction = %d, want 0", got)
@@ -362,9 +362,9 @@ func TestSubmitReplaysEventsAfterLastPublishedSequence(t *testing.T) {
 		startResult: mustStartResult(t, run),
 	}
 	connector := &fakeConnector{session: clientSession}
-	uiSession, cleanup, err := New(config, connector, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, connector, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 
@@ -438,9 +438,9 @@ func TestInteractionSnapshotSelectsAndRespondsToPendingPrompt(t *testing.T) {
 		)},
 		respondResult: mustRespondResult(t),
 	}
-	uiSession, cleanup, err := New(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 	_ = receiveUpdate(t, uiSession)
@@ -489,9 +489,9 @@ func TestCancelUsesActiveRunAndDoesNotWaitForReceive(t *testing.T) {
 		startResult:  mustStartResult(t, run),
 		cancelResult: mustCancelResult(t),
 	}
-	uiSession, cleanup, err := New(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 	_ = receiveUpdate(t, uiSession)
@@ -547,9 +547,9 @@ func TestStartFailureIsNotRetried(t *testing.T) {
 		)},
 		startErr: expected,
 	}
-	uiSession, cleanup, err := New(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 	_ = receiveUpdate(t, uiSession)
@@ -579,9 +579,9 @@ func TestCleanupClosesStreamsAndUnblocksReceive(t *testing.T) {
 		connection:         connection,
 		interactionStreams: []client.InteractionStream{interactionStream},
 	}
-	uiSession, cleanup, err := New(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	_ = receiveUpdate(t, uiSession)
 	receiveDone := make(chan error, 1)
@@ -632,16 +632,16 @@ func TestConfigAndConstructionRejectInvalidBoundaries(t *testing.T) {
 			if err := config.Validate(); err == nil {
 				t.Fatal("Validate() error = nil")
 			}
-			if _, _, err := New(config, &fakeConnector{}, &testIdentifierSource{}); err == nil {
-				t.Fatal("New() error = nil")
+			if _, _, err := NewSession(config, &fakeConnector{}, &testIdentifierSource{}); err == nil {
+				t.Fatal("NewSession() error = nil")
 			}
 		})
 	}
-	if _, _, err := New(valid, nil, &testIdentifierSource{}); err == nil {
-		t.Fatal("New() accepted a nil connector")
+	if _, _, err := NewSession(valid, nil, &testIdentifierSource{}); err == nil {
+		t.Fatal("NewSession() accepted a nil connector")
 	}
-	if _, _, err := New(valid, &fakeConnector{}, nil); err == nil {
-		t.Fatal("New() accepted a nil identifier source")
+	if _, _, err := NewSession(valid, &fakeConnector{}, nil); err == nil {
+		t.Fatal("NewSession() accepted a nil identifier source")
 	}
 }
 
@@ -674,9 +674,9 @@ func TestInitializationFailuresAreStableAndCloseResources(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			uiSession, cleanup, constructErr := New(test.config, test.connector, &testIdentifierSource{})
+			uiSession, cleanup, constructErr := NewSession(test.config, test.connector, &testIdentifierSource{})
 			if constructErr != nil {
-				t.Fatalf("New() error = %v", constructErr)
+				t.Fatalf("NewSession() error = %v", constructErr)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 			defer cancel()
@@ -701,9 +701,9 @@ func TestReceiveAndPerformRejectInvalidState(t *testing.T) {
 	clientSession := &fakeClientSession{
 		connection: connection, interactionStreams: []client.InteractionStream{interactionStream},
 	}
-	uiSession, cleanup, err := New(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	concrete, ok := uiSession.(*Session)
 	if !ok {
@@ -782,9 +782,9 @@ func TestMutationFailuresAndIdempotentResults(t *testing.T) {
 		}(),
 		eventStreams: []client.EventStream{newEventStream()},
 	}
-	uiSession, cleanup, err := New(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{session: clientSession}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 	_ = receiveUpdate(t, uiSession)
@@ -844,9 +844,9 @@ func TestIdentifierAndClientMutationErrorsAreWrapped(t *testing.T) {
 			if test.configure != nil {
 				test.configure(clientSession)
 			}
-			uiSession, cleanup, err := New(config, &fakeConnector{session: clientSession}, test.identifiers)
+			uiSession, cleanup, err := NewSession(config, &fakeConnector{session: clientSession}, test.identifiers)
 			if err != nil {
-				t.Fatalf("New() error = %v", err)
+				t.Fatalf("NewSession() error = %v", err)
 			}
 			t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 			_ = receiveUpdate(t, uiSession)
@@ -864,9 +864,9 @@ func TestIdentifierAndClientMutationErrorsAreWrapped(t *testing.T) {
 func TestEventFrameValidationAndSummaries(t *testing.T) {
 	t.Parallel()
 	config, _, _ := testConfig(t)
-	uiSession, cleanup, err := New(config, &fakeConnector{}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	session, ok := uiSession.(*Session)
 	if !ok {
@@ -911,9 +911,9 @@ func TestEventFrameValidationAndSummaries(t *testing.T) {
 func TestInteractionFramesEnforceSnapshotAndContiguousChanges(t *testing.T) {
 	t.Parallel()
 	config, _, connection := testConfig(t)
-	uiSession, cleanup, err := New(config, &fakeConnector{}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	session, ok := uiSession.(*Session)
 	if !ok {
@@ -1014,28 +1014,28 @@ func TestSelectionPresentationRetryAndHistoryBoundaries(t *testing.T) {
 		{run: runA.ID(), id: a.ID()}: a,
 		{run: runB.ID(), id: b.ID()}: b,
 	}
-	selected, found := selectInteraction(values, runB, true)
+	selected, found := (interactionSelector{}).selectCurrent(values, runB, true)
 	if !found || selected.ID() != b.ID() {
 		t.Fatalf("active selection = %q, found %v", selected.ID(), found)
 	}
-	selected, found = selectInteraction(values, client.RunRef{}, false)
+	selected, found = (interactionSelector{}).selectCurrent(values, client.RunRef{}, false)
 	if !found || selected.ID() != a.ID() {
 		t.Fatalf("lexical selection = %q, found %v", selected.ID(), found)
 	}
-	if _, found = selectInteraction(nil, client.RunRef{}, false); found {
+	if _, found = (interactionSelector{}).selectCurrent(nil, client.RunRef{}, false); found {
 		t.Fatal("empty selection was found")
 	}
-	if !sameInteraction(a, true, a, true) || sameInteraction(a, true, b, true) || sameInteraction(a, true, b, false) {
+	if !(interactionSelector{}).same(a, true, a, true) || (interactionSelector{}).same(a, true, b, true) || (interactionSelector{}).same(a, true, b, false) {
 		t.Fatal("sameInteraction did not preserve identity and availability")
 	}
-	if !sameInteraction(client.PendingInteraction{}, false, client.PendingInteraction{}, false) {
+	if !(interactionSelector{}).same(client.PendingInteraction{}, false, client.PendingInteraction{}, false) {
 		t.Fatal("two absent interactions should be equal")
 	}
-	text, err := presentationText("ok\x00\n\t")
+	text, err := (eventPresentation{}).text("ok\x00\n\t")
 	if err != nil || text.String() != "ok\n\t" {
 		t.Fatalf("sanitized presentation = %q, %v", text.String(), err)
 	}
-	invalidUTF8, err := presentationText(string([]byte{'a', 0xff, 'b'}))
+	invalidUTF8, err := (eventPresentation{}).text(string([]byte{'a', 0xff, 'b'}))
 	if err != nil || invalidUTF8.String() != "a�b" {
 		t.Fatalf("UTF-8 presentation = %q, %v", invalidUTF8.String(), err)
 	}
@@ -1044,14 +1044,14 @@ func TestSelectionPresentationRetryAndHistoryBoundaries(t *testing.T) {
 		history[index] = mustText(t, fmt.Sprintf("prompt-%d", index))
 	}
 	latest := mustText(t, "latest")
-	bounded := appendBoundedHistory(history, latest)
+	bounded := (historyBuffer{}).append(history, latest)
 	if len(bounded) != agenttui.MaximumPromptHistoryItems || bounded[len(bounded)-1].String() != latest.String() {
 		t.Fatalf("bounded history length = %d, last = %q", len(bounded), bounded[len(bounded)-1].String())
 	}
 	config, _, _ := testConfig(t)
-	uiSession, cleanup, err := New(config, &fakeConnector{}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	session, ok := uiSession.(*Session)
 	if !ok {
@@ -1077,9 +1077,9 @@ func TestRandomIdentifiersAndCloseDeadline(t *testing.T) {
 		t.Fatalf("second random identifier = %q, %v", second, err)
 	}
 	config, _, _ := testConfig(t)
-	uiSession, cleanup, err := New(config, &fakeConnector{}, &testIdentifierSource{})
+	uiSession, cleanup, err := NewSession(config, &fakeConnector{}, &testIdentifierSource{})
 	if err != nil {
-		t.Fatalf("New() error = %v", err)
+		t.Fatalf("NewSession() error = %v", err)
 	}
 	session, ok := uiSession.(*Session)
 	if !ok {
