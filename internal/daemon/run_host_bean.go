@@ -26,7 +26,7 @@ func NewRunHost(
 	healthSources []agentdaemon.HealthSource,
 	limits client.Limits,
 ) (*agentdaemon.RunHost, lifecycle.Cleanup, error) {
-	ctx, err := rootContext(root)
+	ctx, err := root.Context()
 	if err != nil {
 		return nil, nil, err
 	}

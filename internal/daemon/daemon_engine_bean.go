@@ -24,7 +24,7 @@ func NewEngine(
 	limits client.Limits,
 ) (*agent.Engine, error) {
 	options := agent.DefaultEngineOptions()
-	logLimits, err := engineLogLimits(limits)
+	logLimits, err := (engineLogPolicy{}).limits(limits)
 	if err != nil {
 		return nil, err
 	}

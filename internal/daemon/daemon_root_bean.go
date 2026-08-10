@@ -18,10 +18,9 @@ func NewRoot(registry daemonprocess.RootRegistry) (*Root, lifecycle.Cleanup, err
 	if registry == nil {
 		return nil, nil, errors.New("daemon root registry is unavailable")
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	root := &Root{Context: ctx}
+	root := &Root{done: make(chan struct{})}
 	cleanup := func(context.Context) error {
-		cancel()
+		root.cancel()
 		return nil
 	}
 	return root, cleanup, nil

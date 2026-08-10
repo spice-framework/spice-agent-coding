@@ -11,7 +11,7 @@ import (
 //
 // @Bean(name="sessionStore")
 func NewSessionStore(root *Root) (*agentdaemon.SessionStore, error) {
-	ctx, err := rootContext(root)
+	ctx, err := root.Context()
 	if err != nil {
 		return nil, err
 	}

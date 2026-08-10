@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	agentdaemon "github.com/spice-framework/spice-agent/daemon"
@@ -11,25 +10,6 @@ import (
 
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
 // @import { OnStart } from "github.com/spice-framework/spice/annotation/lifecycle"
-
-var (
-	// ErrRuntimePluginRequiredUnavailable is the fixed, secret-safe startup
-	// failure returned when a required configured plugin cannot be activated.
-	ErrRuntimePluginRequiredUnavailable = errors.New("required runtime plugin is unavailable")
-	// ErrRuntimePluginActivationPending prevents transport publication before
-	// the generated activation lifecycle has reached a terminal admission state.
-	ErrRuntimePluginActivationPending = errors.New("runtime plugin activation is incomplete")
-)
-
-type runtimePluginActivationState uint8
-
-const (
-	runtimePluginActivationNew runtimePluginActivationState = iota
-	runtimePluginActivationStarting
-	runtimePluginActivationReady
-	runtimePluginActivationDegraded
-	runtimePluginActivationFailed
-)
 
 // RuntimePluginActivation owns one explicit Host activation attempt before
 // daemon transport publication. It never discovers executables or mutates the
@@ -106,7 +86,7 @@ func (activation *RuntimePluginActivation) setState(state runtimePluginActivatio
 
 func (activation *RuntimePluginActivation) healthContribution() agentdaemon.HealthContribution {
 	if activation == nil {
-		return runtimePluginHealth(agentdaemon.HealthReasonDependencyUnavailable)
+		return (runtimePluginHealthPolicy{}).contribution(agentdaemon.HealthReasonDependencyUnavailable)
 	}
 	activation.mu.RLock()
 	state := activation.state
@@ -115,40 +95,8 @@ func (activation *RuntimePluginActivation) healthContribution() agentdaemon.Heal
 	case runtimePluginActivationReady:
 		return agentdaemon.HealthContribution{}
 	case runtimePluginActivationDegraded:
-		return runtimePluginHealth(agentdaemon.HealthReasonDependencyDegraded)
+		return (runtimePluginHealthPolicy{}).contribution(agentdaemon.HealthReasonDependencyDegraded)
 	default:
-		return runtimePluginHealth(agentdaemon.HealthReasonDependencyUnavailable)
+		return (runtimePluginHealthPolicy{}).contribution(agentdaemon.HealthReasonDependencyUnavailable)
 	}
 }
-
-type runtimePluginHealthSource struct {
-	activation *RuntimePluginActivation
-	host       *pluginhost.Host
-}
-
-func (source *runtimePluginHealthSource) HealthContribution() agentdaemon.HealthContribution {
-	contribution := source.activation.healthContribution()
-	if len(contribution.Reasons()) != 0 {
-		return contribution
-	}
-	switch source.host.Health().State() {
-	case pluginhost.HealthStateReady:
-		return agentdaemon.HealthContribution{}
-	case pluginhost.HealthStateDegraded:
-		return runtimePluginHealth(agentdaemon.HealthReasonDependencyDegraded)
-	case pluginhost.HealthStateRecovering:
-		return runtimePluginHealth(agentdaemon.HealthReasonDependencyRecovering)
-	default:
-		return runtimePluginHealth(agentdaemon.HealthReasonDependencyUnavailable)
-	}
-}
-
-func runtimePluginHealth(reason agentdaemon.HealthReasonCode) agentdaemon.HealthContribution {
-	contribution, err := agentdaemon.NewHealthContribution([]agentdaemon.HealthReasonCode{reason})
-	if err != nil {
-		panic("invalid fixed runtime plugin health reason")
-	}
-	return contribution
-}
-
-var _ agentdaemon.HealthSource = (*runtimePluginHealthSource)(nil)

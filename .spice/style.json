@@ -3,6 +3,7 @@
   "profile": "java-structured",
   "sourceRoots": [
     "cmd",
+    "internal/daemon",
     "internal/daemoncommand",
     "internal/runidentity",
     "internal/terminal",

@@ -5,24 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"path/filepath"
-	"slices"
 	"time"
 
 	pluginhost "github.com/spice-framework/spice-agent/plugin/host"
-	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
-	"github.com/spice-framework/spice-agent/tool"
-)
-
-const (
-	defaultRuntimePluginID                 = "runtime-tool"
-	defaultRuntimePluginStartupTimeout     = 10 * time.Second
-	defaultRuntimePluginCallTimeout        = 2 * time.Minute
-	defaultRuntimePluginDrainTimeout       = 10 * time.Second
-	defaultRuntimePluginShutdownTimeout    = 10 * time.Second
-	defaultRuntimePluginContainmentTimeout = 5 * time.Second
-	runtimePluginCleanupGrace              = time.Second
-	maximumDuration                        = time.Duration(1<<63 - 1)
 )
 
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
@@ -93,89 +78,4 @@ func (plan RuntimePluginPlan) Validate() error {
 		return errors.New("runtime plugin plan state is invalid")
 	}
 	return nil
-}
-
-func runtimePluginCleanupTimeout(properties RuntimePluginProperties) time.Duration {
-	total := runtimePluginCleanupGrace
-	for _, candidate := range []struct {
-		value        time.Duration
-		defaultValue time.Duration
-	}{
-		{properties.DrainTimeout, defaultRuntimePluginDrainTimeout},
-		{properties.ShutdownTimeout, defaultRuntimePluginShutdownTimeout},
-		{properties.ContainmentTimeout, defaultRuntimePluginContainmentTimeout},
-	} {
-		value := candidate.value
-		if value == 0 {
-			value = candidate.defaultValue
-		}
-		if value > maximumDuration-total {
-			return maximumDuration
-		}
-		total += value
-	}
-	return total
-}
-
-func runtimePluginPropertiesDisabled(properties RuntimePluginProperties) bool {
-	return !properties.Required && properties.Path == "" &&
-		(properties.ID == "" || properties.ID == defaultRuntimePluginID) &&
-		properties.SHA256 == "" && properties.ManifestName == "" &&
-		properties.ManifestVersion == "" && properties.WorkingDirectory == "" &&
-		runtimePluginCapabilitiesDisabled(properties) && runtimePluginTimeoutsDefault(properties)
-}
-
-func runtimePluginCapabilitiesDisabled(properties RuntimePluginProperties) bool {
-	return !properties.FilesystemRead && !properties.FilesystemWrite &&
-		!properties.ProcessExecute && !properties.NetworkAccess &&
-		!properties.SecretsRead && !properties.EnvironmentRead && !properties.EnvironmentWrite
-}
-
-func runtimePluginTimeoutsDefault(properties RuntimePluginProperties) bool {
-	return defaultOrZeroDuration(
-		properties.StartupTimeout, defaultRuntimePluginStartupTimeout,
-	) && defaultOrZeroDuration(properties.CallTimeout, defaultRuntimePluginCallTimeout) &&
-		defaultOrZeroDuration(properties.DrainTimeout, defaultRuntimePluginDrainTimeout) &&
-		defaultOrZeroDuration(properties.ShutdownTimeout, defaultRuntimePluginShutdownTimeout) &&
-		defaultOrZeroDuration(properties.ContainmentTimeout, defaultRuntimePluginContainmentTimeout)
-}
-
-func defaultOrZeroDuration(value, defaultValue time.Duration) bool {
-	return value == 0 || value == defaultValue
-}
-
-func absoluteCanonicalPath(value string) bool {
-	return filepath.IsAbs(value) && filepath.Clean(value) == value
-}
-
-func runtimePluginCapabilities(properties RuntimePluginProperties) []tool.Capability {
-	values := make([]tool.Capability, 0, 7)
-	// This lexical order is part of the distribution contract. The process
-	// execute capability used to launch the plugin itself remains host-owned;
-	// this list approves only capabilities declared by plugin tools.
-	for _, candidate := range []struct {
-		enabled    bool
-		capability tool.Capability
-	}{
-		{properties.EnvironmentRead, tool.CapabilityEnvironmentRead},
-		{properties.EnvironmentWrite, tool.CapabilityEnvironmentWrite},
-		{properties.FilesystemRead, tool.CapabilityFilesystemRead},
-		{properties.FilesystemWrite, tool.CapabilityFilesystemWrite},
-		{properties.NetworkAccess, tool.CapabilityNetworkAccess},
-		{properties.ProcessExecute, tool.CapabilityProcessExecute},
-		{properties.SecretsRead, tool.CapabilitySecretsRead},
-	} {
-		if candidate.enabled {
-			values = append(values, candidate.capability)
-		}
-	}
-	return slices.Clip(values)
-}
-
-func runtimePluginLimits() *pluginv1.Limits {
-	return &pluginv1.Limits{
-		MaxMessageBytes: 1 << 20, MaxTools: 256, MaxSchemaBytes: 64 << 10,
-		MaxCallArgumentBytes: 1 << 20, MaxResultBytes: 1 << 20,
-		MaxProgressBytes: 4 << 10, MaxConcurrentCalls: 32,
-	}
 }

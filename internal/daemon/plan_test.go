@@ -14,7 +14,7 @@ func TestEngineLogLimitsMatchAdvertisedReplayCapacity(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewLimits() error = %v", err)
 	}
-	got, err := engineLogLimits(limits)
+	got, err := (engineLogPolicy{}).limits(limits)
 	if err != nil {
 		t.Fatalf("engineLogLimits() error = %v", err)
 	}
@@ -57,7 +57,7 @@ func TestEngineLogLimitsAcceptExactRetainedBoundary(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewLimits() error = %v", err)
 	}
-	got, err := engineLogLimits(limits)
+	got, err := (engineLogPolicy{}).limits(limits)
 	if err != nil {
 		t.Fatalf("engineLogLimits() error = %v", err)
 	}
@@ -72,14 +72,14 @@ func TestEngineLogLimitsRejectReplayBytesOutsidePlatformInt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewLimits() error = %v", err)
 	}
-	if _, err = engineLogLimits(limits); err == nil {
+	if _, err = (engineLogPolicy{}).limits(limits); err == nil {
 		t.Fatal("engineLogLimits() accepted replay bytes outside platform int")
 	}
 }
 
 func TestEngineLogLimitsRejectInvalidOrUnretainableCapacity(t *testing.T) {
 	t.Parallel()
-	if _, err := engineLogLimits(client.Limits{}); err == nil {
+	if _, err := (engineLogPolicy{}).limits(client.Limits{}); err == nil {
 		t.Fatal("engineLogLimits() accepted zero limits")
 	}
 	defaults := event.DefaultLogLimits()
@@ -102,7 +102,7 @@ func TestEngineLogLimitsRejectInvalidOrUnretainableCapacity(t *testing.T) {
 			if err != nil {
 				t.Fatalf("NewLimits() error = %v", err)
 			}
-			if _, err = engineLogLimits(limits); err == nil {
+			if _, err = (engineLogPolicy{}).limits(limits); err == nil {
 				t.Fatal("engineLogLimits() accepted an unretainable replay capacity")
 			}
 		})

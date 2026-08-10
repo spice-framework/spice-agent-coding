@@ -12,51 +12,11 @@ import (
 
 	"github.com/spice-framework/spice-agent/client"
 	"github.com/spice-framework/spice-agent/daemon/endpoint"
-	"github.com/spice-framework/spice-agent/daemon/localipc"
 	"google.golang.org/grpc"
 )
 
 // @import { Bean } from "github.com/spice-framework/spice/annotation/core"
 // @import { OnStart, OnStop } from "github.com/spice-framework/spice/annotation/lifecycle"
-
-type runtimeState uint8
-
-const (
-	runtimeNew runtimeState = iota
-	runtimeStarting
-	runtimeRunning
-	runtimeStopping
-	runtimeStopped
-)
-
-type runtimeServer interface {
-	Serve(net.Listener) error
-	Shutdown(context.Context) error
-}
-
-type runtimePublication interface {
-	CloseContext(context.Context) error
-}
-
-// ListenerFactory owns local transport creation. The interface keeps Runtime
-// transport-agnostic and gives process-level acceptance tests a typed seam for
-// faulting only an established client connection without replacing the daemon
-// or bypassing its generated Spice graph.
-type ListenerFactory interface {
-	Listen(string) (net.Listener, error)
-}
-
-type localListenerFactory struct{}
-
-func (localListenerFactory) Listen(address string) (net.Listener, error) {
-	return localipc.Listen(address)
-}
-
-type runtimeServices struct {
-	listen   func(string) (net.Listener, error)
-	publish  func(context.Context, endpoint.Metadata) (runtimePublication, error)
-	metadata func() (endpoint.Metadata, error)
-}
 
 // Runtime owns listener publication and graceful transport draining. The
 // generated application invokes its lifecycle hooks in ordinary Go.
@@ -110,22 +70,22 @@ func (runtime *Runtime) Start(ctx context.Context) error {
 		serveResult <- runtime.server.Serve(ready)
 		close(serveResult)
 	}()
-	err = waitForPublicationReadiness(ctx, ready.ready, serveResult)
+	err = runtime.waitForPublicationReadiness(ctx, ready.ready, serveResult)
 	if err != nil {
-		cleanupErr := stopUnpublished(runtime.server, listener, serveResult)
+		cleanupErr := runtime.stopUnpublished(listener, serveResult)
 		runtime.resetAfterStartFailure()
 		return errors.Join(err, cleanupErr)
 	}
 
 	metadata, err := runtime.services.metadata()
 	if err != nil {
-		cleanupErr := stopUnpublished(runtime.server, listener, serveResult)
+		cleanupErr := runtime.stopUnpublished(listener, serveResult)
 		runtime.resetAfterStartFailure()
 		return errors.Join(err, cleanupErr)
 	}
 	publication, err := runtime.services.publish(ctx, metadata)
 	if err != nil {
-		cleanupErr := stopUnpublished(runtime.server, listener, serveResult)
+		cleanupErr := runtime.stopUnpublished(listener, serveResult)
 		runtime.resetAfterStartFailure()
 		return errors.Join(fmt.Errorf("publish local endpoint: %w", err), cleanupErr)
 	}
@@ -139,7 +99,7 @@ func (runtime *Runtime) Start(ctx context.Context) error {
 	return nil
 }
 
-func waitForPublicationReadiness(
+func (runtime *Runtime) waitForPublicationReadiness(
 	ctx context.Context,
 	ready <-chan struct{},
 	serveResult <-chan error,
@@ -158,7 +118,7 @@ func waitForPublicationReadiness(
 	case <-ready:
 		select {
 		case err := <-serveResult:
-			if err = normalizedServeError(err); err == nil {
+			if err = runtime.normalizedServeError(err); err == nil {
 				return errors.New("gRPC server stopped before endpoint publication")
 			}
 			return err
@@ -225,9 +185,9 @@ func (runtime *Runtime) Stop(ctx context.Context) error {
 	}
 	result = errors.Join(result, runtime.server.Shutdown(ctx))
 	if listener != nil {
-		result = errors.Join(result, ignoreClosed(listener.Close()))
+		result = errors.Join(result, runtime.ignoreClosed(listener.Close()))
 	}
-	joined, serveErr := waitDone(ctx, serveDone)
+	joined, serveErr := runtime.waitDone(ctx, serveDone)
 	result = errors.Join(result, serveErr)
 	runtime.mu.Lock()
 	result = errors.Join(result, runtime.serveErr)
@@ -271,7 +231,7 @@ func (runtime *Runtime) observeServe(result <-chan error) {
 	if !ok {
 		err = nil
 	}
-	err = normalizedServeError(err)
+	err = runtime.normalizedServeError(err)
 	runtime.mu.Lock()
 	if err != nil {
 		runtime.serveErr = err
@@ -280,21 +240,21 @@ func (runtime *Runtime) observeServe(result <-chan error) {
 	close(runtime.serveDone)
 }
 
-func stopUnpublished(server runtimeServer, listener net.Listener, serveResult <-chan error) error {
+func (runtime *Runtime) stopUnpublished(listener net.Listener, serveResult <-chan error) error {
 	shutdownContext, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var result error
-	if server != nil {
-		result = errors.Join(result, server.Shutdown(shutdownContext))
+	if runtime.server != nil {
+		result = errors.Join(result, runtime.server.Shutdown(shutdownContext))
 	}
 	if listener != nil {
-		result = errors.Join(result, ignoreClosed(listener.Close()))
+		result = errors.Join(result, runtime.ignoreClosed(listener.Close()))
 	}
-	_, serveErr := waitServe(shutdownContext, serveResult)
+	_, serveErr := runtime.waitServe(shutdownContext, serveResult)
 	return errors.Join(result, serveErr)
 }
 
-func waitServe(ctx context.Context, result <-chan error) (bool, error) {
+func (runtime *Runtime) waitServe(ctx context.Context, result <-chan error) (bool, error) {
 	if result == nil {
 		return true, nil
 	}
@@ -305,11 +265,11 @@ func waitServe(ctx context.Context, result <-chan error) (bool, error) {
 		if !ok {
 			return true, nil
 		}
-		return true, normalizedServeError(err)
+		return true, runtime.normalizedServeError(err)
 	}
 }
 
-func waitDone(ctx context.Context, done <-chan struct{}) (bool, error) {
+func (*Runtime) waitDone(ctx context.Context, done <-chan struct{}) (bool, error) {
 	if done == nil {
 		return true, nil
 	}
@@ -321,27 +281,16 @@ func waitDone(ctx context.Context, done <-chan struct{}) (bool, error) {
 	}
 }
 
-func normalizedServeError(err error) error {
+func (*Runtime) normalizedServeError(err error) error {
 	if err == nil || errors.Is(err, grpc.ErrServerStopped) || errors.Is(err, net.ErrClosed) {
 		return nil
 	}
 	return fmt.Errorf("serve local endpoint: %w", err)
 }
 
-func ignoreClosed(err error) error {
+func (*Runtime) ignoreClosed(err error) error {
 	if errors.Is(err, net.ErrClosed) {
 		return nil
 	}
 	return err
-}
-
-type readyListener struct {
-	net.Listener
-	ready chan struct{}
-	once  sync.Once
-}
-
-func (listener *readyListener) Accept() (net.Conn, error) {
-	listener.once.Do(func() { close(listener.ready) })
-	return listener.Listener.Accept()
 }

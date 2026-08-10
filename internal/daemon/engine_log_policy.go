@@ -7,11 +7,9 @@ import (
 	"github.com/spice-framework/spice-agent/event"
 )
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+type engineLogPolicy struct{}
 
-const snapshotCompatibilityIdentity = "github.com/spice-framework/spice-agent-coding/daemon:v1"
-
-func engineLogLimits(limits client.Limits) (event.LogLimits, error) {
+func (engineLogPolicy) limits(limits client.Limits) (event.LogLimits, error) {
 	maxEvents := int(limits.ReplayEvents())
 	if maxEvents < 1 || uint64(maxEvents) != uint64(limits.ReplayEvents()) {
 		return event.LogLimits{}, fmt.Errorf(

@@ -36,8 +36,8 @@ func TestHostConstructorsRejectInvalidOwnedDependencies(t *testing.T) {
 	if _, err := NewGRPCServer(nil, endpoint.Token{}, nil, nil, client.Build{}); err == nil {
 		t.Fatal("NewGRPCServer() accepted a nil root")
 	}
-	if _, err := rootContext(nil); err == nil {
-		t.Fatal("rootContext() accepted a nil root")
+	if _, err := (*Root)(nil).Context(); err == nil {
+		t.Fatal("Context() accepted a nil root")
 	}
 }
 
@@ -157,36 +157,37 @@ func TestRuntimeBoundaryHelpersCoverCancellationAndTerminalErrors(t *testing.T) 
 		t.Fatal("Runtime.Done() without a serve channel was not closed")
 	}
 
-	if joined, err := waitServe(context.Background(), nil); !joined || err != nil {
+	runtime := &Runtime{}
+	if joined, err := runtime.waitServe(context.Background(), nil); !joined || err != nil {
 		t.Fatalf("waitServe(nil) = %v, %v", joined, err)
 	}
 	closed := make(chan error)
 	close(closed)
-	if joined, err := waitServe(context.Background(), closed); !joined || err != nil {
+	if joined, err := runtime.waitServe(context.Background(), closed); !joined || err != nil {
 		t.Fatalf("waitServe(closed) = %v, %v", joined, err)
 	}
 	serveFailure := errors.New("serve failed")
 	failed := make(chan error, 1)
 	failed <- serveFailure
-	if joined, err := waitServe(context.Background(), failed); !joined || !errors.Is(err, serveFailure) {
+	if joined, err := runtime.waitServe(context.Background(), failed); !joined || !errors.Is(err, serveFailure) {
 		t.Fatalf("waitServe(failed) = %v, %v", joined, err)
 	}
 	cancelled, cancel := context.WithCancel(context.Background())
 	cancel()
-	if joined, err := waitServe(cancelled, make(chan error)); joined || !errors.Is(err, context.Canceled) {
+	if joined, err := runtime.waitServe(cancelled, make(chan error)); joined || !errors.Is(err, context.Canceled) {
 		t.Fatalf("waitServe(cancelled) = %v, %v", joined, err)
 	}
-	if joined, err := waitDone(context.Background(), nil); !joined || err != nil {
+	if joined, err := runtime.waitDone(context.Background(), nil); !joined || err != nil {
 		t.Fatalf("waitDone(nil) = %v, %v", joined, err)
 	}
-	if joined, err := waitDone(cancelled, make(chan struct{})); joined || !errors.Is(err, context.Canceled) {
+	if joined, err := runtime.waitDone(cancelled, make(chan struct{})); joined || !errors.Is(err, context.Canceled) {
 		t.Fatalf("waitDone(cancelled) = %v, %v", joined, err)
 	}
-	if err := ignoreClosed(net.ErrClosed); err != nil {
+	if err := runtime.ignoreClosed(net.ErrClosed); err != nil {
 		t.Fatalf("ignoreClosed(net.ErrClosed) = %v", err)
 	}
 	other := errors.New("other")
-	if err := ignoreClosed(other); !errors.Is(err, other) {
+	if err := runtime.ignoreClosed(other); !errors.Is(err, other) {
 		t.Fatalf("ignoreClosed(other) = %v", err)
 	}
 }

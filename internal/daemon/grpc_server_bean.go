@@ -20,7 +20,7 @@ func NewGRPCServer(
 	sessions *agentdaemon.SessionStore,
 	build client.Build,
 ) (*grpcserver.Server, error) {
-	ctx, err := rootContext(root)
+	ctx, err := root.Context()
 	if err != nil {
 		return nil, err
 	}

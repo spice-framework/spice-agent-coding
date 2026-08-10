@@ -14,8 +14,8 @@ func TestRootOwnsCancellationAndRequiresContainmentRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewRoot() error = %v", err)
 	}
-	if _, err = rootContext(root); err != nil {
-		t.Fatalf("rootContext() error = %v", err)
+	if _, err = root.Context(); err != nil {
+		t.Fatalf("Context() error = %v", err)
 	}
 	if err = cleanup(context.Background()); err != nil {
 		t.Fatalf("cleanup() error = %v", err)
@@ -23,8 +23,8 @@ func TestRootOwnsCancellationAndRequiresContainmentRegistry(t *testing.T) {
 	if !errors.Is(root.Err(), context.Canceled) {
 		t.Fatalf("root error = %v, want cancellation", root.Err())
 	}
-	if _, err = rootContext(root); err == nil {
-		t.Fatal("rootContext() accepted a canceled root")
+	if _, err = root.Context(); err == nil {
+		t.Fatal("Context() accepted a canceled root")
 	}
 	if _, _, err = NewRoot(nil); err == nil {
 		t.Fatal("NewRoot() accepted a nil registry")

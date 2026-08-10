@@ -1,6 +1,13 @@
 package daemon
 
-import "time"
+import (
+	"path/filepath"
+	"slices"
+	"time"
+
+	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
+	"github.com/spice-framework/spice-agent/tool"
+)
 
 // @import { ConfigurationProperties } from "github.com/spice-framework/spice/annotation/core"
 
@@ -30,4 +37,89 @@ type RuntimePluginProperties struct {
 	DrainTimeout       time.Duration `spice:"timeouts.drain,default=10s,env=SPICE_AGENT_RUNTIME_PLUGIN_DRAIN_TIMEOUT"`
 	ShutdownTimeout    time.Duration `spice:"timeouts.shutdown,default=10s,env=SPICE_AGENT_RUNTIME_PLUGIN_SHUTDOWN_TIMEOUT"`
 	ContainmentTimeout time.Duration `spice:"timeouts.containment,default=5s,env=SPICE_AGENT_RUNTIME_PLUGIN_CONTAINMENT_TIMEOUT"`
+}
+
+func (properties RuntimePluginProperties) cleanupTimeout() time.Duration {
+	total := runtimePluginCleanupGrace
+	for _, candidate := range []struct {
+		value        time.Duration
+		defaultValue time.Duration
+	}{
+		{properties.DrainTimeout, defaultRuntimePluginDrainTimeout},
+		{properties.ShutdownTimeout, defaultRuntimePluginShutdownTimeout},
+		{properties.ContainmentTimeout, defaultRuntimePluginContainmentTimeout},
+	} {
+		value := candidate.value
+		if value == 0 {
+			value = candidate.defaultValue
+		}
+		if value > maximumDuration-total {
+			return maximumDuration
+		}
+		total += value
+	}
+	return total
+}
+
+func (properties RuntimePluginProperties) disabled() bool {
+	return !properties.Required && properties.Path == "" &&
+		(properties.ID == "" || properties.ID == defaultRuntimePluginID) &&
+		properties.SHA256 == "" && properties.ManifestName == "" &&
+		properties.ManifestVersion == "" && properties.WorkingDirectory == "" &&
+		properties.capabilitiesDisabled() && properties.timeoutsDefault()
+}
+
+func (properties RuntimePluginProperties) capabilitiesDisabled() bool {
+	return !properties.FilesystemRead && !properties.FilesystemWrite &&
+		!properties.ProcessExecute && !properties.NetworkAccess &&
+		!properties.SecretsRead && !properties.EnvironmentRead && !properties.EnvironmentWrite
+}
+
+func (properties RuntimePluginProperties) timeoutsDefault() bool {
+	return properties.defaultOrZeroDuration(
+		properties.StartupTimeout, defaultRuntimePluginStartupTimeout,
+	) && properties.defaultOrZeroDuration(properties.CallTimeout, defaultRuntimePluginCallTimeout) &&
+		properties.defaultOrZeroDuration(properties.DrainTimeout, defaultRuntimePluginDrainTimeout) &&
+		properties.defaultOrZeroDuration(properties.ShutdownTimeout, defaultRuntimePluginShutdownTimeout) &&
+		properties.defaultOrZeroDuration(properties.ContainmentTimeout, defaultRuntimePluginContainmentTimeout)
+}
+
+func (RuntimePluginProperties) defaultOrZeroDuration(value, defaultValue time.Duration) bool {
+	return value == 0 || value == defaultValue
+}
+
+func (RuntimePluginProperties) absoluteCanonicalPath(value string) bool {
+	return filepath.IsAbs(value) && filepath.Clean(value) == value
+}
+
+func (properties RuntimePluginProperties) capabilities() []tool.Capability {
+	values := make([]tool.Capability, 0, 7)
+	// This lexical order is part of the distribution contract. The process
+	// execute capability used to launch the plugin itself remains host-owned;
+	// this list approves only capabilities declared by plugin tools.
+	for _, candidate := range []struct {
+		enabled    bool
+		capability tool.Capability
+	}{
+		{properties.EnvironmentRead, tool.CapabilityEnvironmentRead},
+		{properties.EnvironmentWrite, tool.CapabilityEnvironmentWrite},
+		{properties.FilesystemRead, tool.CapabilityFilesystemRead},
+		{properties.FilesystemWrite, tool.CapabilityFilesystemWrite},
+		{properties.NetworkAccess, tool.CapabilityNetworkAccess},
+		{properties.ProcessExecute, tool.CapabilityProcessExecute},
+		{properties.SecretsRead, tool.CapabilitySecretsRead},
+	} {
+		if candidate.enabled {
+			values = append(values, candidate.capability)
+		}
+	}
+	return slices.Clip(values)
+}
+
+func (RuntimePluginProperties) limits() *pluginv1.Limits {
+	return &pluginv1.Limits{
+		MaxMessageBytes: 1 << 20, MaxTools: 256, MaxSchemaBytes: 64 << 10,
+		MaxCallArgumentBytes: 1 << 20, MaxResultBytes: 1 << 20,
+		MaxProgressBytes: 4 << 10, MaxConcurrentCalls: 32,
+	}
 }
