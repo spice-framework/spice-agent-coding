@@ -1,6 +1,6 @@
 # Release history
 
-## `v0.1.0-preview.4` candidate
+## `v0.1.0-preview.4`
 
 Preview 4 advances only the inert distribution identity and exact reusable
 release authority after the immutable preview 3 attempt exposed two
@@ -12,8 +12,17 @@ installed-byte verification unchanged.
 The recovery candidate is authorized independently by Development commit
 `ed7e58a7493a44ba60df881b9bf9b24edcbc99ee`, Toolchain commit
 `01478163ce5282f9b71d7da19016f721b911f909`, and organization workflow commit
-`3bf54b986b68d386a90e418776b35ca08f234d20`. This section does not claim that
-an immutable preview 4 tag or release exists.
+`3bf54b986b68d386a90e418776b35ca08f234d20`.
+
+The immutable annotated tag object
+`df36c1fe523043f6c41e8c5f3d29b49267875d61` points to candidate commit
+`05c16d2e932416085ad489cd401a372661bb95b3`. Release workflow run
+`31349650978` completed candidate validation, deterministic rendering,
+independent verification, installed-byte execution on Linux and Windows,
+keyless attestation, provenance authentication, and protected publication. The
+non-draft GitHub prerelease contains the exact six platform archives, release
+metadata, SPDX SBOM, checksums, and portable Sigstore provenance bundle: ten
+assets in total.
 
 ## `v0.1.0-preview.3`
 
