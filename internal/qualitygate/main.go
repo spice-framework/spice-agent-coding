@@ -146,7 +146,28 @@ func checkRepositoryContract(root string) error {
 	if err := checkReleaseArtifactEntrypoint(root); err != nil {
 		return err
 	}
+	if err := checkDevelopmentEntrypoints(root); err != nil {
+		return err
+	}
 	return checkReleaseWorkflow(root)
+}
+
+func checkDevelopmentEntrypoints(root string) error {
+	content, err := os.ReadFile(filepath.Join(root, "Makefile")) // #nosec G304 -- fixed repository build contract.
+	if err != nil {
+		return fmt.Errorf("read Makefile: %w", err)
+	}
+	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
+	const environment = `dev-daemon dev-terminal: export GOWORK := off
+dev-daemon dev-terminal: export GOTOOLCHAIN := local
+dev-daemon dev-terminal: export GOFLAGS := -mod=vendor
+dev-daemon dev-terminal: export GOPROXY := off
+dev-daemon dev-terminal: export GOSUMDB := off
+`
+	if strings.Count(normalized, environment) != 1 {
+		return errors.New("development targets must use the exact workspace-disabled vendor-only Go environment")
+	}
+	return nil
 }
 
 func checkReleaseArtifactEntrypoint(root string) error {

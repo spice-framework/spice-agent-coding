@@ -13,6 +13,13 @@ build artifacts and do not copy a sibling daemon binary into the terminal's
 temporary build directory; the terminal's managed mode therefore discovers and
 attaches to the daemon already supervised by `dev-daemon`.
 
+Both development targets force `GOWORK=off`, the repository-selected local Go
+toolchain, vendor module resolution, and disabled proxy and checksum-database
+access. Development generation therefore uses the same reviewed source
+provenance as the repository freshness gate. Ambient workspace or module-cache
+state cannot relocate committed generated ownership between `vendor/` and an
+external module source path.
+
 `dev-daemon` builds the `spice-agentd` target from `cmd/spice-agentd` and
 passes `serve` to the candidate. `dev-terminal` builds the `spice-agent` target
 from `cmd/spice-agent` and runs its managed attach-or-start mode. Both targets

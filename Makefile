@@ -23,6 +23,12 @@ verify-release: verify
 verify-release-artifacts:
 	go run ./internal/qualitygate -mode=release-artifacts -artifacts="$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)"
 
+dev-daemon dev-terminal: export GOWORK := off
+dev-daemon dev-terminal: export GOTOOLCHAIN := local
+dev-daemon dev-terminal: export GOFLAGS := -mod=vendor
+dev-daemon dev-terminal: export GOPROXY := off
+dev-daemon dev-terminal: export GOSUMDB := off
+
 # The daemon and terminal use separate Spice supervisors. Target-local source
 # changes therefore rebuild only their owning process, while shared source and
 # module changes correctly invalidate both graphs.

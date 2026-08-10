@@ -50,6 +50,40 @@ func TestReleaseArtifactEntrypointRequiresExactExplicitDirectoryContract(t *test
 	}
 }
 
+func TestDevelopmentEntrypointsRequireExactVendorEnvironment(t *testing.T) {
+	t.Parallel()
+	const valid = `dev-daemon dev-terminal: export GOWORK := off
+dev-daemon dev-terminal: export GOTOOLCHAIN := local
+dev-daemon dev-terminal: export GOFLAGS := -mod=vendor
+dev-daemon dev-terminal: export GOPROXY := off
+dev-daemon dev-terminal: export GOSUMDB := off
+`
+	for _, test := range []struct {
+		name, content string
+		wantErr       bool
+	}{
+		{name: "valid", content: valid},
+		{name: "workspace enabled", content: strings.Replace(valid, "GOWORK := off", "GOWORK := auto", 1), wantErr: true},
+		{name: "module cache", content: strings.Replace(valid, "GOFLAGS := -mod=vendor", "GOFLAGS := -mod=mod", 1), wantErr: true},
+		{name: "proxy enabled", content: strings.Replace(valid, "GOPROXY := off", "GOPROXY := https://proxy.golang.org", 1), wantErr: true},
+		{name: "checksum database enabled", content: strings.Replace(valid, "GOSUMDB := off", "GOSUMDB := sum.golang.org", 1), wantErr: true},
+		{name: "duplicate", content: valid + valid, wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			writeFile(t, root, "Makefile", test.content)
+			err := checkDevelopmentEntrypoints(root)
+			if test.wantErr && err == nil {
+				t.Fatal("checkDevelopmentEntrypoints() error = nil")
+			}
+			if !test.wantErr && err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
 func TestReleaseArtifactGateUsesOneOfflineBuildTaggedTest(t *testing.T) {
 	t.Parallel()
 	directory := filepath.Join(t.TempDir(), "verified subjects")

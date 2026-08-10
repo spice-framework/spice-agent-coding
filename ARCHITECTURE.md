@@ -98,7 +98,10 @@ the last published sequence. See [the terminal target](docs/terminal-target.md).
 Both command packages use the Spice application-package layout required by
 `spice dev`. Repository-owned `dev-daemon` and `dev-terminal` targets start
 independent last-known-good supervisors and exclude only source owned solely by
-the other product target. Shared-source changes remain visible to both. See
+the other product target. Both supervisors inherit the repository's exact
+vendor-only, workspace-disabled Go environment, so development generation and
+the mandatory freshness gate resolve identical source ownership. Shared-source
+changes remain visible to both. See
 [the development-loop contract](docs/development-loop.md).
 
 `internal/architectureproof` is a real generated application used to freeze the
