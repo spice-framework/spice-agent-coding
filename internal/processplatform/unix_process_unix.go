@@ -55,7 +55,7 @@ func (owned *unixProcess) start(
 	spec agentprocess.Spec,
 	registrar ChildRegistrar,
 ) (agentprocess.Process, error) {
-	return owned.startWithSnapshot(spec, registrar, processcontainment.Snapshot)
+	return owned.startWithSnapshot(spec, registrar, processcontainment.NewSnapshotter().Snapshot)
 }
 
 func (*unixProcess) startWithSnapshot(

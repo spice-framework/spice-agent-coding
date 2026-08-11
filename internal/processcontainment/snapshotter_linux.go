@@ -10,8 +10,16 @@ import (
 	"strings"
 )
 
+// Snapshotter owns Linux process-table observation and decoding.
+type Snapshotter struct{}
+
+// NewSnapshotter returns stateless process-table observation support.
+func NewSnapshotter() Snapshotter {
+	return Snapshotter{}
+}
+
 // Snapshot returns every visible identity-bearing process record.
-func Snapshot() ([]Record, error) {
+func (Snapshotter) Snapshot() ([]Record, error) {
 	entries, err := os.ReadDir("/proc")
 	if err != nil {
 		return nil, err
@@ -31,7 +39,7 @@ func Snapshot() ([]Record, error) {
 			}
 			continue
 		}
-		record, valid := ParseLinuxProcessStat(pid, string(value))
+		record, valid := (Snapshotter{}).ParseLinuxProcessStat(pid, string(value))
 		if valid {
 			records = append(records, record)
 		}
@@ -40,7 +48,7 @@ func Snapshot() ([]Record, error) {
 }
 
 // ParseLinuxProcessStat decodes the identity fields used by Snapshot.
-func ParseLinuxProcessStat(pid int, value string) (Record, bool) {
+func (Snapshotter) ParseLinuxProcessStat(pid int, value string) (Record, bool) {
 	closeName := strings.LastIndexByte(value, ')')
 	if closeName < 0 || closeName+2 >= len(value) {
 		return Record{}, false

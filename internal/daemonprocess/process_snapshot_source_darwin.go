@@ -7,7 +7,7 @@ import "github.com/spice-framework/spice-agent-coding/internal/processcontainmen
 type processSnapshotSource struct{}
 
 func (processSnapshotSource) snapshot() ([]processRecord, error) {
-	processes, err := processcontainment.Snapshot()
+	processes, err := processcontainment.NewSnapshotter().Snapshot()
 	if err != nil {
 		return nil, err
 	}

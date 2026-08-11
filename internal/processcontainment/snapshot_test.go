@@ -9,7 +9,7 @@ import (
 
 func TestSnapshotContainsCurrentImmutableIdentity(t *testing.T) {
 	t.Parallel()
-	records, err := Snapshot()
+	records, err := NewSnapshotter().Snapshot()
 	if err != nil {
 		t.Fatal(err)
 	}

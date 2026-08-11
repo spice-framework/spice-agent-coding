@@ -4,8 +4,16 @@ package processcontainment
 
 import "golang.org/x/sys/unix"
 
+// Snapshotter owns Darwin process-table observation.
+type Snapshotter struct{}
+
+// NewSnapshotter returns stateless process-table observation support.
+func NewSnapshotter() Snapshotter {
+	return Snapshotter{}
+}
+
 // Snapshot returns every visible identity-bearing process record.
-func Snapshot() ([]Record, error) {
+func (Snapshotter) Snapshot() ([]Record, error) {
 	processes, err := unix.SysctlKinfoProcSlice("kern.proc.all")
 	if err != nil {
 		return nil, err

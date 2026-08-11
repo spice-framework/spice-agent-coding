@@ -7,7 +7,8 @@ import "github.com/spice-framework/spice-agent-coding/internal/processcontainmen
 type processSnapshotSource struct{}
 
 func (processSnapshotSource) snapshot() ([]processRecord, error) {
-	snapshot, err := processcontainment.Snapshot()
+	snapshotter := processcontainment.NewSnapshotter()
+	snapshot, err := snapshotter.Snapshot()
 	if err != nil {
 		return nil, err
 	}
@@ -19,7 +20,7 @@ func (processSnapshotSource) snapshot() ([]processRecord, error) {
 }
 
 func (processSnapshotSource) parseLinuxStat(pid int, value string) (processRecord, bool) {
-	record, valid := processcontainment.ParseLinuxProcessStat(pid, value)
+	record, valid := processcontainment.NewSnapshotter().ParseLinuxProcessStat(pid, value)
 	if !valid {
 		return processRecord{}, false
 	}

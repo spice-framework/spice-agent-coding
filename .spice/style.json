@@ -11,6 +11,7 @@
     "internal/devacceptance",
     "internal/distribution",
     "internal/installedacceptance",
+    "internal/processcontainment",
     "internal/processplatform",
     "internal/runidentity",
     "internal/runtimepluginfixture",
