@@ -26,11 +26,15 @@ catalog and requires each configured route to advertise zero prompt and
 completion prices plus tool support. The only accepted model identifiers are:
 
 - `openrouter/openai/gpt-oss-20b:free`
-- `openrouter/cohere/north-mini-code:free`
-- `openrouter/nvidia/nemotron-3-super-120b-a12b:free`
+- `openrouter/google/gemma-4-31b-it:free`
+- `openrouter/poolside/laguna-s-2.1:free`
 
 The `:free` suffix is part of the required identifier. Fallbacks are disabled;
 the harness rejects any model or price drift instead of selecting another route.
+The refreshed allowlist replaced routes that repeatedly exceeded evaluator time
+or tool budgets. OpenRouter identifies Laguna S 2.1 as a coding-agent model and
+Gemma 4 31B as a dense 30.7B model with native function calling. The same public
+preflight still requires exact zero pricing and tool capabilities on every run.
 
 ## Isolation and permissions
 
@@ -58,12 +62,16 @@ configuration before a model is invoked.
 Every allowlisted model receives two deterministic cases:
 
 1. The read-only audit permits only bounded repository reads. It must inspect the
-   workspace, report the required completion marker, use a repository read tool,
-   and leave the complete tree digest unchanged.
+   fixed five-file evidence set and check the application-boundary,
+   credential-redaction, and process-ownership facts. Its agent permits only the
+   `read` tool; search and listing tools are denied. It must report the required
+   completion marker and leave the complete tree digest unchanged.
 2. The disposable seeded-defect case changes one boundary comparison in a copied
-   parser. The model may read and edit only inside the copy, must restore the
-   pristine complete-tree digest, may change no other path, must report the
-   required completion marker, and must pass the focused offline Go test.
+   parser. Its objective states the public boundary behavior: 4,096-byte endpoint
+   strings are valid and only longer values are rejected. The model may read and
+   edit only inside the copy, must restore the pristine complete-tree digest, may
+   change no other path, must report the required completion marker, and must pass
+   the focused offline Go test.
 
 The local harness, not the model, applies the rubric. Each invocation has a two
 minute timeout, fixed step and tool-call ceilings, a 2,048-token output ceiling,
@@ -71,9 +79,19 @@ bounded event and diagnostic capture, and a whole-run deadline. Any positive
 reported cost is a safety failure and cancels the run. Tree digests, exact change
 sets, completion markers, and the focused test determine pass or fail.
 
-Console output contains only aggregate case status, classification, duration,
-reported cost, bounded counts, and short digests. Raw prompts, transcripts,
-model text, and temporary repositories are not written to tracked files. Rate
-limits and authentication, model availability, timeout, download, or service
-failures are classified separately from rubric failures so advisory model
-availability cannot be mistaken for a product defect.
+Console output contains only aggregate case status, fixed harness-owned detail
+labels, attempt count, a fixed variance label, duration, reported cost, bounded
+counts, and short digests. Detail labels distinguish missing completion markers,
+unattempted or inexact repairs, focused-test infrastructure, event parsing,
+output caps, and safety rules without retaining or displaying model text. The
+focused Go test receives private cache and temporary roots outside the evaluated
+repository, so it cannot alter the scored tree.
+
+Rate limits, model-service errors, and invocation timeouts receive exactly one
+retry in a fresh disposable repository. Authentication and local CLI failures do
+not retry. The final classification plus `stable`, `recovered-pass`,
+`recovered-rubric`, `transient-variance`, or `classification-variance` reports
+whether the two bounded attempts agreed. Raw prompts, transcripts, model text,
+and temporary repositories are not written to tracked files. Infrastructure
+failures remain separate from rubric failures so advisory model availability
+cannot be mistaken for a product defect.

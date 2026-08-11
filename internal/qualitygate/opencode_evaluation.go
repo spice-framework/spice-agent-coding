@@ -77,6 +77,9 @@ func (evaluation opencodeEvaluation) prepare(
 	if err != nil {
 		return "", nil, nil, fmt.Errorf("OpenCode advisory infrastructure unavailable: %w", err)
 	}
+	if err = evaluation.validateConfiguration(ctx, executable, environment, workspace.repository); err != nil {
+		return "", nil, nil, err
+	}
 	models := evaluation.catalog.Models()
 	if err = evaluation.freeRoutes.Validate(ctx, models); err != nil {
 		return "", nil, nil, fmt.Errorf("OpenCode advisory routes unavailable: %w", err)
@@ -92,30 +95,12 @@ func (evaluation opencodeEvaluation) evaluateMatrix(
 	environment []string,
 	models []opencodeModel,
 ) ([]opencodeEvaluationResult, error) {
-	validatedConfiguration := false
 	results := make([]opencodeEvaluationResult, 0, len(models)*len(openCodeEvaluationCases()))
 	for modelIndex, model := range models {
 		for caseIndex, evaluationCase := range openCodeEvaluationCases() {
 			label := fmt.Sprintf("%02d-%02d-%s-%s", modelIndex, caseIndex, model.Label, evaluationCase.Name)
-			repositoryRoot, pathErr := workspace.CaseRepository(label)
-			if pathErr != nil {
-				return nil, pathErr
-			}
-			repository, constructErr := newOpenCodeRepository(source, repositoryRoot)
-			if constructErr != nil {
-				return nil, constructErr
-			}
-			if copyErr := repository.Copy(ctx); copyErr != nil {
-				return nil, copyErr
-			}
-			if !validatedConfiguration {
-				if validateErr := evaluation.validateConfiguration(ctx, executable, environment, repositoryRoot); validateErr != nil {
-					return nil, validateErr
-				}
-				validatedConfiguration = true
-			}
-			result, executeErr := evaluation.runCase(
-				ctx, executable, environment, repository, model, evaluationCase,
+			result, executeErr := evaluation.runRetriedCase(
+				ctx, source, workspace, executable, environment, model, evaluationCase, label,
 			)
 			if executeErr != nil {
 				return nil, executeErr
@@ -124,7 +109,7 @@ func (evaluation opencodeEvaluation) evaluateMatrix(
 			if result.Classification == "safety-failed" {
 				return nil, fmt.Errorf(
 					"OpenCode advisory evaluation violated its safety contract: model=%s case=%s detail=%s before=%s after=%s",
-					result.Model, result.Case, result.SafetyDetail, result.Before, result.After,
+					result.Model, result.Case, result.Detail, result.Before, result.After,
 				)
 			}
 		}
@@ -139,14 +124,49 @@ func writeOpenCodeResults(destination io.Writer, results []opencodeEvaluationRes
 	for _, result := range results {
 		if _, err := fmt.Fprintf(
 			destination,
-			"  model=%s case=%s classification=%s duration=%s cost=%.4f tools=%d steps=%d before=%s after=%s\n",
-			result.Model, result.Case, result.Classification, result.Duration.Round(time.Millisecond), result.Cost,
-			result.Tools, result.Steps, result.Before, result.After,
+			"  model=%s case=%s classification=%s detail=%s attempts=%d variance=%s duration=%s cost=%.4f tools=%d steps=%d before=%s after=%s\n",
+			result.Model, result.Case, result.Classification, result.Detail, result.Attempts, result.Variance,
+			result.Duration.Round(time.Millisecond), result.Cost, result.Tools, result.Steps, result.Before, result.After,
 		); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (evaluation opencodeEvaluation) runRetriedCase(
+	ctx context.Context,
+	source string,
+	workspace *opencodeWorkspace,
+	executable string,
+	environment []string,
+	model opencodeModel,
+	evaluationCase opencodeCase,
+	label string,
+) (opencodeEvaluationResult, error) {
+	attempts := make([]opencodeEvaluationResult, 0, maximumOpenCodeAttempts)
+	for attempt := 1; attempt <= maximumOpenCodeAttempts; attempt++ {
+		repositoryRoot, err := workspace.CaseRepository(fmt.Sprintf("%s-attempt-%d", label, attempt))
+		if err != nil {
+			return opencodeEvaluationResult{}, err
+		}
+		repository, err := newOpenCodeRepository(source, repositoryRoot)
+		if err != nil {
+			return opencodeEvaluationResult{}, err
+		}
+		if err = repository.Copy(ctx); err != nil {
+			return opencodeEvaluationResult{}, err
+		}
+		result, err := evaluation.runCase(ctx, executable, environment, repository, model, evaluationCase)
+		if err != nil {
+			return opencodeEvaluationResult{}, err
+		}
+		attempts = append(attempts, result)
+		if !retryableOpenCodeClassification(result.Classification) {
+			break
+		}
+	}
+	return combineOpenCodeAttempts(attempts), nil
 }
 
 func (evaluation opencodeEvaluation) validateConfiguration(
@@ -194,21 +214,38 @@ func (evaluation opencodeEvaluation) runCase(
 	if err != nil {
 		return opencodeEvaluationResult{}, err
 	}
+	detail := openCodeInvocationDetail(classification, summary)
 	if classification == "" {
-		classification = evaluation.rubric.Evaluate(ctx, repository, evaluationCase, pristine, before, after, original, summary)
-	}
-	safetyDetail := "none"
-	if classification == "safety-failed" {
-		safetyDetail = "deterministic-rubric"
-		if summary.SafetyFailure != "" {
-			safetyDetail = openCodeSafetyDetail(summary.SafetyFailure)
-		}
+		rubric := evaluation.rubric.Evaluate(ctx, repository, evaluationCase, pristine, before, after, original, summary)
+		classification = rubric.Classification
+		detail = rubric.Detail
 	}
 	return opencodeEvaluationResult{
-		Model: model.Label, Case: evaluationCase.Name, Classification: classification, SafetyDetail: safetyDetail, Duration: duration,
+		Model: model.Label, Case: evaluationCase.Name, Classification: classification, Detail: detail, Duration: duration,
 		Cost: summary.Cost, Tools: len(summary.Tools), Steps: summary.Steps,
 		Before: shortOpenCodeDigest(before.HexDigest()), After: shortOpenCodeDigest(after.HexDigest()),
 	}, nil
+}
+
+func openCodeInvocationDetail(classification string, summary opencodeEventSummary) string {
+	switch classification {
+	case "safety-failed":
+		return openCodeSafetyDetail(summary.SafetyFailure)
+	case "rate-limited":
+		return "provider-rate-limit"
+	case "infrastructure-auth":
+		return "provider-auth"
+	case "infrastructure-model":
+		return "provider-model"
+	case "infrastructure-timeout":
+		return "invocation-deadline"
+	case "infrastructure-cli":
+		return "evaluator-cli"
+	case "infrastructure-prompt":
+		return "prompt-invalid"
+	default:
+		return "none"
+	}
 }
 
 func openCodeSafetyDetail(value string) string {

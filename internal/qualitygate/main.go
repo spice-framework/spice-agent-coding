@@ -45,7 +45,7 @@ func execute() int {
 	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, verify, release-artifacts, or opencode-eval")
 	artifacts := flag.String("artifacts", "", "absolute independently verified release-subject directory")
 	flag.Parse()
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), qualityGateTimeout(*mode))
 	defer cancel()
 	root, err := repositoryRoot()
 	if err == nil {
@@ -58,6 +58,13 @@ func execute() int {
 		return 1
 	}
 	return 1
+}
+
+func qualityGateTimeout(mode string) time.Duration {
+	if mode == "opencode-eval" {
+		return maximumOpenCodeEvaluationDuration + time.Minute
+	}
+	return 15 * time.Minute
 }
 
 type step struct {

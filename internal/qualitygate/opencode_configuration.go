@@ -86,7 +86,7 @@ func (configuration opencodeConfiguration) expected() opencodeConfigurationValue
 		"webfetch": "deny", "websearch": "deny", "lsp": "deny", "skill": "deny",
 		"question": "deny", "todowrite": "deny",
 	}
-	auditPermissions := map[string]string{"*": "deny", "read": "allow", "glob": "allow", "grep": "allow", "list": "allow"}
+	auditPermissions := map[string]string{"*": "deny", "read": "allow"}
 	defectPermissions := maps.Clone(auditPermissions)
 	defectPermissions["edit"] = "allow"
 	return opencodeConfigurationValue{

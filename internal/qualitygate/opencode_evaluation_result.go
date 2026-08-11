@@ -6,7 +6,9 @@ type opencodeEvaluationResult struct {
 	Model          string
 	Case           string
 	Classification string
-	SafetyDetail   string
+	Detail         string
+	Variance       string
+	Attempts       int
 	Duration       time.Duration
 	Cost           float64
 	Tools          int

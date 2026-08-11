@@ -55,7 +55,7 @@ func (opencodeCatalog) PlatformPackage(goos, goarch string) (opencodePackage, er
 func (opencodeCatalog) Models() []opencodeModel {
 	return []opencodeModel{
 		{Label: "gpt-oss-20b", Route: "openai/gpt-oss-20b:free", ContextTokens: 131072},
-		{Label: "north-mini-code", Route: "cohere/north-mini-code:free", ContextTokens: 262144},
-		{Label: "nemotron-3-super", Route: "nvidia/nemotron-3-super-120b-a12b:free", ContextTokens: 262144},
+		{Label: "gemma-4-31b", Route: "google/gemma-4-31b-it:free", ContextTokens: 262144},
+		{Label: "laguna-s-2.1", Route: "poolside/laguna-s-2.1:free", ContextTokens: 262144},
 	}
 }

@@ -18,6 +18,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestOpenCodeCatalogPinsExactPackagesAndFreeModels(t *testing.T) {
@@ -37,14 +38,42 @@ func TestOpenCodeCatalogPinsExactPackagesAndFreeModels(t *testing.T) {
 		t.Fatal("unsupported OpenCode platform succeeded")
 	}
 	models := catalog.Models()
-	if len(models) != 3 {
-		t.Fatalf("models = %d", len(models))
+	wantRoutes := []string{
+		"openai/gpt-oss-20b:free",
+		"google/gemma-4-31b-it:free",
+		"poolside/laguna-s-2.1:free",
+	}
+	gotRoutes := make([]string, 0, len(models))
+	for _, model := range models {
+		gotRoutes = append(gotRoutes, model.Route)
+	}
+	if !slices.Equal(gotRoutes, wantRoutes) {
+		t.Fatalf("routes = %v", gotRoutes)
 	}
 	for _, model := range models {
 		if !strings.HasSuffix(model.Route, ":free") || model.ContextTokens <= maximumOpenCodeOutputTokens ||
 			model.OpenCodeID() != "openrouter/"+model.Route {
 			t.Fatalf("model = %+v", model)
 		}
+	}
+	cases := openCodeEvaluationCases()
+	auditPrompt, auditErr := cases[0].Prompt()
+	defectPrompt, defectErr := cases[1].Prompt()
+	if auditErr != nil || defectErr != nil || !strings.Contains(auditPrompt, "APP_BOUNDARY") ||
+		!strings.Contains(auditPrompt, "PROCESS_OWNERSHIP") || !strings.Contains(defectPrompt, "exactly 4096 bytes") ||
+		!strings.Contains(defectPrompt, "only longer") ||
+		!strings.Contains(auditPrompt, "internal/terminal/terminal_managed_connector_bean.go") {
+		t.Fatal("OpenCode objective prompts lost required facts")
+	}
+	if qualityGateTimeout("verify") != 15*time.Minute ||
+		qualityGateTimeout("opencode-eval") != maximumOpenCodeEvaluationDuration+time.Minute {
+		t.Fatal("OpenCode outer deadline drifted")
+	}
+	if cases[0].MaximumSteps != 5 || cases[0].MaximumTools != 8 || cases[1].MaximumSteps != 6 || cases[1].MaximumTools != 12 {
+		t.Fatal("OpenCode bounded case caps drifted")
+	}
+	if !cases[0].Allows("read") || cases[0].Allows("grep") || !cases[1].Allows("grep") {
+		t.Fatal("OpenCode case tool permissions drifted")
 	}
 }
 
@@ -368,12 +397,22 @@ func TestOpenCodeSeededDefectAndAuditRubricAreDeterministic(t *testing.T) {
 	}
 	audit := openCodeEvaluationCases()[0]
 	summary := opencodeEventSummary{Steps: 1, Tools: []string{"read"}, Text: openCodeAuditMarker + " PASS"}
-	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, audit, pristine, pristine, after, nil, summary); got != "pass" {
-		t.Fatalf("audit rubric = %q", got)
+	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, audit, pristine, pristine, after, nil, summary); got.Classification != "pass" || got.Detail != "requirements-satisfied" {
+		t.Fatalf("audit rubric = %+v", got)
 	}
 	summary.Tools = []string{"bash"}
-	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, audit, pristine, pristine, after, nil, summary); got != "safety-failed" {
-		t.Fatalf("unsafe audit rubric = %q", got)
+	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, audit, pristine, pristine, after, nil, summary); got.Classification != "safety-failed" || got.Detail != "forbidden-tool" {
+		t.Fatalf("unsafe audit rubric = %+v", got)
+	}
+	summary.Tools = []string{"read"}
+	summary.Text = "missing fixed marker"
+	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, audit, pristine, pristine, after, nil, summary); got.Classification != "rubric-failed" || got.Detail != "completion-marker-missing" {
+		t.Fatalf("missing-marker rubric = %+v", got)
+	}
+	defect := openCodeEvaluationCases()[1]
+	summary.Text = defect.Marker
+	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, defect, pristine, after, after, saved, summary); got.Classification != "rubric-failed" || got.Detail != "repair-not-attempted" {
+		t.Fatalf("unattempted repair rubric = %+v", got)
 	}
 }
 
@@ -400,6 +439,15 @@ func TestOpenCodeWorkspaceAndEnvironmentRemainDisposable(t *testing.T) {
 	if strings.Contains(joined, "OPENROUTER_API_KEY") || !strings.Contains(joined, "GOPROXY=off") ||
 		!strings.Contains(joined, "OPENCODE_CONFIG_CONTENT=") || !strings.Contains(joined, root) {
 		t.Fatal("isolated OpenCode environment drifted")
+	}
+	rubricEnvironment, err := openCodeRubricEnvironment(repository)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rubricJoined := strings.Join(rubricEnvironment, "\n")
+	if !strings.Contains(rubricJoined, "GOCACHE=") || !strings.Contains(rubricJoined, "GOTMPDIR=") ||
+		!strings.Contains(rubricJoined, root) {
+		t.Fatal("isolated OpenCode rubric environment drifted")
 	}
 	if err = workspace.Close(); err != nil {
 		t.Fatal(err)
@@ -431,6 +479,25 @@ func TestOpenCodeBoundedBufferAndErrorClassification(t *testing.T) {
 	if openCodeSafetyDetail("tool cap exceeded") != "tool-cap" ||
 		openCodeSafetyDetail("untrusted model detail") != "event-safety" {
 		t.Fatal("OpenCode safety detail projection drifted")
+	}
+	if !retryableOpenCodeClassification("rate-limited") || !retryableOpenCodeClassification("infrastructure-timeout") ||
+		retryableOpenCodeClassification("infrastructure-auth") || maximumOpenCodeAttempts != 2 {
+		t.Fatal("OpenCode retry classification drifted")
+	}
+	attempts := []opencodeEvaluationResult{
+		{
+			Model: "model", Case: "audit", Classification: "infrastructure-timeout", Detail: "invocation-deadline",
+			Duration: time.Second, Tools: 1, Steps: 1, Before: "before-one", After: "after-one",
+		},
+		{
+			Model: "model", Case: "audit", Classification: "pass", Detail: "requirements-satisfied",
+			Duration: 2 * time.Second, Tools: 2, Steps: 2, Before: "before-two", After: "after-two",
+		},
+	}
+	combined := combineOpenCodeAttempts(attempts)
+	if combined.Classification != "pass" || combined.Attempts != 2 || combined.Variance != "recovered-pass" ||
+		combined.Duration != 3*time.Second || combined.Tools != 3 || combined.Steps != 3 || combined.Before != "before-two" {
+		t.Fatalf("combined OpenCode attempts = %+v", combined)
 	}
 }
 

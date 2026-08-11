@@ -16,10 +16,11 @@ const (
 	maximumOpenCodeOutputTokens            = 2048
 	maximumOpenCodeAuditTools              = 8
 	maximumOpenCodeDefectTools             = 12
-	maximumOpenCodeAuditSteps              = 4
+	maximumOpenCodeAuditSteps              = 5
 	maximumOpenCodeDefectSteps             = 6
+	maximumOpenCodeAttempts                = 2
 	maximumOpenCodeInvocationDuration      = 2 * time.Minute
-	maximumOpenCodeEvaluationDuration      = 13 * time.Minute
+	maximumOpenCodeEvaluationDuration      = 25 * time.Minute
 	openCodeCredentialType                 = "api"
 	openCodeProvider                       = "openrouter"
 	openCodeAuditAgent                     = "spice-audit"
