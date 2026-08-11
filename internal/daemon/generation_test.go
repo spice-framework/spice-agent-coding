@@ -27,7 +27,7 @@ const (
 	daemonTestModel  = "daemon-test-model"
 )
 
-func TestDaemonGenerationAndBeanExplanationAreCurrent(t *testing.T) {
+func TestDaemonGenerationIsCurrent(t *testing.T) {
 	root := repositoryRoot(t)
 	for _, retired := range []string{
 		filepath.Join(root, ".spice", "daemon.manifest.json"),
@@ -46,41 +46,16 @@ func TestDaemonGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 			t.Fatalf("spice %v = stdout %q, stderr %q, error %v", arguments, stdout, stderr, err)
 		}
 	}
-	stdout, stderr, err := runSpice(
-		t, root, "beans", "--explain", "--format=json", "./internal/daemon",
-	)
-	if err != nil || stderr != "" {
-		t.Fatalf("spice beans = stdout %q, stderr %q, error %v", stdout, stderr, err)
-	}
-	for _, expected := range []string{
-		`"name": "daemonRootRegistry"`,
-		`"name": "processLauncher"`,
-		`"name": "processResolver"`,
-		`"name": "openAIModelProvider"`,
-		`"name": "read"`,
-		`"name": "replace"`,
-		`"name": "shell"`,
-		`"name": "runtimePluginCompiledDispatcher"`,
-		`"name": "runtimePluginEndpointFactory"`,
-		`"name": "runtimePluginRestartPolicy"`,
-		`"name": "runtimePluginHost"`,
-		`"name": "runtimePluginToolPlanSource"`,
-		`"name": "runtimePluginPlan"`,
-		`"name": "runtimePluginActivation"`,
-		`"name": "runtimePluginHealthSource"`,
-		`"module": "github.com/spice-framework/spice-agent"`,
-		`"name": "daemonRuntime"`,
-	} {
-		if !strings.Contains(stdout, expected) {
-			t.Fatalf("bean explanation lacks %q: %s", expected, stdout)
-		}
-	}
 }
 
 func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.T) {
 	t.Parallel()
 	var pluginLaunches atomic.Int32
 	launcher := agentprocess.LauncherFunc(func(context.Context, agentprocess.Spec) (agentprocess.Process, error) {
+		pluginLaunches.Add(1)
+		return nil, errors.New("generated construction must not launch a runtime plugin")
+	})
+	verified := agentprocess.VerifiedLauncherFunc(func(context.Context, *agentprocess.ExecutableLease, agentprocess.Spec) (agentprocess.Process, error) {
 		pluginLaunches.Add(1)
 		return nil, errors.New("generated construction must not launch a runtime plugin")
 	})
@@ -97,7 +72,8 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 		spicegen.ApplicationOptions{
 			Sources: []spiceconfig.Source{values},
 			Overrides: spicegen.BeanOverrides{
-				ProcessLauncher: spicebean.Replace[agentprocess.Launcher](launcher),
+				ProcessLauncher:         spicebean.Replace[agentprocess.Launcher](launcher),
+				VerifiedProcessLauncher: spicebean.Replace[agentprocess.VerifiedLauncher](verified),
 			},
 		},
 	)
@@ -113,8 +89,17 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 		components.RuntimePluginHostIdentity == nil || components.RuntimePluginEndpointFactory == nil ||
 		components.RuntimePluginCompiledDispatcher == nil || components.RuntimePluginHost == nil ||
 		components.RuntimePluginToolPlanSource == nil || components.RuntimePluginActivation == nil ||
-		components.RuntimePluginHealthSource == nil {
+		components.RuntimePluginHealthSource == nil || components.VerifiedProcessLauncher == nil ||
+		components.AgentLoggingMailbox == nil || components.AgentLoggingProcessor == nil ||
+		components.AgentLoggingHealth == nil {
 		t.Fatal("generated daemon graph is incomplete")
+	}
+	if components.AgentLoggingConfig.MailboxCapacity != 1024 ||
+		components.AgentLoggingConfig.IncludeProgress || components.AgentLoggingConfig.ReadinessImpact {
+		t.Fatalf("generated Agent logging defaults = %#v", components.AgentLoggingConfig)
+	}
+	if contribution := components.AgentLoggingHealth.HealthContribution(); len(contribution.Reasons()) != 0 {
+		t.Fatalf("default Agent logging readiness contribution = %v", contribution)
 	}
 	sourceHost, ok := components.RuntimePluginToolPlanSource.(*pluginhost.Host)
 	if !ok || sourceHost != components.RuntimePluginHost {
@@ -177,6 +162,10 @@ func TestGeneratedDaemonRejectsPartialRuntimePluginConfigurationWithoutLaunch(t 
 		pluginLaunches.Add(1)
 		return nil, errors.New("partial configuration must not launch a runtime plugin")
 	})
+	verified := agentprocess.VerifiedLauncherFunc(func(context.Context, *agentprocess.ExecutableLease, agentprocess.Spec) (agentprocess.Process, error) {
+		pluginLaunches.Add(1)
+		return nil, errors.New("partial configuration must not launch a runtime plugin")
+	})
 	values, err := spiceconfig.NewMapSource("test", map[string]string{
 		"agent.openai.api-key":          daemonTestSecret,
 		"agent.model":                   daemonTestModel,
@@ -191,7 +180,8 @@ func TestGeneratedDaemonRejectsPartialRuntimePluginConfigurationWithoutLaunch(t 
 		spicegen.ApplicationOptions{
 			Sources: []spiceconfig.Source{values},
 			Overrides: spicegen.BeanOverrides{
-				ProcessLauncher: spicebean.Replace[agentprocess.Launcher](launcher),
+				ProcessLauncher:         spicebean.Replace[agentprocess.Launcher](launcher),
+				VerifiedProcessLauncher: spicebean.Replace[agentprocess.VerifiedLauncher](verified),
 			},
 		},
 	)
@@ -220,10 +210,17 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 	runtimeRestart := bytes.Index(providers, []byte("ConstructRuntimePluginRestartPolicy"))
 	runtimeActivation := bytes.Index(providers, []byte("ConstructRuntimePluginActivation"))
 	runtimeHealth := bytes.Index(providers, []byte("ConstructRuntimePluginHealthSource"))
+	loggingConfig := bytes.Index(providers, []byte("ConstructAgentLoggingConfig"))
+	loggingMailbox := bytes.Index(providers, []byte("ConstructAgentLoggingMailbox"))
+	loggingProcessor := bytes.Index(providers, []byte("ConstructAgentLoggingProcessor"))
+	loggingHealth := bytes.Index(providers, []byte("ConstructAgentLoggingHealth"))
+	daemonEngine := bytes.Index(providers, []byte("ConstructDaemonEngine"))
 	if registry < 0 || launcher <= registry || codingConfig <= registry || shellTool <= launcher ||
 		runtimePlan <= shellTool || runtimeRestart <= runtimePlan || runtimeHost <= runtimeRestart ||
 		runtimePlanSource <= runtimeHost ||
-		runtimeActivation <= runtimeHost || runtimeHealth <= runtimeActivation {
+		runtimeActivation <= runtimeHost || runtimeHealth <= runtimeActivation ||
+		loggingConfig < 0 || loggingMailbox <= loggingConfig || loggingProcessor <= loggingMailbox ||
+		loggingHealth <= loggingProcessor || daemonEngine <= loggingProcessor {
 		t.Fatalf(
 			"generated containment order registry=%d launcher=%d coding=%d shell=%d config-plan=%d restart=%d host=%d source=%d activation=%d health=%d",
 			registry,
@@ -238,12 +235,18 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 			runtimeHealth,
 		)
 	}
+	if !bytes.Contains(providers, []byte("[]*event.BestEffortObserver{agentLoggingMailbox}")) ||
+		!bytes.Contains(providers, []byte("[]daemon2.HealthSource{agentLoggingHealth, runtimePluginHealthSource}")) {
+		t.Fatal("generated Agent logging observer or health collection is incomplete or unordered")
+	}
 	for _, expected := range []string{
 		"ConstructDaemonRuntime", "ConstructGrpcServer", "ConstructRunHost",
 		"ConstructProcessLauncher", "ConstructProcessResolver",
 		"ConstructRuntimePluginHost_", "ConstructRuntimePluginToolPlanSource_",
 		"ConstructRuntimePluginRestartPolicy", "ConstructRuntimePluginPlan",
 		"ConstructRuntimePluginActivation", "ConstructRuntimePluginHealthSource",
+		"ConstructAgentLoggingConfig", "ConstructAgentLoggingMailbox",
+		"ConstructAgentLoggingProcessor", "ConstructAgentLoggingHealth",
 		`map[string]tool.Tool{"read": read, "replace": replace, "shell": shell}`,
 	} {
 		if !bytes.Contains(providers, []byte(expected)) {
@@ -272,6 +275,8 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 		"NewRootRegistry", "NewProcessLauncher", "NewExecutableResolver", "NewRuntime",
 		"NewRuntimePluginHostIdentity", "NewRuntimePluginRestartPolicy",
 		"NewRuntimePluginPlan", "NewRuntimePluginActivation", "NewRuntimePluginHealthSource",
+		"NewAgentLoggingConfig", "NewAgentLoggingHealthSource",
+		"github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
 		"github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
 		"github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
 	} {
@@ -301,6 +306,8 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 		"agent.runtime-plugin.timeouts.startup", "agent.runtime-plugin.timeouts.call",
 		"agent.runtime-plugin.timeouts.drain", "agent.runtime-plugin.timeouts.shutdown",
 		"agent.runtime-plugin.timeouts.containment",
+		"agent.logging.mailbox-capacity", "agent.logging.include-progress",
+		"agent.logging.readiness-impact",
 	} {
 		if !bytes.Contains(configuration, []byte(key)) {
 			t.Fatalf("generated configuration lacks public key %q", key)

@@ -44,14 +44,16 @@ func DefaultDisabledRestartPolicy() pluginhost.RestartPolicy {
 func DefaultHost(
 	hostIdentity *pluginv1.BuildIdentity,
 	compiled stage.ToolDispatcher,
+	guards []stage.ToolDispatchGuard,
 	decorators []stage.ToolDispatchDecorator,
 	restart pluginhost.RestartPolicy,
-	launcher process.Launcher,
+	launcher process.VerifiedLauncher,
 	endpoints pluginhost.LocalEndpointFactory,
 ) (*pluginhost.Host, lifecycle.Cleanup, error) {
 	host, err := pluginhost.NewHost(pluginhost.HostConfig{
 		HostIdentity: hostIdentity,
 		Compiled:     compiled,
+		Guards:       guards,
 		Decorators:   decorators,
 		Restart:      restart,
 		Processes:    launcher,

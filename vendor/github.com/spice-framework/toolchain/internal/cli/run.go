@@ -21,8 +21,8 @@ import (
 )
 
 // Version is the version reported by the Spice CLI. Release builds replace the
-// development value through Go's link-time string-variable mechanism.
-var Version = "0.1.0-dev"
+// source release identity through Go's link-time string-variable mechanism.
+var Version = codegen.GeneratorVersion
 
 const legacyStarterSelectionPath = ".spice/starters.json"
 
@@ -298,7 +298,7 @@ Usage:
   spice new (module|service|repository|controller|component|enum) name [--profile=java-structured] [--directory path] [--package name]
   spice new --module path [application-init-option ...]
   spice add [--tool] [--apply] [--directory path] package@version
-  spice verify [--format text|json] [package-pattern ...]
+  spice verify [--format text|json] [--profile java-structured | --style path] [package-pattern ...]
   spice annotations [package-pattern ...]
   spice annotations list [package-pattern ...]
   spice annotations doctor [package-pattern ...]

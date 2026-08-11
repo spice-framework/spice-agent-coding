@@ -10,11 +10,13 @@ import (
 )
 
 // @import { Application } from "github.com/spice-framework/spice/annotation/core"
+// @import { Logging } from "github.com/spice-framework/spice/annotation/observability"
 
 // main marks the terminal command package as one generated Spice application.
 // The marker body is statically inspected and is never executed by analysis.
 //
 // @Application
+// @Logging
 func main() {
 	os.Exit(spicegen.Main(os.Args[1:]))
 }

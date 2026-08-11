@@ -79,7 +79,7 @@ func NewExecutable(config ExecutableConfig) (Executable, error) {
 	if err := validateIdentity("manifest_version", config.ManifestVersion, maximumManifestBytes, false); err != nil {
 		return Executable{}, err
 	}
-	if config.SHA256.isZero() {
+	if config.SHA256.Validate() != nil {
 		return Executable{}, configFailure("sha256", -1, ProblemRequired)
 	}
 	if config.RequestedLimits == nil {

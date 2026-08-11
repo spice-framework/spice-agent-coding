@@ -30,8 +30,9 @@ const (
 type HostConfig struct {
 	HostIdentity *pluginv1.BuildIdentity
 	Compiled     stage.ToolDispatcher
+	Guards       []stage.ToolDispatchGuard
 	Decorators   []stage.ToolDispatchDecorator
-	Processes    process.Launcher
+	Processes    process.VerifiedLauncher
 	Endpoints    LocalEndpointFactory
 	Restart      RestartPolicy
 }
@@ -44,6 +45,7 @@ type Host struct {
 
 	starter             generationStarter
 	compiled            stage.ToolDispatcher
+	guards              []stage.ToolDispatchGuard
 	decorators          []stage.ToolDispatchDecorator
 	restart             RestartPolicy
 	clock               recoveryClock
@@ -176,6 +178,12 @@ func newHost(config HostConfig, random io.Reader, starter generationStarter) (*H
 			return nil, errors.New("runtime plugin host contains a nil decorator")
 		}
 	}
+	guards := slices.Clone(config.Guards)
+	for _, guard := range guards {
+		if guard == nil {
+			return nil, errors.New("runtime plugin host contains a nil dispatch guard")
+		}
+	}
 	if random == nil {
 		random = rand.Reader
 	}
@@ -190,11 +198,11 @@ func newHost(config HostConfig, random io.Reader, starter generationStarter) (*H
 		}
 		starter = productionStarter{launcher: launcher}
 	}
-	base, err := stage.ApplyToolDispatchDecorators(config.Compiled, nil)
+	base, err := stage.SnapshotToolDispatcher(config.Compiled)
 	if err != nil {
 		return nil, fmt.Errorf("snapshot compiled runtime plugin generation: %w", err)
 	}
-	compiled, err := stage.ApplyToolDispatchDecorators(base, decorators)
+	compiled, err := stage.ApplyToolDispatchPipeline(base, guards, decorators)
 	if err != nil {
 		return nil, fmt.Errorf("compose compiled runtime plugin generation: %w", err)
 	}
@@ -205,7 +213,7 @@ func newHost(config HostConfig, random io.Reader, starter generationStarter) (*H
 	root, cancel := context.WithCancel(context.Background())
 	initial := &hostGeneration{id: id, dispatcher: compiled, current: true}
 	host := &Host{
-		starter: starter, compiled: base, decorators: decorators, restart: config.Restart,
+		starter: starter, compiled: base, guards: guards, decorators: decorators, restart: config.Restart,
 		clock: systemRecoveryClock{},
 		root:  root, rootDone: root.Done(), cancel: cancel, activation: make(chan struct{}, 1), closeGate: make(chan struct{}, 1),
 		changed: make(chan struct{}), recoveryWake: make(chan struct{}, 1), recoveryDone: make(chan struct{}), epoch: epoch,
@@ -417,7 +425,7 @@ func (host *Host) compose(candidates []generationCandidate) (stage.ToolDispatche
 	if err != nil {
 		return nil, err
 	}
-	decorated, err := stage.ApplyToolDispatchDecorators(merged, host.decorators)
+	decorated, err := stage.ApplyToolDispatchPipeline(merged, host.guards, host.decorators)
 	if err != nil {
 		return nil, fmt.Errorf("decorate runtime tool dispatcher: %w", err)
 	}
@@ -841,13 +849,14 @@ func (dispatcher *mergedDispatcher) Definition(name string) (tool.Definition, bo
 
 func (dispatcher *mergedDispatcher) Dispatch(
 	ctx context.Context,
+	scope stage.ToolDispatchScope,
 	call tool.Call,
 	reporter tool.Reporter,
 ) (tool.Result, error) {
 	if _, runtime := dispatcher.runtimeName[call.Name()]; runtime {
-		return dispatcher.runtime.Dispatch(ctx, call, reporter)
+		return dispatcher.runtime.Dispatch(ctx, scope, call, reporter)
 	}
-	return dispatcher.compiled.Dispatch(ctx, call, reporter)
+	return dispatcher.compiled.Dispatch(ctx, scope, call, reporter)
 }
 
 var _ stage.ToolPlanSource = (*Host)(nil)

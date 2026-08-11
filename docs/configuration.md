@@ -15,6 +15,15 @@ it cannot appear in generated metadata or diagnostics.
 | `OPENAI_MAX_RETRIES` | no | `0` | Pre-stream retries only |
 | `SPICE_AGENT_WORKSPACE` | no | `.` | Coding-tool workspace |
 | `SPICE_AGENT_RUN_AUTHORITY_DIRECTORY` | no | platform default | Private run-authority state |
+| `SPICE_AGENT_LOGGING_MAILBOX_CAPACITY` | no | `1024` | Bounded daemon Agent-event logging mailbox (1–65536) |
+| `SPICE_AGENT_LOGGING_INCLUDE_PROGRESS` | no | `false` | Admit metadata-only `tool.progress` records; model deltas remain excluded |
+| `SPICE_AGENT_LOGGING_READINESS_IMPACT` | no | `false` | Include fixed-code logging degradation in daemon readiness |
+
+Spice application logging uses `SPICE_LOGGING_FORMAT`, `SPICE_LOGGING_LEVEL`,
+`SPICE_LOGGING_LEVELS`, and `SPICE_LOGGING_ADD_SOURCE`. The daemon writes its
+instance-owned structured logger to the command's caller-owned standard error.
+The interactive terminal keeps the generated logger on its embedded discard
+handler so structured records cannot corrupt Bubble Tea output.
 
 One optional runtime-tool plugin may be selected explicitly. Setting any
 non-default plugin field opts into the plugin contract; a required plugin must

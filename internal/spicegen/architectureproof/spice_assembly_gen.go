@@ -21,12 +21,6 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		return nil, fmt.Errorf("construct application architectureproof: context is nil")
 	}
 	application := &Application{coordinator: spicelifecycle.NewCoordinator()}
-	observers := append([]spicelifecycle.Observer(nil), options.Observers...)
-	for index, observer := range observers {
-		if err := application.coordinator.RegisterObserver(observer); err != nil {
-			return nil, fmt.Errorf("register lifecycle observer %d: %w", index, err)
-		}
-	}
 	configurationSchema, err := ConfigurationSchema()
 	if err != nil {
 		return nil, fmt.Errorf("construct configuration schema for application architectureproof: %w", err)
@@ -49,6 +43,12 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 	}
 	if application.shutdownTimeout <= 0 {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode shutdown timeout for application architectureproof: duration must be positive"))
+	}
+	observers := append([]spicelifecycle.Observer(nil), options.Observers...)
+	for index, observer := range observers {
+		if err := application.coordinator.RegisterObserver(observer); err != nil {
+			return nil, fmt.Errorf("register lifecycle observer %d: %w", index, err)
+		}
 	}
 	dependencies, err := constructApplicationDependencies(ctx, application, options, configurationSnapshot)
 	if err != nil {

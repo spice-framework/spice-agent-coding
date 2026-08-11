@@ -15,13 +15,14 @@ import (
 type engineService struct {
 	enginev1.UnimplementedEngineServiceServer
 
-	root         context.Context //nolint:containedctx // adapter service lifetime, never an RPC lifetime.
-	host         runHostBoundary
-	sessions     sessionStoreBoundary
-	registry     *negotiatedSessionRegistry
-	build        *commonv1.BuildIdentity
-	capabilities *commonv1.CapabilitySet
-	limits       *commonv1.Limits
+	root          context.Context //nolint:containedctx // adapter service lifetime, never an RPC lifetime.
+	host          runHostBoundary
+	sessions      sessionStoreBoundary
+	registry      *negotiatedSessionRegistry
+	build         *commonv1.BuildIdentity
+	capabilities  *commonv1.CapabilitySet
+	limits        *commonv1.Limits
+	protocolRange *commonv1.ProtocolRange
 }
 
 func (service *engineService) Initialize(
@@ -64,9 +65,15 @@ func (service *engineService) Initialize(
 	if err != nil {
 		return initializeInternalFailure("daemon definitions are invalid"), nil
 	}
+	protocolRange := service.protocolRange
+	if protocolRange == nil {
+		// Direct service fixtures predate the private compatibility seam. The
+		// production constructor always supplies the complete supported range.
+		protocolRange = commonv1.SupportedProtocolRange()
+	}
 	negotiation, failure := enginev1.PreflightInitialize(
 		request,
-		commonv1.SupportedProtocolRange(),
+		proto.CloneOf(protocolRange),
 		proto.CloneOf(service.build),
 		proto.CloneOf(service.capabilities),
 		proto.CloneOf(service.limits),

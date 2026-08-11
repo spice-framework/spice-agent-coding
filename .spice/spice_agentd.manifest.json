@@ -10,17 +10,17 @@
     "bridge_dir": "cmd/spice-agentd",
     "manifest_path": ".spice/spice_agentd.manifest.json"
   },
-  "generator_version": "0.1.0-dev",
+  "generator_version": "v0.1.0-preview.2",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:398b6400da248a0b8e7ad991a5e0443c2e73a0c809802993398225521ead8873",
+  "input_sha256": "sha256:aef86594450350c477da4fa3b88984d37fe49aed5898206364c45b7097522eb8",
   "files": [
     {
       "path": "internal/spicegen/spice_agentd/sources/cmd/spice-agentd/application_spice_gen.go",
-      "sha256": "sha256:53e3eab2f2e869ffed07c71de7d65d96444d3443233b29ea9aedffa989b2f277",
+      "sha256": "sha256:9ccec070422208c4862c79ca3a49034a7996dd90c4295aa5608ee9b51d56f90f",
       "role": "source-unit",
       "primary_source": {
         "path": "cmd/spice-agentd/application.go",
-        "line": 17,
+        "line": 18,
         "column": 4,
         "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
       },
@@ -30,7 +30,7 @@
           "contribution": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main",
           "source": {
             "path": "cmd/spice-agentd/application.go",
-            "line": 17,
+            "line": 18,
             "column": 4,
             "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
           },
@@ -39,6 +39,64 @@
             "start_column": 4,
             "end_line": 8,
             "end_column": 41
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/agent_logging_config_bean_spice_gen.go",
+      "sha256": "sha256:7d92fdc7973d5a9cc58bb9179c208df9eb832361e2bee8e1cda3c04171b3a7dd",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/daemon/agent_logging_config_bean.go",
+        "line": 14,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewAgentLoggingConfig"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewAgentLoggingConfig",
+          "source": {
+            "path": "internal/daemon/agent_logging_config_bean.go",
+            "line": 14,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewAgentLoggingConfig"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 40
+          }
+        }
+      ]
+    },
+    {
+      "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/agent_logging_health_source_bean_spice_gen.go",
+      "sha256": "sha256:dc4968316a9ced491906ef6c88c84648de1af8b389e0f2eaea9b3eb5397fc700",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/daemon/agent_logging_health_source_bean.go",
+        "line": 13,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|27:NewAgentLoggingHealthSource"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|27:NewAgentLoggingHealthSource",
+          "source": {
+            "path": "internal/daemon/agent_logging_health_source_bean.go",
+            "line": 13,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|27:NewAgentLoggingHealthSource"
+          },
+          "generated": {
+            "start_line": 15,
+            "start_column": 4,
+            "end_line": 15,
+            "end_column": 40
           }
         }
       ]
@@ -74,11 +132,11 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/daemon_engine_bean_spice_gen.go",
-      "sha256": "sha256:965ab64902de2d09652d59be8f250f29ba84f073290d371c38bc3f8a27b867bf",
+      "sha256": "sha256:0538c8f2edc62eda93b5fb41ac3a5b4522a80f05c4d38a23bd484dcbb44e9dc9",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/daemon/daemon_engine_bean.go",
-        "line": 18,
+        "line": 25,
         "column": 4,
         "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
       },
@@ -88,14 +146,14 @@
           "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine",
           "source": {
             "path": "internal/daemon/daemon_engine_bean.go",
-            "line": 18,
+            "line": 25,
             "column": 4,
             "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
           },
           "generated": {
-            "start_line": 20,
+            "start_line": 23,
             "start_column": 4,
-            "end_line": 20,
+            "end_line": 23,
             "end_column": 34
           }
         }
@@ -567,11 +625,11 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/properties_spice_gen.go",
-      "sha256": "sha256:85121544ce5fbc2a1a93e0ebd50346d44236ca5df4f07d8780aed6dedf15df53",
+      "sha256": "sha256:3644251925c3074d05c3f81fcd188e34a2440aa8e10ccaaaafbf4894fb5ebc42",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/daemon/properties.go",
-        "line": 16,
+        "line": 17,
         "column": 4,
         "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties"
       },
@@ -581,7 +639,7 @@
           "contribution": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties",
           "source": {
             "path": "internal/daemon/properties.go",
-            "line": 16,
+            "line": 17,
             "column": 4,
             "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties"
           },
@@ -712,7 +770,7 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/runtime_plugin_host_bean_spice_gen.go",
-      "sha256": "sha256:0707695f3b887ce14dcd9c44ee9bca6d0efe9f827cad4beddfc2c9ae1fe4ea33",
+      "sha256": "sha256:ce3b08bbdd7cb17390406eb89c9335804993fcfd191163d7f24b0295b427c8b0",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/daemon/runtime_plugin_host_bean.go",
@@ -972,6 +1030,35 @@
       ]
     },
     {
+      "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/verified_process_launcher_bean_spice_gen.go",
+      "sha256": "sha256:7f164b69dd91181d61836d31f9ad26013fbeef0195420845ba0a7ddb17fe1e45",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/daemon/verified_process_launcher_bean.go",
+        "line": 14,
+        "column": 4,
+        "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewVerifiedProcessLauncher"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewVerifiedProcessLauncher",
+          "source": {
+            "path": "internal/daemon/verified_process_launcher_bean.go",
+            "line": 14,
+            "column": 4,
+            "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewVerifiedProcessLauncher"
+          },
+          "generated": {
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 45
+          }
+        }
+      ]
+    },
+    {
       "path": "internal/spicegen/spice_agentd/sources/vendor_/github.com/spice-framework/spice-agent-provider-openai/autoconfigure/autoconfigure_spice_gen.go",
       "sha256": "sha256:129124929e704a98c9160774cb6965a017680702471780d84544b16c3c87b09e",
       "role": "source-unit",
@@ -1062,8 +1149,53 @@
       ]
     },
     {
+      "path": "internal/spicegen/spice_agentd/sources/vendor_/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure_spice_gen.go",
+      "sha256": "sha256:e5f9098f8f37ed01088f86368820f4c4a2c6d1d7ce5f35226d016ed73dce632c",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+        "line": 18,
+        "column": 6,
+        "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|14:DefaultMailbox"
+      },
+      "mappings": [
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|14:DefaultMailbox",
+          "source": {
+            "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+            "line": 18,
+            "column": 6,
+            "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|14:DefaultMailbox"
+          },
+          "generated": {
+            "start_line": 19,
+            "start_column": 4,
+            "end_line": 19,
+            "end_column": 41
+          }
+        },
+        {
+          "kind": "provider-construction",
+          "contribution": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|16:DefaultProcessor",
+          "source": {
+            "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+            "line": 23,
+            "column": 6,
+            "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|16:DefaultProcessor"
+          },
+          "generated": {
+            "start_line": 30,
+            "start_column": 4,
+            "end_line": 30,
+            "end_column": 43
+          }
+        }
+      ]
+    },
+    {
       "path": "internal/spicegen/spice_agentd/sources/vendor_/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure_spice_gen.go",
-      "sha256": "sha256:0dd5e7e006e50947163766c693e01855a198becc9593a43b0e4c7da394e79bc7",
+      "sha256": "sha256:a2dd74e896ca45d2fc1d421dafa347678204e4deef0974ee74a4c8e0f9b6bce4",
       "role": "source-unit",
       "primary_source": {
         "path": "vendor/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
@@ -1077,7 +1209,7 @@
           "contribution": "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource",
           "source": {
             "path": "vendor/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
-            "line": 68,
+            "line": 70,
             "column": 6,
             "symbol": "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource"
           },
@@ -1124,14 +1256,26 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_assembly_gen.go",
-      "sha256": "sha256:7e17bd19029cad8ec5da1c754df59e2d0a05c36028fb1fc9b917f99793ac5090",
+      "sha256": "sha256:38df5ca3213d4e57e42c71245080699f955f8528b7ee9848749cfa4989cdb3ef",
       "role": "target-assembly",
       "related_sources": [
         {
           "path": "cmd/spice-agentd/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
+        },
+        {
+          "path": "internal/daemon/agent_logging_config_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewAgentLoggingConfig"
+        },
+        {
+          "path": "internal/daemon/agent_logging_health_source_bean.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|27:NewAgentLoggingHealthSource"
         },
         {
           "path": "internal/daemon/coding_config_bean.go",
@@ -1141,7 +1285,7 @@
         },
         {
           "path": "internal/daemon/daemon_engine_bean.go",
-          "line": 18,
+          "line": 25,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },
@@ -1243,63 +1387,81 @@
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 16,
+          "line": 17,
           "column": 4,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 18,
+          "line": 19,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.APIKey"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 19,
+          "line": 20,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.BaseURL"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 20,
+          "line": 21,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Organization"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 21,
+          "line": 22,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Project"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 22,
+          "line": 23,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.ProviderTimeout"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 23,
+          "line": 24,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.ProviderRetries"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 24,
+          "line": 25,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Model"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 25,
+          "line": 26,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Workspace"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 26,
+          "line": 27,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.RunAuthorityDirectory"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 28,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingMailboxCapacity"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 29,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingIncludeProgress"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 30,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingReadinessImpact"
         },
         {
           "path": "internal/daemon/run_authority_bean.go",
@@ -1512,6 +1674,12 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewSessionStore"
         },
         {
+          "path": "internal/daemon/verified_process_launcher_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewVerifiedProcessLauncher"
+        },
+        {
           "path": "vendor/github.com/spice-framework/spice-agent-provider-openai/autoconfigure/autoconfigure.go",
           "line": 13,
           "column": 6,
@@ -1536,6 +1704,18 @@
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
         },
         {
+          "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+          "line": 18,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|14:DefaultMailbox"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+          "line": 23,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|16:DefaultProcessor"
+        },
+        {
           "path": "vendor/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
           "line": 23,
           "column": 6,
@@ -1549,7 +1729,7 @@
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
-          "line": 68,
+          "line": 70,
           "column": 6,
           "symbol": "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource"
         }
@@ -1557,12 +1737,12 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_command_gen.go",
-      "sha256": "sha256:2afaeb2f943191295594a8584a6f2412f3de75279b790db1b9767d7b82d93096",
+      "sha256": "sha256:626f4fa8e25d9a1c5f1bd3670e7019e1eacfa31bb9f69f6911c8e437c9d06f19",
       "role": "target-command",
       "related_sources": [
         {
           "path": "cmd/spice-agentd/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
         }
@@ -1570,74 +1750,92 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_configuration_gen.go",
-      "sha256": "sha256:ba5bbfa2467ea3153cc01ac34d6adaad9f6cc21a3c46e1202466d4c9d1a970ab",
+      "sha256": "sha256:bc3302062c52c6d1340fed61bdd522e30783a68789b19ee5039a41a3f26e7e09",
       "role": "target-configuration",
       "related_sources": [
         {
           "path": "cmd/spice-agentd/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 16,
+          "line": 17,
           "column": 4,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 18,
+          "line": 19,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.APIKey"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 19,
+          "line": 20,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.BaseURL"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 20,
+          "line": 21,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Organization"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 21,
+          "line": 22,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Project"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 22,
+          "line": 23,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.ProviderTimeout"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 23,
+          "line": 24,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.ProviderRetries"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 24,
+          "line": 25,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Model"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 25,
+          "line": 26,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Workspace"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 26,
+          "line": 27,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.RunAuthorityDirectory"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 28,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingMailboxCapacity"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 29,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingIncludeProgress"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 30,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingReadinessImpact"
         },
         {
           "path": "internal/daemon/runtime_plugin_properties.go",
@@ -1763,14 +1961,26 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_contracts_gen.go",
-      "sha256": "sha256:eeb353102f75df752dd0e71a02f3fee075b199a557003cdb11771141214f04a0",
+      "sha256": "sha256:73808e9be11c94de2718334686be9fba20f8e0ab0e5fb37872f04b121fc4202f",
       "role": "target-contracts",
       "related_sources": [
         {
           "path": "cmd/spice-agentd/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
+        },
+        {
+          "path": "internal/daemon/agent_logging_config_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewAgentLoggingConfig"
+        },
+        {
+          "path": "internal/daemon/agent_logging_health_source_bean.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|27:NewAgentLoggingHealthSource"
         },
         {
           "path": "internal/daemon/coding_config_bean.go",
@@ -1780,7 +1990,7 @@
         },
         {
           "path": "internal/daemon/daemon_engine_bean.go",
-          "line": 18,
+          "line": 25,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },
@@ -1882,63 +2092,81 @@
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 16,
+          "line": 17,
           "column": 4,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 18,
+          "line": 19,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.APIKey"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 19,
+          "line": 20,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.BaseURL"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 20,
+          "line": 21,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Organization"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 21,
+          "line": 22,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Project"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 22,
+          "line": 23,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.ProviderTimeout"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 23,
+          "line": 24,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.ProviderRetries"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 24,
+          "line": 25,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Model"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 25,
+          "line": 26,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Workspace"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 26,
+          "line": 27,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.RunAuthorityDirectory"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 28,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingMailboxCapacity"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 29,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingIncludeProgress"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 30,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingReadinessImpact"
         },
         {
           "path": "internal/daemon/run_authority_bean.go",
@@ -2151,6 +2379,12 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewSessionStore"
         },
         {
+          "path": "internal/daemon/verified_process_launcher_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewVerifiedProcessLauncher"
+        },
+        {
           "path": "vendor/github.com/spice-framework/spice-agent-provider-openai/autoconfigure/autoconfigure.go",
           "line": 13,
           "column": 6,
@@ -2175,6 +2409,18 @@
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
         },
         {
+          "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+          "line": 18,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|14:DefaultMailbox"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+          "line": 23,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|16:DefaultProcessor"
+        },
+        {
           "path": "vendor/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
           "line": 23,
           "column": 6,
@@ -2188,7 +2434,7 @@
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
-          "line": 68,
+          "line": 70,
           "column": 6,
           "symbol": "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource"
         }
@@ -2196,12 +2442,12 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_features_gen.go",
-      "sha256": "sha256:07ad4a54a25874378ebba8d374681d512983331ffff53b26aa3405e5bba97212",
+      "sha256": "sha256:7b973673b141e0c3ef92a8dd879bea42cbdf90417909bb489ddd80b8656954f8",
       "role": "target-features",
       "related_sources": [
         {
           "path": "cmd/spice-agentd/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
         },
@@ -2227,12 +2473,12 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_lifecycle_gen.go",
-      "sha256": "sha256:0184facdc6475b5fa879631e6537990f88ac70adf9bd61e191d1506f959f3508",
+      "sha256": "sha256:9a638ba594e9cfd3c868544d2ac182d99ef571b296694b5487bb9375ae12a897",
       "role": "target-lifecycle",
       "related_sources": [
         {
           "path": "cmd/spice-agentd/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
         },
@@ -2258,14 +2504,26 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_providers_gen.go",
-      "sha256": "sha256:2ae7d2d5661ebdd05b351bcdd4237a2fa142645e484f1a613edf8dd84dba268c",
+      "sha256": "sha256:aa61e16df394056e91ef5e0e9e604aa5b45e5907b0c27219e5ffc72e92cf73f8",
       "role": "target-providers",
       "related_sources": [
         {
           "path": "cmd/spice-agentd/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|62:github.com/spice-framework/spice-agent-coding/cmd/spice-agentd|0:|4:main"
+        },
+        {
+          "path": "internal/daemon/agent_logging_config_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewAgentLoggingConfig"
+        },
+        {
+          "path": "internal/daemon/agent_logging_health_source_bean.go",
+          "line": 13,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|27:NewAgentLoggingHealthSource"
         },
         {
           "path": "internal/daemon/coding_config_bean.go",
@@ -2275,7 +2533,7 @@
         },
         {
           "path": "internal/daemon/daemon_engine_bean.go",
-          "line": 18,
+          "line": 25,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },
@@ -2377,63 +2635,81 @@
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 16,
+          "line": 17,
           "column": 4,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 18,
+          "line": 19,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.APIKey"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 19,
+          "line": 20,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.BaseURL"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 20,
+          "line": 21,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Organization"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 21,
+          "line": 22,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Project"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 22,
+          "line": 23,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.ProviderTimeout"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 23,
+          "line": 24,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.ProviderRetries"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 24,
+          "line": 25,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Model"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 25,
+          "line": 26,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.Workspace"
         },
         {
           "path": "internal/daemon/properties.go",
-          "line": 26,
+          "line": 27,
           "column": 2,
           "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.RunAuthorityDirectory"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 28,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingMailboxCapacity"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 29,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingIncludeProgress"
+        },
+        {
+          "path": "internal/daemon/properties.go",
+          "line": 30,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties.LoggingReadinessImpact"
         },
         {
           "path": "internal/daemon/run_authority_bean.go",
@@ -2628,6 +2904,12 @@
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewSessionStore"
         },
         {
+          "path": "internal/daemon/verified_process_launcher_bean.go",
+          "line": 14,
+          "column": 4,
+          "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewVerifiedProcessLauncher"
+        },
+        {
           "path": "vendor/github.com/spice-framework/spice-agent-provider-openai/autoconfigure/autoconfigure.go",
           "line": 13,
           "column": 6,
@@ -2652,6 +2934,18 @@
           "symbol": "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"
         },
         {
+          "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+          "line": 18,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|14:DefaultMailbox"
+        },
+        {
+          "path": "vendor/github.com/spice-framework/spice-agent/logging/autoconfigure/autoconfigure.go",
+          "line": 23,
+          "column": 6,
+          "symbol": "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|16:DefaultProcessor"
+        },
+        {
           "path": "vendor/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
           "line": 23,
           "column": 6,
@@ -2665,7 +2959,7 @@
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent/plugin/host/autoconfigure/autoconfigure.go",
-          "line": 68,
+          "line": 70,
           "column": 6,
           "symbol": "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource"
         }

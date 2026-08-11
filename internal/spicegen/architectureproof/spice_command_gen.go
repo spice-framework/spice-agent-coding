@@ -22,10 +22,11 @@ import (
 type ShutdownContextFactory func(time.Duration) (context.Context, context.CancelFunc)
 
 type CommandOptions struct {
-	Context         context.Context
-	Arguments       []string
-	Stdout          io.Writer
-	Stderr          io.Writer
+	Context   context.Context
+	Arguments []string
+	Stdout    io.Writer
+	Stderr    io.Writer
+
 	Logger          *slog.Logger
 	ShutdownTimeout time.Duration
 	ShutdownContext ShutdownContextFactory
@@ -46,7 +47,6 @@ func Main(arguments []string) int {
 		Arguments: arguments,
 		Stdout:    os.Stdout,
 		Stderr:    os.Stderr,
-		Logger:    logger,
 		Application: ApplicationOptions{
 			Sources: []spiceconfig.Source{environment},
 		},

@@ -67,7 +67,7 @@ github.com/openai/openai-go/v3/shared/constant
 # github.com/rivo/uniseg v0.4.7
 ## explicit; go 1.18
 github.com/rivo/uniseg
-# github.com/spice-framework/spice v0.1.0-preview.2
+# github.com/spice-framework/spice v0.1.0-preview.2.0.20260811041952-0e79bc4f3b29
 ## explicit; go 1.26.0
 github.com/spice-framework/spice/annotation
 github.com/spice-framework/spice/annotation/async
@@ -87,16 +87,29 @@ github.com/spice-framework/spice/annotation/sdk/protocol
 github.com/spice-framework/spice/annotation/sdk/starter
 github.com/spice-framework/spice/annotation/security
 github.com/spice-framework/spice/annotation/web
+github.com/spice-framework/spice/async
+github.com/spice-framework/spice/batch
 github.com/spice-framework/spice/bean
+github.com/spice-framework/spice/cache
 github.com/spice-framework/spice/config
 github.com/spice-framework/spice/conversion
+github.com/spice-framework/spice/data
+github.com/spice-framework/spice/event
+github.com/spice-framework/spice/event/outbox
 github.com/spice-framework/spice/expression
 github.com/spice-framework/spice/lifecycle
+github.com/spice-framework/spice/logging
+github.com/spice-framework/spice/mail
+github.com/spice-framework/spice/mail/mailtest
+github.com/spice-framework/spice/migration
+github.com/spice-framework/spice/observability
+github.com/spice-framework/spice/retry
+github.com/spice-framework/spice/schedule
 github.com/spice-framework/spice/security
 github.com/spice-framework/spice/starter
 github.com/spice-framework/spice/validation
 github.com/spice-framework/spice/web
-# github.com/spice-framework/spice-agent v0.1.0-preview.4
+# github.com/spice-framework/spice-agent v0.1.0-preview.6.0.20260811054602-8fd9ba5f8a90
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent/agent
 github.com/spice-framework/spice-agent/annotation/agent
@@ -117,6 +130,8 @@ github.com/spice-framework/spice-agent/engine/v1
 github.com/spice-framework/spice-agent/event
 github.com/spice-framework/spice-agent/interaction
 github.com/spice-framework/spice-agent/internal/annotationtool
+github.com/spice-framework/spice-agent/logging
+github.com/spice-framework/spice-agent/logging/autoconfigure
 github.com/spice-framework/spice-agent/message
 github.com/spice-framework/spice-agent/model
 github.com/spice-framework/spice-agent/plugin/host
@@ -144,7 +159,7 @@ github.com/spice-framework/spice-agent-tui/cmd/spice-agent-tui-annotations
 github.com/spice-framework/spice-agent-tui/internal/annotationtool
 github.com/spice-framework/spice-agent-tui/internal/presentation
 github.com/spice-framework/spice-agent-tui/terminal
-# github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260807044408-6598abca8196
+# github.com/spice-framework/toolchain v0.1.0-preview.2.0.20260811055955-07268323c5f9
 ## explicit; go 1.26.0
 github.com/spice-framework/toolchain/cmd/spice
 github.com/spice-framework/toolchain/cmd/spice-annotation-core

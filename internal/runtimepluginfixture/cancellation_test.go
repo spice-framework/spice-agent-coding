@@ -98,6 +98,10 @@ func TestFixtureCancellationReleasesSingleConcurrencySlotAndProcess(t *testing.T
 		definitions[1].Name() != fixtureTool {
 		t.Fatalf("cancellation fixture definitions = %#v", definitions)
 	}
+	dispatchScope, err := newFixtureDispatchScope(lease)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	blockCall, err := tool.NewCall("distribution-fixture-block-call", fixtureBlock, []byte(`{}`))
 	if err != nil {
@@ -112,7 +116,7 @@ func TestFixtureCancellationReleasesSingleConcurrencySlotAndProcess(t *testing.T
 	}
 	dispatchDone := make(chan dispatchOutcome, 1)
 	go func() {
-		result, dispatchErr := lease.Dispatcher().Dispatch(callContext, blockCall, reporter)
+		result, dispatchErr := lease.Dispatcher().Dispatch(callContext, dispatchScope, blockCall, reporter)
 		dispatchDone <- dispatchOutcome{result: result, err: dispatchErr}
 	}()
 
@@ -155,7 +159,7 @@ func TestFixtureCancellationReleasesSingleConcurrencySlotAndProcess(t *testing.T
 	}
 	echoContext, cancelEcho := context.WithTimeout(t.Context(), 5*time.Second)
 	echoReporter := &recordingReporter{}
-	echoResult, err := lease.Dispatcher().Dispatch(echoContext, echoCall, echoReporter)
+	echoResult, err := lease.Dispatcher().Dispatch(echoContext, dispatchScope, echoCall, echoReporter)
 	cancelEcho()
 	if err != nil {
 		t.Fatalf("dispatch echo after cancellation released the single slot: %v", err)

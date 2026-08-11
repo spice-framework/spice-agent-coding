@@ -99,6 +99,9 @@ func TestGeneratedTerminalConstructsInspectableGraphWithoutConnecting(t *testing
 	if components.TerminalClientConnector != components.TerminalManagedConnector {
 		t.Fatal("check mode did not select the generated managed connector")
 	}
+	if application.Logger() == nil || application.LoggingController() == nil {
+		t.Fatal("generated terminal did not expose its instance-owned core logger")
+	}
 	if components.Properties.TerminalMode != "check" ||
 		components.TerminalWorkspace.Title().String() == "" ||
 		components.TerminalInitialStatus.Level() != agenttui.StatusReconnecting {
@@ -131,6 +134,10 @@ func TestGeneratedTerminalIsDirectAndSourceMapped(t *testing.T) {
 			t.Fatalf("generated provider file contains forbidden %q", forbidden)
 		}
 	}
+	if bytes.Contains(providers, []byte("agentLogging")) ||
+		bytes.Contains(providers, []byte("spice-agent/logging")) {
+		t.Fatal("terminal graph subscribed to daemon Agent event logging")
+	}
 	manifest, err := os.ReadFile(filepath.Join(root, ".spice", "spice_agent.manifest.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -150,6 +157,9 @@ func TestGeneratedTerminalIsDirectAndSourceMapped(t *testing.T) {
 		if !bytes.Contains(manifest, []byte(expected)) {
 			t.Fatalf("generation manifest lacks %q", expected)
 		}
+	}
+	if bytes.Contains(manifest, []byte("spice-agent/logging/autoconfigure")) {
+		t.Fatal("terminal manifest contains daemon Agent logging auto-configuration")
 	}
 }
 

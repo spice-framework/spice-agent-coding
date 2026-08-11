@@ -13,6 +13,12 @@ transitive Apache-2.0, BSD, and MIT dependencies. The distribution adds no
 independent third-party runtime dependency. `make verify` runs gosec and
 govulncheck over the selected product graph and reproduces vendor contents.
 
+Daemon event logging uses Spice Agent's standard-library-only production
+logging package and the Spice core `slog.Handler` boundary. It owns one bounded
+mailbox and lifecycle consumer, performs no network or file I/O, filters model
+deltas before enqueue, and projects only typed metadata with process-local HMAC
+correlation. The terminal does not subscribe to daemon events.
+
 The proof exercises cancellation-aware kernel/provider/tool APIs, bounded
 provider and filesystem payloads, reverse cleanup, secret-redacted provider
 configuration, Windows-safe paths, and a local TLS transport. Its fixed test

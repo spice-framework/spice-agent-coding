@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	SnapshotVersion         = "spice.agent.snapshot/v1alpha2"
+	SnapshotVersion         = "spice.agent.snapshot/v1alpha3"
 	MaximumSnapshotBytes    = 16 << 20
 	maximumSnapshotMessages = 4096
 	maximumPlanIdentities   = 512
@@ -173,6 +173,7 @@ func ParseSnapshot(encoded []byte) (Snapshot, error) {
 	planIdentity, err := reconstructPlanIdentity(
 		wire.PlanIdentity.CompiledIdentities,
 		wire.PlanIdentity.SnapshotCompatibilityIdentity,
+		wire.PlanIdentity.WorkspaceFingerprint,
 		wire.PlanIdentity.ToolPlanID,
 		wire.PlanIdentity.Fingerprint,
 	)
@@ -201,6 +202,7 @@ type snapshotWire struct {
 type snapshotPlanIdentity struct {
 	CompiledIdentities            []string `json:"compiled_identities"`
 	SnapshotCompatibilityIdentity string   `json:"snapshot_compatibility_identity"`
+	WorkspaceFingerprint          string   `json:"workspace_fingerprint"`
 	ToolPlanID                    string   `json:"tool_plan_id"`
 	Fingerprint                   string   `json:"fingerprint"`
 }
@@ -242,6 +244,7 @@ func (snapshot Snapshot) toWire() (snapshotWire, error) {
 		PlanIdentity: snapshotPlanIdentity{
 			CompiledIdentities:            snapshot.planIdentity.CompiledIdentities(),
 			SnapshotCompatibilityIdentity: snapshot.planIdentity.SnapshotCompatibilityIdentity(),
+			WorkspaceFingerprint:          snapshot.planIdentity.WorkspaceFingerprint(),
 			ToolPlanID:                    snapshot.planIdentity.ToolPlanID().String(),
 			Fingerprint:                   snapshot.planIdentity.Fingerprint(),
 		},

@@ -22,12 +22,12 @@ func configureGeneratedLifecycle(
 	application.hooks = []spicelifecycle.Hook{
 		{
 			ID:     "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewRuntimePluginActivation",
-			Module: "",
+			Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Start:  dependencies.runtimePluginActivation.Start,
 		},
 		{
 			ID:     "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime",
-			Module: "",
+			Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Start:  dependencies.daemonRuntime.Start,
 			Stop:   dependencies.daemonRuntime.Stop,
 		},

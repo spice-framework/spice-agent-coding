@@ -604,7 +604,7 @@ Source: https://github.com/rivo/uniseg
     SOFTWARE.
 
 
-## `github.com/spice-framework/spice` `v0.1.0-preview.2`
+## `github.com/spice-framework/spice` `v0.1.0-preview.2.0.20260811041952-0e79bc4f3b29`
 
 Source: https://github.com/spice-framework/spice
 
@@ -813,7 +813,7 @@ Source: https://github.com/spice-framework/spice
        limitations under the License.
 
 
-## `github.com/spice-framework/spice-agent` `v0.1.0-preview.4`
+## `github.com/spice-framework/spice-agent` `v0.1.0-preview.6.0.20260811054602-8fd9ba5f8a90`
 
 Source: https://github.com/spice-framework/spice-agent
 
@@ -1649,7 +1649,7 @@ Source: https://github.com/spice-framework/spice-agent-tui
        limitations under the License.
 
 
-## `github.com/spice-framework/toolchain` `v0.1.0-preview.1.0.20260807044408-6598abca8196`
+## `github.com/spice-framework/toolchain` `v0.1.0-preview.2.0.20260811055955-07268323c5f9`
 
 Source: https://github.com/spice-framework/toolchain
 

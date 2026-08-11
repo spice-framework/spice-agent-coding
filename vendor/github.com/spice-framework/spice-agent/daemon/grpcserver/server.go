@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/spice-framework/spice-agent/client"
+	commonv1 "github.com/spice-framework/spice-agent/common/v1"
 	"github.com/spice-framework/spice-agent/daemon"
 	enginev1 "github.com/spice-framework/spice-agent/engine/v1"
 	"github.com/spice-framework/spice-agent/event"
@@ -105,6 +106,7 @@ type serverDependencies struct {
 	build           client.Build
 	capabilities    []string
 	maximumSessions int
+	protocolRange   *commonv1.ProtocolRange
 }
 
 // Server is one authenticated local gRPC boundary. It wraps gRPC so callers
@@ -128,6 +130,7 @@ func NewServer(config ServerConfig) (*Server, error) {
 		root: config.Root, token: config.EndpointToken, host: runHostAdapter{RunHost: config.Host},
 		sessions: config.Sessions, build: config.Build,
 		capabilities: config.Capabilities, maximumSessions: config.MaximumSessions,
+		protocolRange: commonv1.SupportedProtocolRange(),
 	})
 }
 
@@ -143,6 +146,10 @@ func newServer(dependencies serverDependencies) (*Server, error) {
 		return nil, err
 	}
 	capabilities, err := capabilitiesToWire(dependencies.capabilities)
+	if err != nil {
+		return nil, err
+	}
+	protocolRange, err := validatedServerProtocolRange(dependencies.protocolRange)
 	if err != nil {
 		return nil, err
 	}
@@ -180,6 +187,7 @@ func newServer(dependencies serverDependencies) (*Server, error) {
 	service := &engineService{
 		root: root, host: dependencies.host, sessions: dependencies.sessions,
 		registry: registry, build: build, capabilities: capabilities, limits: limits,
+		protocolRange: protocolRange,
 	}
 	server := grpc.NewServer(
 		grpc.MaxRecvMsgSize(int(maximumMessageBytes)),
@@ -191,6 +199,33 @@ func newServer(dependencies serverDependencies) (*Server, error) {
 	return &Server{
 		grpc: server, registry: registry, cancel: cancel,
 		shutdownDone: make(chan struct{}),
+	}, nil
+}
+
+func validatedServerProtocolRange(candidate *commonv1.ProtocolRange) (*commonv1.ProtocolRange, error) {
+	if candidate == nil {
+		candidate = commonv1.SupportedProtocolRange()
+	}
+	if err := commonv1.ValidateProtocolRange(candidate); err != nil {
+		return nil, fmt.Errorf("gRPC server protocol range: %w", err)
+	}
+	supported := commonv1.SupportedProtocolRange()
+	minimum, maximum := candidate.GetMinimum(), candidate.GetMaximum()
+	if minimum.GetMajor() != commonv1.ProtocolMajor ||
+		minimum.GetMinor() != commonv1.ProtocolMinimumMinor ||
+		minimum.GetPatch() != commonv1.ProtocolPatch ||
+		maximum.GetMajor() != commonv1.ProtocolMajor ||
+		maximum.GetMinor() > commonv1.ProtocolMinor ||
+		maximum.GetPatch() != commonv1.ProtocolPatch {
+		return nil, errors.New("gRPC server protocol range must be a supported prefix of the production range")
+	}
+	return &commonv1.ProtocolRange{
+		Minimum: &commonv1.ProtocolVersion{
+			Major: supported.GetMinimum().GetMajor(), Minor: minimum.GetMinor(), Patch: minimum.GetPatch(),
+		},
+		Maximum: &commonv1.ProtocolVersion{
+			Major: supported.GetMaximum().GetMajor(), Minor: maximum.GetMinor(), Patch: maximum.GetPatch(),
+		},
 	}, nil
 }
 

@@ -23,7 +23,7 @@ var errProcessExited = errors.New("runtime plugin process exited during startup"
 // candidateLauncher establishes one authenticated, digest-pinned runtime-tool
 // candidate. It never retries or activates a candidate.
 type candidateLauncher struct {
-	processes process.Launcher
+	processes process.VerifiedLauncher
 	endpoints LocalEndpointFactory
 	random    io.Reader
 	randomMu  sync.Mutex
@@ -32,7 +32,7 @@ type candidateLauncher struct {
 
 // newCandidateLauncher validates and snapshots candidate-launch dependencies.
 func newCandidateLauncher(
-	processes process.Launcher,
+	processes process.VerifiedLauncher,
 	endpoints LocalEndpointFactory,
 	randomSource io.Reader,
 	host *pluginv1.BuildIdentity,
@@ -164,13 +164,13 @@ func (launcher *candidateLauncher) start(
 	candidate *candidate,
 	spec process.Spec,
 ) error {
-	ownedProcess, startErr := launcher.processes.Start(ctx, spec)
+	ownedProcess, startErr := launcher.processes.StartVerified(ctx, candidate.lease, spec)
 	candidate.process = ownedProcess
 	if ownedProcess == nil && startErr == nil {
 		startErr = errors.New("process launcher returned no ownership")
 	}
 	if ownedProcess != nil {
-		if recheckErr := candidate.lease.Recheck(ctx); recheckErr != nil {
+		if recheckErr := recheckVerifiedExecutable(ctx, candidate.lease); recheckErr != nil {
 			candidate.input.Clear()
 			return launchFailure(launchPhaseRecheck, recheckErr)
 		}

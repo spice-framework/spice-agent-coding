@@ -109,6 +109,21 @@ type Broker interface {
 	Request(context.Context, Scope, Request) (Response, error)
 }
 
+// Requester is a run-bound interaction lifecycle capability. Unlike Broker it
+// accepts no caller-supplied Scope; the owner fixes run authority at binding.
+type Requester interface {
+	Request(context.Context, Request) (Response, error)
+}
+
+// UnavailableRequester is a fail-closed capability for direct dispatcher tests
+// and embeddings that deliberately provide no run interaction lifecycle.
+type UnavailableRequester struct{}
+
+// Request always fails without observing request payload data.
+func (UnavailableRequester) Request(context.Context, Request) (Response, error) {
+	return Response{}, errors.New("interaction requester is unavailable")
+}
+
 // UnavailableBroker is the fail-closed fallback when no client owns prompts.
 type UnavailableBroker struct{}
 

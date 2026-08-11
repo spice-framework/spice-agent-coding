@@ -20,6 +20,7 @@ const planFingerprintPrefix = "sha256:"
 type PlanIdentity struct {
 	compiled              []string
 	snapshotCompatibility string
+	workspaceFingerprint  string
 	toolPlanID            stage.PlanID
 	fingerprint           string
 }
@@ -29,6 +30,7 @@ type PlanIdentity struct {
 func NewPlanIdentity(
 	compiled []string,
 	snapshotCompatibility string,
+	workspaceFingerprint string,
 	toolPlanID stage.PlanID,
 	definitions []tool.Definition,
 ) (PlanIdentity, error) {
@@ -42,6 +44,9 @@ func NewPlanIdentity(
 		if err := snapshotToken("compatibility identity", snapshotCompatibility, 256); err != nil {
 			return PlanIdentity{}, err
 		}
+	}
+	if err := validateWorkspaceFingerprint(workspaceFingerprint, snapshotCompatibility != ""); err != nil {
+		return PlanIdentity{}, err
 	}
 	definitionsCopy := make([]tool.Definition, len(definitions))
 	for index, definition := range definitions {
@@ -59,12 +64,13 @@ func NewPlanIdentity(
 		}
 	}
 	hash := sha256.New()
-	writeIdentityField(hash, "spice-agent-plan/v2")
+	writeIdentityField(hash, "spice-agent-plan/v3")
 	for _, value := range compiled {
 		writeIdentityField(hash, value)
 	}
 	writeIdentityField(hash, toolPlanID.String())
 	writeIdentityField(hash, snapshotCompatibility)
+	writeIdentityField(hash, workspaceFingerprint)
 	for _, definition := range definitionsCopy {
 		writeIdentityField(hash, definition.Name())
 		writeIdentityField(hash, definition.Fingerprint())
@@ -72,6 +78,7 @@ func NewPlanIdentity(
 	result := PlanIdentity{
 		compiled:              append([]string(nil), compiled...),
 		snapshotCompatibility: snapshotCompatibility,
+		workspaceFingerprint:  workspaceFingerprint,
 		toolPlanID:            toolPlanID,
 		fingerprint:           fmt.Sprintf("%s%x", planFingerprintPrefix, hash.Sum(nil)),
 	}
@@ -90,6 +97,9 @@ func (identity PlanIdentity) Validate() error {
 		if err := snapshotToken("compatibility identity", identity.snapshotCompatibility, 256); err != nil {
 			return err
 		}
+	}
+	if err := validateWorkspaceFingerprint(identity.workspaceFingerprint, identity.snapshotCompatibility != ""); err != nil {
+		return err
 	}
 	if !strings.HasPrefix(identity.fingerprint, planFingerprintPrefix) {
 		return errors.New("agent plan fingerprint must use sha256")
@@ -118,6 +128,10 @@ func (identity PlanIdentity) SnapshotCompatibilityIdentity() string {
 	return identity.snapshotCompatibility
 }
 
+// WorkspaceFingerprint binds portable snapshot and dispatch authority to one
+// caller-defined workspace identity. Empty is valid only for non-portable runs.
+func (identity PlanIdentity) WorkspaceFingerprint() string { return identity.workspaceFingerprint }
+
 // Fingerprint returns the combined stable identity suitable for transport.
 func (identity PlanIdentity) Fingerprint() string { return identity.fingerprint }
 
@@ -129,6 +143,7 @@ func (identity PlanIdentity) clone() PlanIdentity {
 func (identity PlanIdentity) equal(other PlanIdentity) bool {
 	return identity.toolPlanID == other.toolPlanID &&
 		identity.snapshotCompatibility == other.snapshotCompatibility &&
+		identity.workspaceFingerprint == other.workspaceFingerprint &&
 		identity.fingerprint == other.fingerprint &&
 		slices.Equal(identity.compiled, other.compiled)
 }
@@ -136,17 +151,19 @@ func (identity PlanIdentity) equal(other PlanIdentity) bool {
 func newPlanIdentity(
 	compiled []string,
 	snapshotCompatibility string,
+	workspaceFingerprint string,
 	lease *stage.ToolPlanLease,
 ) (PlanIdentity, error) {
 	if err := lease.Validate(); err != nil {
 		return PlanIdentity{}, err
 	}
-	return NewPlanIdentity(compiled, snapshotCompatibility, lease.ToolPlanID(), lease.Definitions())
+	return NewPlanIdentity(compiled, snapshotCompatibility, workspaceFingerprint, lease.ToolPlanID(), lease.Definitions())
 }
 
 func reconstructPlanIdentity(
 	compiled []string,
 	snapshotCompatibility string,
+	workspaceFingerprint string,
 	toolPlanID string,
 	fingerprint string,
 ) (PlanIdentity, error) {
@@ -157,10 +174,28 @@ func reconstructPlanIdentity(
 	result := PlanIdentity{
 		compiled:              append([]string(nil), compiled...),
 		snapshotCompatibility: snapshotCompatibility,
+		workspaceFingerprint:  workspaceFingerprint,
 		toolPlanID:            id,
 		fingerprint:           fingerprint,
 	}
 	return result, result.Validate()
+}
+
+func validateWorkspaceFingerprint(value string, required bool) error {
+	if value == "" && !required {
+		return nil
+	}
+	if !strings.HasPrefix(value, planFingerprintPrefix) {
+		return errors.New("agent workspace fingerprint must use sha256")
+	}
+	digest := strings.TrimPrefix(value, planFingerprintPrefix)
+	if len(digest) != sha256.Size*2 {
+		return errors.New("agent workspace fingerprint has an invalid SHA-256 length")
+	}
+	if _, err := hex.DecodeString(digest); err != nil || strings.ToLower(digest) != digest {
+		return errors.New("agent workspace fingerprint must be lowercase hexadecimal SHA-256")
+	}
+	return nil
 }
 
 type identityHashWriter interface {

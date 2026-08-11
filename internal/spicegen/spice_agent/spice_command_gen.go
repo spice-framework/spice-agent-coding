@@ -22,10 +22,12 @@ import (
 type ShutdownContextFactory func(time.Duration) (context.Context, context.CancelFunc)
 
 type CommandOptions struct {
-	Context         context.Context
-	Arguments       []string
-	Stdout          io.Writer
-	Stderr          io.Writer
+	Context   context.Context
+	Arguments []string
+	Stdout    io.Writer
+	Stderr    io.Writer
+	Logging   *LoggingOptions
+
 	Logger          *slog.Logger
 	ShutdownTimeout time.Duration
 	ShutdownContext ShutdownContextFactory
@@ -46,7 +48,6 @@ func Main(arguments []string) int {
 		Arguments: arguments,
 		Stdout:    os.Stdout,
 		Stderr:    os.Stderr,
-		Logger:    logger,
 		Application: ApplicationOptions{
 			Sources: []spiceconfig.Source{environment},
 		},
@@ -89,6 +90,15 @@ func RunCommand(options CommandOptions) int {
 	}
 
 	applicationOptions := options.Application
+	if applicationOptions.Logging == nil && applicationOptions.Logger == nil {
+		if options.Logging != nil {
+			applicationOptions.Logging = options.Logging
+		} else if options.Logger != nil {
+			applicationOptions.Logger = options.Logger
+		} else {
+			applicationOptions.Logging = &LoggingOptions{Writer: stderr}
+		}
+	}
 	logger.InfoContext(ctx, "Spice application constructing", slog.String("application", TargetID))
 	application, err := NewApplicationWithOptions(ctx, applicationOptions)
 	if err != nil {

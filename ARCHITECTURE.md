@@ -25,7 +25,14 @@ Each target independently owns dependency construction, configuration,
 cancellation, observability, rollback, and cleanup for its boundary.
 
 The daemon explicitly blank-imports the Agent runtime-plugin host
-auto-configuration. Its generated graph constructs the compiled read,
+auto-configuration and the Agent logging auto-configuration. Its generated
+graph replaces the logging fallback with typed `agent.logging` properties,
+constructs one bounded best-effort mailbox and processor, and injects both the
+processor dependency and generated mailbox collection into the engine. Reverse
+cleanup therefore shuts the run host and engine down before draining accepted
+logging events. The terminal target enables the same injectable Spice logger
+without importing Agent logging auto-configuration and uses the embedded
+discard sink while Bubble Tea is live. The daemon graph constructs the compiled read,
 replace, and shell beans first, snapshots them into the fallback compiled
 dispatcher, and then constructs one exact `pluginhost.Host`. That same pointer
 is adapted to `stage.ToolPlanSource` for the engine; there is no parallel

@@ -10,17 +10,17 @@
     "bridge_dir": "cmd/spice-agent",
     "manifest_path": ".spice/spice_agent.manifest.json"
   },
-  "generator_version": "0.1.0-dev",
+  "generator_version": "v0.1.0-preview.2",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:f9f4d7548c414ea966cc3469d02d542e16ff86abb18c105f77071cee304c2069",
+  "input_sha256": "sha256:a4e42d0ea3c8f0037084d447db38cfd60c681f7ada0ec1666bcd6554e46e5312",
   "files": [
     {
       "path": "internal/spicegen/spice_agent/sources/cmd/spice-agent/application_spice_gen.go",
-      "sha256": "sha256:f79c4bfe970b7b3152ddf16ddbf01ca41a2603b03223d3a2be402712191ceee8",
+      "sha256": "sha256:f6f2285991ce88d5f7bb10b6861410c0750491ae8b9aadcfcddc96753f038120",
       "role": "source-unit",
       "primary_source": {
         "path": "cmd/spice-agent/application.go",
-        "line": 17,
+        "line": 18,
         "column": 4,
         "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
       },
@@ -30,7 +30,7 @@
           "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main",
           "source": {
             "path": "cmd/spice-agent/application.go",
-            "line": 17,
+            "line": 18,
             "column": 4,
             "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
           },
@@ -878,12 +878,12 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_assembly_gen.go",
-      "sha256": "sha256:9cc291db0e505f75c656138039ef4ddfa91954475b58f68e854e34a9325b37dc",
+      "sha256": "sha256:00262ec66b0aed4fe7068201cb2a3e096a8bff43afcafd4a04381501633040b4",
       "role": "target-assembly",
       "related_sources": [
         {
           "path": "cmd/spice-agent/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
@@ -1125,12 +1125,12 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_command_gen.go",
-      "sha256": "sha256:2afaeb2f943191295594a8584a6f2412f3de75279b790db1b9767d7b82d93096",
+      "sha256": "sha256:626f4fa8e25d9a1c5f1bd3670e7019e1eacfa31bb9f69f6911c8e437c9d06f19",
       "role": "target-command",
       "related_sources": [
         {
           "path": "cmd/spice-agent/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         }
@@ -1138,12 +1138,12 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_configuration_gen.go",
-      "sha256": "sha256:d25223e18de0d2a32dd6f8c84b434e9a8d01c32ad3627756267823529d078cc0",
+      "sha256": "sha256:5580650c75f276b746d1c42ffce9789f23596051bffff887682d9972cd7704f4",
       "role": "target-configuration",
       "related_sources": [
         {
           "path": "cmd/spice-agent/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
@@ -1181,12 +1181,12 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_contracts_gen.go",
-      "sha256": "sha256:5aa32c53d18e73e13129379cd5f201c74f61f55cc57c05a3eee32d15acfeb9ab",
+      "sha256": "sha256:4797e52ce071276e3bfe346b82be3acd608fc92a0be9e9ed585691bb726f47df",
       "role": "target-contracts",
       "related_sources": [
         {
           "path": "cmd/spice-agent/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },
@@ -1428,12 +1428,12 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_lifecycle_gen.go",
-      "sha256": "sha256:0184facdc6475b5fa879631e6537990f88ac70adf9bd61e191d1506f959f3508",
+      "sha256": "sha256:9a638ba594e9cfd3c868544d2ac182d99ef571b296694b5487bb9375ae12a897",
       "role": "target-lifecycle",
       "related_sources": [
         {
           "path": "cmd/spice-agent/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         }
@@ -1441,12 +1441,12 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_providers_gen.go",
-      "sha256": "sha256:95dc56ae7b18883180a2595fb68b12cd02d2398d0a194b66c3a4bb57f6a8618f",
+      "sha256": "sha256:8958e4a8b078d79390fd8b2580a3fd60c845a769ca777969944f47d5a8a4af19",
       "role": "target-providers",
       "related_sources": [
         {
           "path": "cmd/spice-agent/application.go",
-          "line": 17,
+          "line": 18,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/cmd/spice-agent|0:|4:main"
         },

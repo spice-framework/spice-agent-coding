@@ -3,6 +3,8 @@ package processplatform
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -192,6 +194,54 @@ func TestLauncherPreservesExactProcessIntentWithoutShell(t *testing.T) {
 		if strings.Contains(rendered, root) || strings.Contains(rendered, injection) {
 			t.Fatalf("formatting leaked process state: %q", rendered)
 		}
+	}
+}
+
+func TestVerifiedLauncherUsesExecutableLeaseAndRejectsInvalidBoundaries(t *testing.T) {
+	root := testpath.TempDir(t)
+	executable := installProcessHelper(t, root, "verified")
+	content, err := os.ReadFile(executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digestBytes := sha256.Sum256(content)
+	digest, err := agentprocess.ParseSHA256(hex.EncodeToString(digestBytes[:]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	lease, err := agentprocess.VerifyExecutable(t.Context(), executable, digest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if closeErr := lease.Close(); closeErr != nil {
+			t.Error(closeErr)
+		}
+	})
+	var stdout bytes.Buffer
+	spec := helperSpec(t, executable, root, "echo", strings.NewReader("verified"), &stdout, io.Discard, nil)
+	launcher := mustLauncher(t)
+	owned, err := launcher.StartVerified(t.Context(), lease, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wait, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	if err = owned.Wait(wait); err != nil {
+		t.Fatal(err)
+	}
+	if outcome, resultErr := owned.Result(); resultErr != nil || !outcome.Successful() {
+		t.Fatalf("verified outcome = %#v, %v", outcome, resultErr)
+	}
+	if !strings.Contains(stdout.String(), "input=verified") {
+		t.Fatalf("verified stdout = %q", stdout.String())
+	}
+	if owned, err = launcher.StartVerified(t.Context(), nil, spec); err == nil || owned != nil {
+		t.Fatalf("nil lease launch = %T, %v", owned, err)
+	}
+	var nilLauncher *Launcher
+	if owned, err = nilLauncher.StartVerified(t.Context(), lease, spec); err == nil || owned != nil {
+		t.Fatalf("nil launcher verified launch = %T, %v", owned, err)
 	}
 }
 

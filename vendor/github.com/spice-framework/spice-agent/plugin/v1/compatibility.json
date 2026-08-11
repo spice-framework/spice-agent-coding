@@ -1,0 +1,54 @@
+{
+  "schema": "spice.agent.plugin.compatibility/v1alpha2",
+  "protocol": "spice.agent.plugin.v1",
+  "production_range": {
+    "minimum": "1.0.0",
+    "maximum": "1.0.0"
+  },
+  "versioning": "independent-from-engine",
+  "transcripts": [
+    {
+      "version": 1,
+      "domain": "spice-agent/plugin/v1/initialize",
+      "protocol": "1.0.0"
+    }
+  ],
+  "source_built_matrix": {
+    "bridge": "real-process-plugin-v1-to-immutable-run-leased-tool-plan",
+    "engine_modes": [
+      "1.2.0",
+      "1.3.0"
+    ],
+    "languages": [
+      "go",
+      "python"
+    ],
+    "required_cases": [
+      "cancellation-terminal-events",
+      "fixture-process-loss",
+      "generation-lease-cleanup",
+      "identical-tool-result"
+    ]
+  },
+  "history": [
+    {
+      "version": "1.0.0",
+      "transcript": 1,
+      "evidence": "source-built-go-and-python",
+      "released_binary": false
+    }
+  ],
+  "production_host_launch": {
+    "go": "separately-proven",
+    "python": "future-pinned-native-artifact-required"
+  },
+  "released_generation_matrix": {
+    "manifest": "compatibility/released-generation.json",
+    "proven": true
+  },
+  "released_binary_matrix": {
+    "proven": false,
+    "claim": "not-claimed"
+  },
+  "v1_stable": false
+}

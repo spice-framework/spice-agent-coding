@@ -217,7 +217,8 @@ func TestExecuteHelpDoesNotExposeConfigurationOrConstructApplication(t *testing.
 func TestExecuteCheckConstructsAndCleansGeneratedGraph(t *testing.T) {
 	t.Setenv("OPENAI_API_KEY", "command-check-secret")
 	t.Setenv("OPENAI_MODEL", "command-check-model")
-	t.Setenv("SPICE_AGENT_WORKSPACE", t.TempDir())
+	workspace := t.TempDir()
+	t.Setenv("SPICE_AGENT_WORKSPACE", workspace)
 	t.Setenv("SPICE_AGENT_RUN_AUTHORITY_DIRECTORY", "")
 	var stdout, stderr bytes.Buffer
 	applicationCommand := command{stdout: &stdout, stderr: &stderr}
@@ -226,6 +227,17 @@ func TestExecuteCheckConstructsAndCleansGeneratedGraph(t *testing.T) {
 	}
 	if strings.Contains(stdout.String(), "command-check-secret") || strings.Contains(stderr.String(), "command-check-secret") {
 		t.Fatal("execute check exposed configuration secret")
+	}
+	logs := stderr.String()
+	if !strings.Contains(logs, `"schema":"spice.log/v1"`) ||
+		!strings.Contains(logs, `"event":"application.lifecycle"`) ||
+		!strings.Contains(logs, `"application":"spice_agentd"`) {
+		t.Fatalf("execute check did not route structured lifecycle records to caller stderr: %q", logs)
+	}
+	for _, forbidden := range []string{"command-check-model", workspace} {
+		if strings.Contains(logs, forbidden) {
+			t.Fatalf("execute check log exposed forbidden value %q", forbidden)
+		}
 	}
 }
 

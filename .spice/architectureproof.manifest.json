@@ -8,9 +8,9 @@
     "output_dir": "internal/spicegen/architectureproof",
     "manifest_path": ".spice/architectureproof.manifest.json"
   },
-  "generator_version": "0.1.0-dev",
+  "generator_version": "v0.1.0-preview.2",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:0918477aed00e88a859081a27c647b68f5c28a0cf7e80ffb377be3baf157a699",
+  "input_sha256": "sha256:35dacfab2f8e80446f2634f8a1370be6b55e4db42fac97383fcd03028c8ecb50",
   "files": [
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/application_spice_gen.go",
@@ -43,11 +43,11 @@
     },
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/architecture_proof_engine_bean_spice_gen.go",
-      "sha256": "sha256:040d27330eb9c3e8384722c97f8ece5ed6289bc0e50ebabf36faf22761164089",
+      "sha256": "sha256:c8bb5c5b254527717017e440e75a3712abb9a9a6090c250fda6bbc677cfa0d4b",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/architectureproof/architecture_proof_engine_bean.go",
-        "line": 20,
+        "line": 24,
         "column": 4,
         "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
       },
@@ -57,14 +57,14 @@
           "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine",
           "source": {
             "path": "internal/architectureproof/architecture_proof_engine_bean.go",
-            "line": 20,
+            "line": 24,
             "column": 4,
             "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
           },
           "generated": {
-            "start_line": 19,
+            "start_line": 20,
             "start_column": 4,
-            "end_line": 19,
+            "end_line": 20,
             "end_column": 45
           }
         }
@@ -452,7 +452,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_assembly_gen.go",
-      "sha256": "sha256:4cc0e1f3a7907ca8b94e1b4a1b03c17d8de239a0c56d9bb4b955235414da85ea",
+      "sha256": "sha256:d95721ced0ce932deae05a45f1e269db99daa87540ec2676ba63d3c000d72db8",
       "role": "target-assembly",
       "related_sources": [
         {
@@ -463,7 +463,7 @@
         },
         {
           "path": "internal/architectureproof/architecture_proof_engine_bean.go",
-          "line": 20,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
         },
@@ -555,7 +555,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_command_gen.go",
-      "sha256": "sha256:2afaeb2f943191295594a8584a6f2412f3de75279b790db1b9767d7b82d93096",
+      "sha256": "sha256:74dece72b84c550b484f37ab58d01a813d605a58f854e60d209e3220ab6519c0",
       "role": "target-command",
       "related_sources": [
         {
@@ -592,7 +592,7 @@
         },
         {
           "path": "internal/architectureproof/architecture_proof_engine_bean.go",
-          "line": 20,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
         },
@@ -697,7 +697,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_providers_gen.go",
-      "sha256": "sha256:ac49d36456e39ceac908652f8c71d2f72d0fc5ad7f64fd61f1d91fa4c42b90ea",
+      "sha256": "sha256:c85f1d59024961dbc45553cae628fd2e544302b5f33a5e44202d10cc51d77d7a",
       "role": "target-providers",
       "related_sources": [
         {
@@ -708,7 +708,7 @@
         },
         {
           "path": "internal/architectureproof/architecture_proof_engine_bean.go",
-          "line": 20,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|9:NewEngine"
         },

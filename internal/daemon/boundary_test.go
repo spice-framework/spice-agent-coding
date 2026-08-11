@@ -6,11 +6,13 @@ import (
 	"net"
 	"testing"
 
+	coding "github.com/spice-framework/spice-agent-tools-coding"
 	"github.com/spice-framework/spice-agent/client"
 	agentdaemon "github.com/spice-framework/spice-agent/daemon"
 	"github.com/spice-framework/spice-agent/daemon/endpoint"
 	"github.com/spice-framework/spice-agent/daemon/grpcserver"
 	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
+	agentprocess "github.com/spice-framework/spice-agent/process"
 )
 
 func TestHostConstructorsRejectInvalidOwnedDependencies(t *testing.T) {
@@ -39,6 +41,38 @@ func TestHostConstructorsRejectInvalidOwnedDependencies(t *testing.T) {
 	if _, err := (*Root)(nil).Context(); err == nil {
 		t.Fatal("Context() accepted a nil root")
 	}
+	if engine, err := NewEngine(nil, nil, nil, nil, client.Limits{}, coding.Config{}, nil, nil); err == nil || engine != nil {
+		t.Fatal("NewEngine() accepted a nil Agent logging processor")
+	}
+}
+
+func TestVerifiedProcessLauncherRequiresExplicitLeaseSupport(t *testing.T) {
+	t.Parallel()
+	plain := agentprocess.LauncherFunc(func(context.Context, agentprocess.Spec) (agentprocess.Process, error) {
+		return nil, errors.New("unused")
+	})
+	if verified, err := NewVerifiedProcessLauncher(plain); err == nil || verified != nil {
+		t.Fatalf("plain launcher adaptation = (%T, %v)", verified, err)
+	}
+	dual := &verifiedLauncherFixture{}
+	verified, err := NewVerifiedProcessLauncher(dual)
+	if err != nil || verified != dual {
+		t.Fatalf("verified launcher adaptation = (%T, %v)", verified, err)
+	}
+}
+
+type verifiedLauncherFixture struct{}
+
+func (*verifiedLauncherFixture) Start(context.Context, agentprocess.Spec) (agentprocess.Process, error) {
+	return nil, errors.New("unused")
+}
+
+func (*verifiedLauncherFixture) StartVerified(
+	context.Context,
+	*agentprocess.ExecutableLease,
+	agentprocess.Spec,
+) (agentprocess.Process, error) {
+	return nil, errors.New("unused")
 }
 
 func TestRuntimePluginHostIdentityAdaptsValidatedServerBuild(t *testing.T) {

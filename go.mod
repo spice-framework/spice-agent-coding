@@ -13,8 +13,8 @@ tool (
 
 require (
 	charm.land/bubbletea/v2 v2.0.8
-	github.com/spice-framework/spice v0.1.0-preview.2
-	github.com/spice-framework/spice-agent v0.1.0-preview.4
+	github.com/spice-framework/spice v0.1.0-preview.2.0.20260811041952-0e79bc4f3b29
+	github.com/spice-framework/spice-agent v0.1.0-preview.6.0.20260811054602-8fd9ba5f8a90
 	github.com/spice-framework/spice-agent-provider-openai v0.1.0-preview.1
 	github.com/spice-framework/spice-agent-tools-coding v0.1.0-preview.1
 	github.com/spice-framework/spice-agent-tui v0.1.0-preview.1
@@ -38,7 +38,7 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/openai/openai-go/v3 v3.50.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/spice-framework/toolchain v0.1.0-preview.1.0.20260807044408-6598abca8196 // indirect
+	github.com/spice-framework/toolchain v0.1.0-preview.2.0.20260811055955-07268323c5f9 // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	coding "github.com/spice-framework/spice-agent-tools-coding"
 	"github.com/spice-framework/spice-agent/agent"
 	"github.com/spice-framework/spice-agent/event"
 	"github.com/spice-framework/spice-agent/message"
@@ -34,18 +35,19 @@ func TestProofConstructionAndRunRejectInvalidState(t *testing.T) {
 	if source, sourceErr := NewToolPlanSource(nil); source != nil || sourceErr == nil || !strings.Contains(sourceErr.Error(), "source") {
 		t.Fatalf("nil dispatcher source = %#v, %v", source, sourceErr)
 	}
-	if engine, cleanup, engineErr := NewEngine(nil, toolPlans, NewInteractionBroker(), NewExecutionPlanMetadata(), &agent.AtomicIDSource{}); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "provider") {
+	codingConfig := coding.Config{Root: t.TempDir()}
+	if engine, cleanup, engineErr := NewEngine(nil, toolPlans, NewInteractionBroker(), NewExecutionPlanMetadata(), &agent.AtomicIDSource{}, codingConfig); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "provider") {
 		t.Fatalf("nil provider construction = %#v, %#v, %v", engine, cleanup, engineErr)
 	}
-	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, nil, NewInteractionBroker(), NewExecutionPlanMetadata(), &agent.AtomicIDSource{}); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "plan source") {
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, nil, NewInteractionBroker(), NewExecutionPlanMetadata(), &agent.AtomicIDSource{}, codingConfig); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "plan source") {
 		t.Fatalf("nil tool source construction = %#v, %#v, %v", engine, cleanup, engineErr)
 	}
-	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, nil, NewExecutionPlanMetadata(), &agent.AtomicIDSource{}); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "broker") {
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, nil, NewExecutionPlanMetadata(), &agent.AtomicIDSource{}, codingConfig); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "broker") {
 		t.Fatalf("nil broker construction = %#v, %#v, %v", engine, cleanup, engineErr)
 	}
 	invalidMetadata := NewExecutionPlanMetadata()
 	invalidMetadata.CompiledPlanIdentities = []string{"invalid"}
-	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, NewInteractionBroker(), invalidMetadata, &agent.AtomicIDSource{}); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "compiled plan") {
+	if engine, cleanup, engineErr := NewEngine(unavailableProvider{}, toolPlans, NewInteractionBroker(), invalidMetadata, &agent.AtomicIDSource{}, codingConfig); engine != nil || cleanup != nil || engineErr == nil || !strings.Contains(engineErr.Error(), "compiled plan") {
 		t.Fatalf("invalid plan construction = %#v, %#v, %v", engine, cleanup, engineErr)
 	}
 	var nilProof *Proof
@@ -165,6 +167,7 @@ func newTestProof(
 		NewInteractionBroker(),
 		NewExecutionPlanMetadata(),
 		&agent.AtomicIDSource{},
+		coding.Config{Root: t.TempDir()},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -238,6 +241,11 @@ func TestGeneratedExecutionPlanResumesExactStaticSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	metadata := NewExecutionPlanMetadata()
+	codingConfig := coding.Config{Root: t.TempDir()}
+	workspace, err := architectureProofWorkspaceFingerprint(codingConfig.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
 	lease, err := source.LeaseCurrent(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -245,6 +253,7 @@ func TestGeneratedExecutionPlanResumesExactStaticSnapshot(t *testing.T) {
 	identity, err := agent.NewPlanIdentity(
 		metadata.CompiledPlanIdentities,
 		metadata.SnapshotCompatibilityIdentity,
+		workspace,
 		lease.ToolPlanID(),
 		lease.Definitions(),
 	)
@@ -288,6 +297,7 @@ func TestGeneratedExecutionPlanResumesExactStaticSnapshot(t *testing.T) {
 		NewInteractionBroker(),
 		metadata,
 		&agent.AtomicIDSource{},
+		codingConfig,
 	)
 	if err != nil {
 		t.Fatal(err)

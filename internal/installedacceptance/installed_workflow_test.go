@@ -140,6 +140,11 @@ func TestInstalledDaemonAndTerminalReconnect(t *testing.T) {
 	terminal.waitForOutput(t, "checkpoint-two")
 	terminal.waitForOutput(t, "event stream reconnected after sequence")
 	terminal.waitForOutput(t, "Completed runs: 1")
+	waitFor(t, func() bool {
+		return strings.Contains(daemonOne.stderr.String(), `"event":"agent.run.completed"`)
+	}, func() string {
+		return "daemon one did not emit its structured run completion:\n" + daemonOne.stderr.String()
+	})
 	if strings.Contains(terminal.stdout.String(), "Completed runs: 2") {
 		t.Fatal("the first run produced more than one terminal event")
 	}
@@ -180,6 +185,11 @@ func TestInstalledDaemonAndTerminalReconnect(t *testing.T) {
 	}
 	terminal.waitForOutput(t, "replacement-complete")
 	terminal.waitForOutput(t, "Completed runs: 2")
+	waitFor(t, func() bool {
+		return strings.Contains(daemonTwo.stderr.String(), `"event":"agent.run.completed"`)
+	}, func() string {
+		return "daemon two did not emit its structured run completion:\n" + daemonTwo.stderr.String()
+	})
 
 	// Bubble Tea remains the same process and retains both prompt-history items
 	// across daemon replacement. Two native history-up actions reach the first.
@@ -200,6 +210,43 @@ func TestInstalledDaemonAndTerminalReconnect(t *testing.T) {
 
 	terminal.stop(t, true)
 	daemonTwo.stop(t, true)
+	assertInstalledLogging(t, daemonOne, daemonTwo, terminal, workspace, providerDirectory, secondProviderDirectory)
+}
+
+func assertInstalledLogging(
+	t *testing.T,
+	daemonOne *process,
+	daemonTwo *process,
+	terminal *process,
+	workspace string,
+	providerDirectories ...string,
+) {
+	t.Helper()
+	for name, daemonProcess := range map[string]*process{"first": daemonOne, "second": daemonTwo} {
+		logs := daemonProcess.stderr.String()
+		if !strings.Contains(logs, `"schema":"spice.log/v1"`) ||
+			strings.Count(logs, `"event":"agent.run.completed"`) != 1 {
+			t.Fatalf("%s daemon structured run logs are incomplete or duplicated:\n%s", name, logs)
+		}
+		for _, forbidden := range append([]string{
+			acceptanceAPIKey,
+			workspace,
+			workspaceMarker,
+			"first installed prompt",
+			"second installed prompt",
+			"checkpoint-one",
+			"checkpoint-two",
+			"replacement-complete",
+		}, providerDirectories...) {
+			if strings.Contains(logs, forbidden) {
+				t.Fatalf("%s daemon structured logs exposed forbidden value %q", name, forbidden)
+			}
+		}
+	}
+	if terminalLogs := terminal.stderr.String(); strings.Contains(terminalLogs, "spice.log/v1") ||
+		strings.Contains(terminalLogs, `"event":"agent.`) {
+		t.Fatalf("terminal duplicated daemon Agent logs or corrupted TUI stderr:\n%s", terminalLogs)
+	}
 }
 
 type synchronizedBuffer struct {

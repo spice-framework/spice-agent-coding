@@ -19,6 +19,7 @@ import (
 	distributiondaemon "github.com/spice-framework/spice-agent-coding/internal/daemon"
 	"github.com/spice-framework/spice-agent-coding/internal/processplatform"
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd"
+	"github.com/spice-framework/spice-agent/interaction"
 	pluginhost "github.com/spice-framework/spice-agent/plugin/host"
 	"github.com/spice-framework/spice-agent/plugin/host/localendpoint"
 	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
@@ -127,7 +128,11 @@ func TestOfflineFixtureActivatesAndShutsDownThroughProductionHost(t *testing.T) 
 		t.Fatal(err)
 	}
 	reporter := &recordingReporter{}
-	result, err := lease.Dispatcher().Dispatch(t.Context(), call, reporter)
+	scope, err := newFixtureDispatchScope(lease)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := lease.Dispatcher().Dispatch(t.Context(), scope, call, reporter)
 	if err != nil {
 		t.Fatalf("dispatch fixture echo: %v", err)
 	}
@@ -412,7 +417,11 @@ func probeGeneratedRuntimePlugin(ctx context.Context, components spicegen.Compon
 		return err
 	}
 	reporter := &recordingReporter{}
-	result, err := lease.Dispatcher().Dispatch(ctx, call, reporter)
+	scope, err := newFixtureDispatchScope(lease)
+	if err != nil {
+		return fmt.Errorf("create generated fixture dispatch scope: %w", err)
+	}
+	result, err := lease.Dispatcher().Dispatch(ctx, scope, call, reporter)
 	if err != nil {
 		return fmt.Errorf("dispatch generated fixture echo: %w", err)
 	}
@@ -423,6 +432,22 @@ func probeGeneratedRuntimePlugin(ctx context.Context, components spicegen.Compon
 		return fmt.Errorf("generated fixture progress = %#v", got)
 	}
 	return nil
+}
+
+func newFixtureDispatchScope(lease *stage.ToolPlanLease) (stage.ToolDispatchScope, error) {
+	authority, err := interaction.NewScope("runtime-plugin-fixture")
+	if err != nil {
+		return stage.ToolDispatchScope{}, err
+	}
+	return stage.NewToolDispatchScope(
+		"runtime-plugin-fixture",
+		1,
+		lease.ToolPlanID(),
+		"sha256:"+strings.Repeat("0", sha256.Size*2),
+		"",
+		authority,
+		interaction.UnavailableRequester{},
+	)
 }
 
 func TestFixtureSourceUsesOnlyPublicSpiceAgentPackages(t *testing.T) {

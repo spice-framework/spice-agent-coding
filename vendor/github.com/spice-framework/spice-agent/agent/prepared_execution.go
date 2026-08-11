@@ -131,7 +131,7 @@ func (engine *Engine) PrepareStart(setupCtx context.Context, definition Definiti
 	if err != nil {
 		return nil, err
 	}
-	planIdentity, err := newPlanIdentity(engine.compiledPlan, engine.snapshotCompatibility, lease)
+	planIdentity, err := newPlanIdentity(engine.compiledPlan, engine.snapshotCompatibility, engine.workspaceFingerprint, lease)
 	if err != nil {
 		return nil, releaseLeaseOnRollback(lease, err, engine.finalizationTimeout)
 	}
@@ -186,6 +186,7 @@ func (engine *Engine) PrepareResumeSnapshot(setupCtx context.Context, snapshot S
 		return nil, errors.New("agent engine snapshot import requires an explicit generated compatibility identity")
 	}
 	if snapshot.planIdentity.SnapshotCompatibilityIdentity() != engine.snapshotCompatibility ||
+		snapshot.planIdentity.WorkspaceFingerprint() != engine.workspaceFingerprint ||
 		!slices.Equal(snapshot.planIdentity.CompiledIdentities(), engine.compiledPlan) {
 		return nil, errors.New("agent snapshot compiled compatibility does not match the constructed engine")
 	}
@@ -199,7 +200,7 @@ func (engine *Engine) PrepareResumeSnapshot(setupCtx context.Context, snapshot S
 	if err != nil {
 		return nil, errors.Join(err, engine.abortRunIdentityReservation(snapshot.runID, identityToken))
 	}
-	planIdentity, err := newPlanIdentity(engine.compiledPlan, engine.snapshotCompatibility, lease)
+	planIdentity, err := newPlanIdentity(engine.compiledPlan, engine.snapshotCompatibility, engine.workspaceFingerprint, lease)
 	if err != nil {
 		return nil, rollbackPreparedResources(engine, snapshot.runID, identityToken, nil, lease, err)
 	}
@@ -336,6 +337,7 @@ func (prepared *preparedExecution) commitPaused(runRootCtx context.Context, acti
 		engine: prepared.engine, runID: prepared.runID, token: prepared.identityToken,
 	}
 	run.emitter = &runEmitter{engine: prepared.engine, run: run, next: prepared.lastSequence + 1}
+	run.requester = &runInteractionRequester{run: run}
 
 	prepared.engine.mu.Lock()
 	if prepared.engine.closed {

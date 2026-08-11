@@ -10,6 +10,7 @@ import (
 	time "time"
 
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
+	spicelogging "github.com/spice-framework/spice/logging"
 )
 
 func (application *Application) State() spicelifecycle.State {
@@ -60,4 +61,20 @@ func (application *Application) Components() Components {
 		return Components{}
 	}
 	return application.components
+}
+
+// Logger returns the selected application-owned Spice logger.
+func (application *Application) Logger() *spicelogging.Logger {
+	if application == nil {
+		return nil
+	}
+	return application.logger
+}
+
+// LoggingController returns the exact-scope runtime level controller.
+func (application *Application) LoggingController() *spicelogging.Controller {
+	if application == nil || application.logger == nil {
+		return nil
+	}
+	return application.logger.Controller()
 }

@@ -154,6 +154,9 @@ func TestExecuteHelpAndGeneratedCheck(t *testing.T) {
 	if code := applicationCommand.execute(t.Context(), []string{"--check"}); code != terminalcommand.ExitSuccess {
 		t.Fatalf("check code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
+	if strings.Contains(stderr.String(), "spice.log/v1") || strings.Contains(stderr.String(), `"event":"agent.`) {
+		t.Fatalf("terminal check emitted daemon structured logs: %q", stderr.String())
+	}
 }
 
 func TestExecuteRejectsUnavailableTerminalStreams(t *testing.T) {

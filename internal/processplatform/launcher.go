@@ -56,6 +56,16 @@ func (launcher *Launcher) Start(ctx context.Context, spec agentprocess.Spec) (ag
 	return owned, nil
 }
 
+// StartVerified launches only from an executable lease whose identity and
+// digest remain authoritative through the platform-specific launch boundary.
+func (launcher *Launcher) StartVerified(
+	ctx context.Context,
+	lease *agentprocess.ExecutableLease,
+	spec agentprocess.Spec,
+) (agentprocess.Process, error) {
+	return (verifiedLauncherPlatform{}).Start(ctx, launcher, lease, spec)
+}
+
 func (*Launcher) String() string            { return "processplatform.Launcher([REDACTED])" }
 func (launcher *Launcher) GoString() string { return launcher.String() }
 func (*Launcher) Format(state fmt.State, _ rune) {

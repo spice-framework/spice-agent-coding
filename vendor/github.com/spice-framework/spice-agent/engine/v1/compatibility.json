@@ -1,0 +1,80 @@
+{
+  "schema": "spice.agent.engine.compatibility/v1alpha3",
+  "protocol": "spice.agent.engine.v1",
+  "production_range": {
+    "minimum": "1.0.0",
+    "maximum": "1.3.0"
+  },
+  "initialization_modes": [
+    {
+      "name": "legacy",
+      "minimum": "1.0.0",
+      "maximum": "1.2.0",
+      "attempt_id": "forbidden",
+      "automatic_unavailable_retries": 0,
+      "ambiguous_outcome": "non-retryable"
+    },
+    {
+      "name": "exact-replay",
+      "minimum": "1.3.0",
+      "maximum": "1.3.0",
+      "attempt_id": "required",
+      "automatic_unavailable_retries": 1,
+      "ambiguous_outcome": "same-request-and-attempt-only"
+    }
+  ],
+  "source_built_matrix": [
+    {
+      "peer": "previous-semantics",
+      "server_range": "1.0.0-1.2.0",
+      "client_mode": "legacy",
+      "platforms": [
+        "linux/amd64",
+        "windows/amd64"
+      ]
+    },
+    {
+      "peer": "current",
+      "server_range": "1.0.0-1.3.0",
+      "client_mode": "exact-replay",
+      "platforms": [
+        "linux/amd64",
+        "windows/amd64"
+      ]
+    }
+  ],
+  "required_cases": [
+    "exact-legacy-1.2",
+    "adaptive-current-1.3",
+    "explicit-proven-downgrade",
+    "authentication-definitive",
+    "current-exact-replay-after-response-loss",
+    "legacy-ambiguity-never-retries",
+    "cancellation-conflict-exact-recovery",
+    "process-cleanup"
+  ],
+  "released_generation_matrix": {
+    "manifest": "compatibility/released-generation.json",
+    "proven": true
+  },
+  "released_binary_matrix": {
+    "proven": false,
+    "claim": "not-claimed"
+  },
+  "history": [
+    {
+      "version": "1.2.0",
+      "profile": "legacy",
+      "evidence": "source-built-only",
+      "released_binary": false
+    },
+    {
+      "version": "1.3.0",
+      "profile": "exact-replay",
+      "evidence": "source-built-current",
+      "released_binary": false
+    }
+  ],
+  "plugin_compatibility_manifest": "plugin/v1/compatibility.json",
+  "v1_stable": false
+}

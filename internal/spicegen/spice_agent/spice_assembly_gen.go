@@ -7,9 +7,13 @@ package spicegen
 import (
 	context "context"
 	fmt "fmt"
+	io "io"
+	slog "log/slog"
 
 	spiceconfig "github.com/spice-framework/spice/config"
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
+	spicelogging "github.com/spice-framework/spice/logging"
+	spiceobservability "github.com/spice-framework/spice/observability"
 )
 
 func NewApplication(ctx context.Context, observers ...spicelifecycle.Observer) (*Application, error) {
@@ -21,12 +25,6 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		return nil, fmt.Errorf("construct application spice_agent: context is nil")
 	}
 	application := &Application{coordinator: spicelifecycle.NewCoordinator()}
-	observers := append([]spicelifecycle.Observer(nil), options.Observers...)
-	for index, observer := range observers {
-		if err := application.coordinator.RegisterObserver(observer); err != nil {
-			return nil, fmt.Errorf("register lifecycle observer %d: %w", index, err)
-		}
-	}
 	configurationSchema, err := ConfigurationSchema()
 	if err != nil {
 		return nil, fmt.Errorf("construct configuration schema for application spice_agent: %w", err)
@@ -49,6 +47,108 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 	}
 	if application.shutdownTimeout <= 0 {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode shutdown timeout for application spice_agent: duration must be positive"))
+	}
+	loggingFormatValue, err := configurationSnapshot.RequiredString("spice.logging.format")
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging format: %w", err))
+	}
+	loggingLevelValue, err := configurationSnapshot.RequiredString("spice.logging.level")
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging level: %w", err))
+	}
+	loggingLevel, err := spicelogging.ParseLevel(loggingLevelValue)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging level: %w", err))
+	}
+	loggingAddSource, err := configurationSnapshot.Boolean("spice.logging.add-source")
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging source policy: %w", err))
+	}
+	loggingScopes := []spicelogging.Scope{
+		{Module: "github.com/spice-framework/spice-agent-coding/cmd/spice-agent"},
+		{Module: "github.com/spice-framework/spice-agent-coding/cmd/spice-agent", Component: "spice.schedule"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:NewSession"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|13:NewDefinition"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewClientBuild"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|14:NewStartupLock"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|15:NewClientLimits"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewDaemonStarter"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointScope"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewEndpointStore"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewInitialStatus"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewSessionConfig"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|16:NewTerminalShell"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewClientProtocol"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewIdentifierSource"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedConnector"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|19:NewManagedDiscovery"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|20:NewInitializeRequest"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", Component: "spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|16:DefaultDarkTheme"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|18:DefaultQuitBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|19:DefaultOSTerminalIO"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|20:DefaultCancelBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|20:DefaultFixedRenderer"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|20:DefaultSubmitBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultConnectingView"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|21:DefaultRespondBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|23:DefaultBackspaceBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|23:DefaultCursorEndBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|24:DefaultCursorLeftBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|25:DefaultCursorRightBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|25:DefaultCursorStartBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|25:DefaultHistoryNextBinding"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tui/autoconfigure", Component: "spice:symbol:v1|function|56:github.com/spice-framework/spice-agent-tui/autoconfigure|0:|29:DefaultHistoryPreviousBinding"},
+	}
+	loggingLevelsValue, _ := configurationSnapshot.Lookup("spice.logging.levels")
+	loggingLevels, err := spicelogging.ParseLevelRules(loggingLevelsValue, loggingScopes)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging scope levels: %w", err))
+	}
+	loggingConfiguration := spicelogging.Configuration{
+		Format: spicelogging.Format(loggingFormatValue), Level: loggingLevel,
+		Levels: loggingLevels, AddSource: loggingAddSource,
+	}
+	var loggingWriter io.Writer
+	var loggingHandler slog.Handler
+	if options.Logging != nil {
+		if (options.Logging.Writer == nil) == (options.Logging.Handler == nil) {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("configure Spice logging: exactly one writer or handler is required"))
+		}
+		loggingWriter = options.Logging.Writer
+		loggingHandler = options.Logging.Handler
+		if options.Logging.Configuration != nil {
+			loggingConfiguration = *options.Logging.Configuration
+		}
+	}
+	if options.Logging != nil && options.Logger != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("configure Spice logging: Logging and deprecated Logger conflict"))
+	}
+	if options.Logging == nil && options.Logger != nil {
+		loggingHandler = options.Logger.Handler()
+	}
+	application.logger, err = spicelogging.New(spicelogging.Options{
+		Application: TargetID, Configuration: loggingConfiguration,
+		Writer: loggingWriter, Handler: loggingHandler, Scopes: loggingScopes,
+	})
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("configure Spice logging: %w", err))
+	}
+	observers := append([]spicelifecycle.Observer(nil), options.Observers...)
+	loggingObservers, err := spiceobservability.NewLoggingObservers(application.logger)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("configure Spice logging observers: %w", err))
+	}
+	observers = append([]spicelifecycle.Observer{loggingObservers.Lifecycle}, observers...)
+	for index, observer := range observers {
+		if err := application.coordinator.RegisterObserver(observer); err != nil {
+			return nil, fmt.Errorf("register lifecycle observer %d: %w", index, err)
+		}
 	}
 	dependencies, err := constructApplicationDependencies(ctx, application, options, configurationSnapshot)
 	if err != nil {

@@ -33,7 +33,14 @@ func (command command) execute(ctx context.Context, arguments []string) int {
 		}
 		return daemoncommand.ExitFailure
 	}
-	applicationOptions := spicegen.ApplicationOptions{Sources: []spiceconfig.Source{environment}}
+	loggingWriter := command.stderr
+	if loggingWriter == nil {
+		loggingWriter = io.Discard
+	}
+	applicationOptions := spicegen.ApplicationOptions{
+		Sources: []spiceconfig.Source{environment},
+		Logging: &spicegen.LoggingOptions{Writer: loggingWriter},
+	}
 	adapter := acceptanceAdapter{}
 	applicationOptions, err = adapter.applicationOptions(applicationOptions)
 	if err != nil {

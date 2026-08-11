@@ -95,7 +95,7 @@ type candidate struct {
 	mu sync.Mutex
 
 	executable Executable
-	lease      *verifiedExecutable
+	lease      *process.ExecutableLease
 	endpoint   LocalEndpoint
 	process    process.Process
 	connection *grpc.ClientConn
@@ -235,7 +235,7 @@ func (candidate *candidate) cleanup(ctx context.Context) error {
 		candidate.endpoint = nil
 	}
 	if candidate.lease != nil {
-		if err := candidate.lease.Close(); err != nil {
+		if err := closeVerifiedExecutable(candidate.lease); err != nil {
 			failures = append(failures, err)
 		}
 		candidate.lease = nil

@@ -355,7 +355,7 @@ func runtimePluginTestHost(t *testing.T, launches *atomic.Int32) *pluginhost.Hos
 			Commit: "fixture", Runtime: runtime.Version(),
 		},
 		Compiled: dispatcher,
-		Processes: agentprocess.LauncherFunc(func(context.Context, agentprocess.Spec) (agentprocess.Process, error) {
+		Processes: agentprocess.VerifiedLauncherFunc(func(context.Context, *agentprocess.ExecutableLease, agentprocess.Spec) (agentprocess.Process, error) {
 			launches.Add(1)
 			return nil, errors.New("test launcher must not start")
 		}),

@@ -7,9 +7,13 @@ package spicegen
 import (
 	context "context"
 	fmt "fmt"
+	io "io"
+	slog "log/slog"
 
 	spiceconfig "github.com/spice-framework/spice/config"
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
+	spicelogging "github.com/spice-framework/spice/logging"
+	spiceobservability "github.com/spice-framework/spice/observability"
 )
 
 func NewApplication(ctx context.Context, observers ...spicelifecycle.Observer) (*Application, error) {
@@ -21,12 +25,6 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		return nil, fmt.Errorf("construct application spice_agentd: context is nil")
 	}
 	application := &Application{coordinator: spicelifecycle.NewCoordinator()}
-	observers := append([]spicelifecycle.Observer(nil), options.Observers...)
-	for index, observer := range observers {
-		if err := application.coordinator.RegisterObserver(observer); err != nil {
-			return nil, fmt.Errorf("register lifecycle observer %d: %w", index, err)
-		}
-	}
 	configurationSchema, err := ConfigurationSchema()
 	if err != nil {
 		return nil, fmt.Errorf("construct configuration schema for application spice_agentd: %w", err)
@@ -50,6 +48,120 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 	if application.shutdownTimeout <= 0 {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode shutdown timeout for application spice_agentd: duration must be positive"))
 	}
+	loggingFormatValue, err := configurationSnapshot.RequiredString("spice.logging.format")
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging format: %w", err))
+	}
+	loggingLevelValue, err := configurationSnapshot.RequiredString("spice.logging.level")
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging level: %w", err))
+	}
+	loggingLevel, err := spicelogging.ParseLevel(loggingLevelValue)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging level: %w", err))
+	}
+	loggingAddSource, err := configurationSnapshot.Boolean("spice.logging.add-source")
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging source policy: %w", err))
+	}
+	loggingScopes := []spicelogging.Scope{
+		{Module: "github.com/spice-framework/spice-agent-coding/cmd/spice-agentd"},
+		{Module: "github.com/spice-framework/spice-agent-coding/cmd/spice-agentd", Component: "spice.schedule"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRunHost"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:NewRuntime"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|11:NewIDSource"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|13:NewGRPCServer"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|13:NewPendingHub"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|14:NewServerBuild"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewCodingConfig"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewOpenAIConfig"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewRootRegistry"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewRunAuthority"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewSessionStore"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewDefinitionSet"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointScope"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointStore"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewEndpointToken"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewListenerFactory"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProcessLauncher"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|18:NewProtocolVersion"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewInteractionBroker"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewRuntimePluginHost"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewRuntimePluginPlan"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewAgentLoggingConfig"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewExecutableResolver"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewRuntimePluginActivation"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|26:NewVerifiedProcessLauncher"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|27:NewAgentLoggingHealthSource"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|28:NewRuntimePluginHealthSource"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|28:NewRuntimePluginHostIdentity"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|29:NewRuntimePluginRestartPolicy"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|7:NewRoot"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewLedger"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewLimits"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", Component: "spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|23:RuntimePluginProperties"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-provider-openai/autoconfigure"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-provider-openai/autoconfigure", Component: "spice:symbol:v1|function|68:github.com/spice-framework/spice-agent-provider-openai/autoconfigure|0:|7:Default"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tools-coding/autoconfigure"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tools-coding/autoconfigure", Component: "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|11:DefaultRead"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tools-coding/autoconfigure", Component: "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|12:DefaultShell"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent-tools-coding/autoconfigure", Component: "spice:symbol:v1|function|65:github.com/spice-framework/spice-agent-tools-coding/autoconfigure|0:|14:DefaultReplace"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent/logging/autoconfigure"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent/logging/autoconfigure", Component: "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|14:DefaultMailbox"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent/logging/autoconfigure", Component: "spice:symbol:v1|function|60:github.com/spice-framework/spice-agent/logging/autoconfigure|0:|16:DefaultProcessor"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent/plugin/host/autoconfigure"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent/plugin/host/autoconfigure", Component: "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|21:DefaultToolPlanSource"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent/plugin/host/autoconfigure", Component: "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|25:DefaultCompiledDispatcher"},
+		{Module: "spice.unassigned:github.com/spice-framework/spice-agent/plugin/host/autoconfigure", Component: "spice:symbol:v1|function|64:github.com/spice-framework/spice-agent/plugin/host/autoconfigure|0:|33:DefaultCurrentUserEndpointFactory"},
+	}
+	loggingLevelsValue, _ := configurationSnapshot.Lookup("spice.logging.levels")
+	loggingLevels, err := spicelogging.ParseLevelRules(loggingLevelsValue, loggingScopes)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("decode Spice logging scope levels: %w", err))
+	}
+	loggingConfiguration := spicelogging.Configuration{
+		Format: spicelogging.Format(loggingFormatValue), Level: loggingLevel,
+		Levels: loggingLevels, AddSource: loggingAddSource,
+	}
+	var loggingWriter io.Writer
+	var loggingHandler slog.Handler
+	if options.Logging != nil {
+		if (options.Logging.Writer == nil) == (options.Logging.Handler == nil) {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("configure Spice logging: exactly one writer or handler is required"))
+		}
+		loggingWriter = options.Logging.Writer
+		loggingHandler = options.Logging.Handler
+		if options.Logging.Configuration != nil {
+			loggingConfiguration = *options.Logging.Configuration
+		}
+	}
+	if options.Logging != nil && options.Logger != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("configure Spice logging: Logging and deprecated Logger conflict"))
+	}
+	if options.Logging == nil && options.Logger != nil {
+		loggingHandler = options.Logger.Handler()
+	}
+	application.logger, err = spicelogging.New(spicelogging.Options{
+		Application: TargetID, Configuration: loggingConfiguration,
+		Writer: loggingWriter, Handler: loggingHandler, Scopes: loggingScopes,
+	})
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("configure Spice logging: %w", err))
+	}
+	observers := append([]spicelifecycle.Observer(nil), options.Observers...)
+	loggingObservers, err := spiceobservability.NewLoggingObservers(application.logger)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("configure Spice logging observers: %w", err))
+	}
+	observers = append([]spicelifecycle.Observer{loggingObservers.Lifecycle}, observers...)
+	for index, observer := range observers {
+		if err := application.coordinator.RegisterObserver(observer); err != nil {
+			return nil, fmt.Errorf("register lifecycle observer %d: %w", index, err)
+		}
+	}
 	dependencies, err := constructApplicationDependencies(ctx, application, options, configurationSnapshot)
 	if err != nil {
 		return nil, err
@@ -68,6 +180,7 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		ServerProtocol:                  dependencies.serverProtocol,
 		DaemonInteractionBroker:         dependencies.daemonInteractionBroker,
 		ProcessResolver:                 dependencies.processResolver,
+		VerifiedProcessLauncher:         dependencies.verifiedProcessLauncher,
 		RuntimePluginHostIdentity:       dependencies.runtimePluginHostIdentity,
 		DaemonRoot:                      dependencies.daemonRoot,
 		SessionStore:                    dependencies.sessionStore,
@@ -79,6 +192,10 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		OpenAIConfig:                    dependencies.openAIConfig,
 		RunAuthority:                    dependencies.runAuthority,
 		DefinitionSet:                   dependencies.definitionSet,
+		AgentLoggingConfig:              dependencies.agentLoggingConfig,
+		AgentLoggingMailbox:             dependencies.agentLoggingMailbox,
+		AgentLoggingProcessor:           dependencies.agentLoggingProcessor,
+		AgentLoggingHealth:              dependencies.agentLoggingHealth,
 		Read:                            dependencies.read,
 		Shell:                           dependencies.shell,
 		Replace:                         dependencies.replace,

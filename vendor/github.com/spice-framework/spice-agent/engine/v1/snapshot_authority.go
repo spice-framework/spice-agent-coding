@@ -19,7 +19,7 @@ const (
 	// CapabilitySnapshotAuthorityV1 identifies authenticated snapshot transfer.
 	CapabilitySnapshotAuthorityV1 = "snapshot-authority-v1"
 	// SnapshotFormat is the only safe kernel snapshot format accepted by v1.
-	SnapshotFormat = "spice.agent.snapshot/v1alpha2"
+	SnapshotFormat = "spice.agent.snapshot/v1alpha3"
 
 	snapshotAuthorityDomain = "spice.agent.run-authority/v1"
 	snapshotAuthorityBytes  = sha256.Size
@@ -277,7 +277,7 @@ func validateSnapshotEnvelopeContent(value *SnapshotEnvelope) error {
 		RunID string `json:"run_id"`
 	}
 	if err := json.Unmarshal(value.GetPayload(), &identity); err != nil {
-		return errors.New("snapshot payload must be valid v1alpha2 JSON")
+		return errors.New("snapshot payload must be valid v1alpha3 JSON")
 	}
 	if identity.RunID != value.GetRunId() {
 		return errors.New("snapshot envelope run ID does not match its embedded run ID")

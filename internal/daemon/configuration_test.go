@@ -5,6 +5,45 @@ import (
 	"testing"
 )
 
+func TestNewAgentLoggingConfigMapsValidatedDistributionProperties(t *testing.T) {
+	t.Parallel()
+	config, err := NewAgentLoggingConfig(Properties{
+		LoggingMailboxCapacity: 4096,
+		LoggingIncludeProgress: true,
+		LoggingReadinessImpact: true,
+	})
+	if err != nil {
+		t.Fatalf("NewAgentLoggingConfig() error = %v", err)
+	}
+	if config.MailboxCapacity != 4096 || !config.IncludeProgress || !config.ReadinessImpact {
+		t.Fatalf("Agent logging config = %#v", config)
+	}
+	for _, capacity := range []int{0, 65537} {
+		if _, configErr := NewAgentLoggingConfig(Properties{LoggingMailboxCapacity: capacity}); configErr == nil {
+			t.Fatalf("NewAgentLoggingConfig() accepted capacity %d", capacity)
+		}
+	}
+}
+
+func TestWorkspaceFingerprintIsStableAndRejectsNonAbsoluteRoots(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	first, err := workspaceFingerprint(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := workspaceFingerprint(filepath.Clean(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != second || len(first) != len("sha256:")+64 {
+		t.Fatalf("workspace fingerprints = %q, %q", first, second)
+	}
+	if _, err = workspaceFingerprint("relative"); err == nil {
+		t.Fatal("workspaceFingerprint() accepted a relative root")
+	}
+}
+
 func TestNewCodingConfigCanonicalizesWorkspaceAndRequiresRegistry(t *testing.T) {
 	t.Parallel()
 	workspace := filepath.Join("relative", "workspace", "..", "root")

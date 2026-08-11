@@ -171,22 +171,75 @@ type Observer interface {
 	Publish(context.Context, Envelope) error
 }
 
+// BestEffortFilter is an immutable set of event kinds excluded before a
+// best-effort mailbox consumes capacity. Its zero value admits every kind.
+type BestEffortFilter struct {
+	excluded map[Kind]struct{}
+}
+
+// NewBestEffortFilter validates and freezes an exact exclusion set.
+func NewBestEffortFilter(excluded ...Kind) (BestEffortFilter, error) {
+	if len(excluded) > 20 {
+		return BestEffortFilter{}, errors.New("best-effort observer filter exceeds 20 event kinds")
+	}
+	result := BestEffortFilter{excluded: make(map[Kind]struct{}, len(excluded))}
+	for index, kind := range excluded {
+		if !validKind(kind) {
+			return BestEffortFilter{}, fmt.Errorf("best-effort observer filter kind %d is unsupported", index)
+		}
+		if _, duplicate := result.excluded[kind]; duplicate {
+			return BestEffortFilter{}, fmt.Errorf("best-effort observer filter kind %q is duplicated", kind)
+		}
+		result.excluded[kind] = struct{}{}
+	}
+	return result, nil
+}
+
+func (filter BestEffortFilter) clone() BestEffortFilter {
+	result := BestEffortFilter{excluded: make(map[Kind]struct{}, len(filter.excluded))}
+	for kind := range filter.excluded {
+		result.excluded[kind] = struct{}{}
+	}
+	return result
+}
+
+func (filter BestEffortFilter) excludes(kind Kind) bool {
+	_, excluded := filter.excluded[kind]
+	return excluded
+}
+
 // BestEffortObserver is a bounded non-blocking mailbox. Publishing never waits;
-// overflow increments Dropped and leaves execution unaffected.
+// filtering and overflow are accounted separately and leave execution unaffected.
 type BestEffortObserver struct {
-	mu      sync.Mutex
-	events  chan Envelope
-	dropped uint64
-	closed  bool
-	once    sync.Once
+	mu       sync.Mutex
+	events   chan Envelope
+	filter   BestEffortFilter
+	dropped  uint64
+	filtered uint64
+	closed   bool
+	once     sync.Once
 }
 
 // NewBestEffortObserver constructs a mailbox with a fixed positive capacity.
 func NewBestEffortObserver(capacity int) (*BestEffortObserver, error) {
+	return NewFilteredBestEffortObserver(capacity, BestEffortFilter{})
+}
+
+// NewFilteredBestEffortObserver constructs a mailbox with one immutable
+// validated filter. Filtering happens before an envelope can occupy capacity.
+func NewFilteredBestEffortObserver(
+	capacity int,
+	filter BestEffortFilter,
+) (*BestEffortObserver, error) {
 	if capacity < 1 || capacity > 65536 {
 		return nil, errors.New("best-effort observer capacity must be between 1 and 65536")
 	}
-	return &BestEffortObserver{events: make(chan Envelope, capacity)}, nil
+	for kind := range filter.excluded {
+		if !validKind(kind) {
+			return nil, errors.New("best-effort observer filter is invalid")
+		}
+	}
+	return &BestEffortObserver{events: make(chan Envelope, capacity), filter: filter.clone()}, nil
 }
 
 // TryPublish enqueues an event or records one drop without blocking.
@@ -194,6 +247,10 @@ func (observer *BestEffortObserver) TryPublish(envelope Envelope) bool {
 	observer.mu.Lock()
 	defer observer.mu.Unlock()
 	if observer.closed {
+		return false
+	}
+	if observer.filter.excludes(envelope.Kind()) {
+		observer.filtered++
 		return false
 	}
 	select {
@@ -213,6 +270,13 @@ func (observer *BestEffortObserver) Dropped() uint64 {
 	observer.mu.Lock()
 	defer observer.mu.Unlock()
 	return observer.dropped
+}
+
+// Filtered returns the number of observations excluded before enqueue.
+func (observer *BestEffortObserver) Filtered() uint64 {
+	observer.mu.Lock()
+	defer observer.mu.Unlock()
+	return observer.filtered
 }
 
 // Close closes the mailbox exactly once after all producers have stopped.

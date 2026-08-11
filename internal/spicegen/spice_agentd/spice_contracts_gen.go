@@ -6,6 +6,8 @@ package spicegen
 
 import (
 	fmt "fmt"
+	io "io"
+	slog "log/slog"
 	strings "strings"
 	time "time"
 
@@ -19,7 +21,9 @@ import (
 	daemon2 "github.com/spice-framework/spice-agent/daemon"
 	endpoint "github.com/spice-framework/spice-agent/daemon/endpoint"
 	grpcserver "github.com/spice-framework/spice-agent/daemon/grpcserver"
+	event "github.com/spice-framework/spice-agent/event"
 	interaction "github.com/spice-framework/spice-agent/interaction"
+	logging "github.com/spice-framework/spice-agent/logging"
 	model "github.com/spice-framework/spice-agent/model"
 	pluginhost "github.com/spice-framework/spice-agent/plugin/host"
 	pluginv1 "github.com/spice-framework/spice-agent/plugin/v1"
@@ -29,6 +33,7 @@ import (
 	spicebean "github.com/spice-framework/spice/bean"
 	spiceconfig "github.com/spice-framework/spice/config"
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
+	spicelogging "github.com/spice-framework/spice/logging"
 )
 
 const TargetID = spiceentrypoint.ApplicationTargetSpiceAgentd_d556aede
@@ -66,6 +71,8 @@ type Components struct {
 	DaemonInteractionBroker interaction.Broker
 	// ProcessResolver is bean "processResolver".
 	ProcessResolver process.ExecutableResolver
+	// VerifiedProcessLauncher is bean "verifiedProcessLauncher".
+	VerifiedProcessLauncher process.VerifiedLauncher
 	// RuntimePluginHostIdentity is bean "runtimePluginHostIdentity".
 	RuntimePluginHostIdentity *pluginv1.BuildIdentity
 	// DaemonRoot is bean "daemonRoot".
@@ -88,6 +95,14 @@ type Components struct {
 	RunAuthority *daemon2.RunAuthority
 	// DefinitionSet is bean "definitionSet".
 	DefinitionSet daemon2.DefinitionSet
+	// AgentLoggingConfig is bean "agentLoggingConfig".
+	AgentLoggingConfig logging.Config
+	// AgentLoggingMailbox is bean "agentLoggingMailbox".
+	AgentLoggingMailbox *event.BestEffortObserver
+	// AgentLoggingProcessor is bean "agentLoggingProcessor".
+	AgentLoggingProcessor *logging.Processor
+	// AgentLoggingHealth is bean "agentLoggingHealth".
+	AgentLoggingHealth daemon2.HealthSource
 	// Read is bean "read".
 	Read tool.Tool
 	// Shell is bean "shell".
@@ -149,6 +164,8 @@ type BeanOverrides struct {
 	DaemonInteractionBroker spicebean.Override[interaction.Broker]
 	// ProcessResolver replaces bean "processResolver".
 	ProcessResolver spicebean.Override[process.ExecutableResolver]
+	// VerifiedProcessLauncher replaces bean "verifiedProcessLauncher".
+	VerifiedProcessLauncher spicebean.Override[process.VerifiedLauncher]
 	// RuntimePluginHostIdentity replaces bean "runtimePluginHostIdentity".
 	RuntimePluginHostIdentity spicebean.Override[*pluginv1.BuildIdentity]
 	// DaemonRoot replaces bean "daemonRoot".
@@ -169,6 +186,14 @@ type BeanOverrides struct {
 	RunAuthority spicebean.Override[*daemon2.RunAuthority]
 	// DefinitionSet replaces bean "definitionSet".
 	DefinitionSet spicebean.Override[daemon2.DefinitionSet]
+	// AgentLoggingConfig replaces bean "agentLoggingConfig".
+	AgentLoggingConfig spicebean.Override[logging.Config]
+	// AgentLoggingMailbox replaces bean "agentLoggingMailbox".
+	AgentLoggingMailbox spicebean.Override[*event.BestEffortObserver]
+	// AgentLoggingProcessor replaces bean "agentLoggingProcessor".
+	AgentLoggingProcessor spicebean.Override[*logging.Processor]
+	// AgentLoggingHealth replaces bean "agentLoggingHealth".
+	AgentLoggingHealth spicebean.Override[daemon2.HealthSource]
 	// Read replaces bean "read".
 	Read spicebean.Override[tool.Tool]
 	// Shell replaces bean "shell".
@@ -257,6 +282,9 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.ProcessResolver.Enabled() {
 			result.ProcessResolver = layer.Overrides.ProcessResolver
 		}
+		if layer.Overrides.VerifiedProcessLauncher.Enabled() {
+			result.VerifiedProcessLauncher = layer.Overrides.VerifiedProcessLauncher
+		}
 		if layer.Overrides.RuntimePluginHostIdentity.Enabled() {
 			result.RuntimePluginHostIdentity = layer.Overrides.RuntimePluginHostIdentity
 		}
@@ -286,6 +314,18 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		}
 		if layer.Overrides.DefinitionSet.Enabled() {
 			result.DefinitionSet = layer.Overrides.DefinitionSet
+		}
+		if layer.Overrides.AgentLoggingConfig.Enabled() {
+			result.AgentLoggingConfig = layer.Overrides.AgentLoggingConfig
+		}
+		if layer.Overrides.AgentLoggingMailbox.Enabled() {
+			result.AgentLoggingMailbox = layer.Overrides.AgentLoggingMailbox
+		}
+		if layer.Overrides.AgentLoggingProcessor.Enabled() {
+			result.AgentLoggingProcessor = layer.Overrides.AgentLoggingProcessor
+		}
+		if layer.Overrides.AgentLoggingHealth.Enabled() {
+			result.AgentLoggingHealth = layer.Overrides.AgentLoggingHealth
 		}
 		if layer.Overrides.Read.Enabled() {
 			result.Read = layer.Overrides.Read
@@ -336,11 +376,18 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 	return result, nil
 }
 
+type LoggingOptions struct {
+	Writer        io.Writer
+	Handler       slog.Handler
+	Configuration *spicelogging.Configuration
+}
+
 type Application struct {
 	coordinator     *spicelifecycle.Coordinator
 	hooks           []spicelifecycle.Hook
 	shutdownTimeout time.Duration
 	components      Components
+	logger          *spicelogging.Logger
 }
 
 type ApplicationOptions struct {
@@ -348,5 +395,8 @@ type ApplicationOptions struct {
 	Profiles                  []string
 	Sources                   []spiceconfig.Source
 	AllowUnknownConfiguration bool
-	Observers                 []spicelifecycle.Observer
+	Logging                   *LoggingOptions
+	// Logger is deprecated; use Logging.
+	Logger    *slog.Logger
+	Observers []spicelifecycle.Observer
 }

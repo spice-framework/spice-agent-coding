@@ -6,6 +6,8 @@ package spicegen
 
 import (
 	fmt "fmt"
+	io "io"
+	slog "log/slog"
 	strings "strings"
 	time "time"
 
@@ -21,6 +23,7 @@ import (
 	spicebean "github.com/spice-framework/spice/bean"
 	spiceconfig "github.com/spice-framework/spice/config"
 	spicelifecycle "github.com/spice-framework/spice/lifecycle"
+	spicelogging "github.com/spice-framework/spice/logging"
 )
 
 const TargetID = spiceentrypoint.ApplicationTargetSpiceAgent_89bc7a6d
@@ -305,11 +308,18 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 	return result, nil
 }
 
+type LoggingOptions struct {
+	Writer        io.Writer
+	Handler       slog.Handler
+	Configuration *spicelogging.Configuration
+}
+
 type Application struct {
 	coordinator     *spicelifecycle.Coordinator
 	hooks           []spicelifecycle.Hook
 	shutdownTimeout time.Duration
 	components      Components
+	logger          *spicelogging.Logger
 }
 
 type ApplicationOptions struct {
@@ -317,5 +327,8 @@ type ApplicationOptions struct {
 	Profiles                  []string
 	Sources                   []spiceconfig.Source
 	AllowUnknownConfiguration bool
-	Observers                 []spicelifecycle.Observer
+	Logging                   *LoggingOptions
+	// Logger is deprecated; use Logging.
+	Logger    *slog.Logger
+	Observers []spicelifecycle.Observer
 }

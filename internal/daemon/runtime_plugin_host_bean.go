@@ -24,7 +24,7 @@ func NewRuntimePluginHost(
 	compiled stage.ToolDispatcher,
 	decorators []stage.ToolDispatchDecorator,
 	restart pluginhost.RestartPolicy,
-	launcher agentprocess.Launcher,
+	launcher agentprocess.VerifiedLauncher,
 	endpoints pluginhost.LocalEndpointFactory,
 	plan RuntimePluginPlan,
 ) (*pluginhost.Host, lifecycle.Cleanup, error) {
