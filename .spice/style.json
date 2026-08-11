@@ -14,6 +14,7 @@
     "internal/processcontainment",
     "internal/processplatform",
     "internal/releaseassets",
+    "internal/releaseinstallation",
     "internal/runidentity",
     "internal/runtimepluginfixture",
     "internal/testpath",

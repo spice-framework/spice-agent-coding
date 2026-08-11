@@ -32,7 +32,7 @@ func TestVerifyCandidateBindsExactCanonicalMetadata(t *testing.T) {
 		Schema: 1, Profile: releaseProfile, Repository: fixtureExpectation.Repository,
 		Module: fixtureExpectation.Module, Version: fixtureExpectation.Version,
 	})
-	set, err := VerifyCandidate(candidate, releaseFixture(t))
+	set, err := NewVerifier().VerifyCandidate(candidate, releaseFixture(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestVerifyCandidateBindsExactCanonicalMetadata(t *testing.T) {
 		Schema: 1, Profile: releaseProfile, Repository: fixtureExpectation.Repository,
 		Module: fixtureExpectation.Module, Version: "v0.1.0-preview.3",
 	})
-	if _, err = VerifyCandidate(staleCandidate, releaseFixture(t)); err == nil {
+	if _, err = NewVerifier().VerifyCandidate(staleCandidate, releaseFixture(t)); err == nil {
 		t.Fatal("preview 2 subjects satisfied a preview 3 candidate")
 	}
 
@@ -54,7 +54,7 @@ func TestVerifyCandidateBindsExactCanonicalMetadata(t *testing.T) {
 		Schema: 1, Profile: releaseProfile, Repository: fixtureExpectation.Repository,
 		Module: "example.com/wrong", Version: fixtureExpectation.Version,
 	})
-	if _, err = VerifyCandidate(mismatchedCandidate, releaseFixture(t)); err == nil {
+	if _, err = NewVerifier().VerifyCandidate(mismatchedCandidate, releaseFixture(t)); err == nil {
 		t.Fatal("subjects satisfied mismatched candidate module metadata")
 	}
 }
@@ -97,12 +97,12 @@ func TestCandidateExpectationRejectsInvalidOrNoncanonicalMetadata(t *testing.T) 
 				content = test.content(content)
 			}
 			writeTestFile(t, filepath.Join(candidate, "spice-release.json"), content)
-			if _, err = candidateExpectation(candidate); err == nil {
-				t.Fatal("candidateExpectation() error = nil")
+			if _, err = NewVerifier().candidateExpectation(candidate); err == nil {
+				t.Fatal("NewVerifier().candidateExpectation() error = nil")
 			}
 		})
 	}
-	if _, err := candidateExpectation("relative"); err == nil {
+	if _, err := NewVerifier().candidateExpectation("relative"); err == nil {
 		t.Fatal("relative candidate root was accepted")
 	}
 }
@@ -119,7 +119,7 @@ func writeCandidateMetadata(t *testing.T, root string, metadata candidateMetadat
 func TestVerifyAndExtractValidatedSubjects(t *testing.T) {
 	t.Parallel()
 	directory := releaseFixture(t)
-	set, err := Verify(directory, fixtureExpectation)
+	set, err := NewVerifier().Verify(directory, fixtureExpectation)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func TestVerifyRejectsSubjectAndChecksumDrift(t *testing.T) {
 		}},
 		{name: "subject hash", mutate: func(t *testing.T, directory string) {
 			t.Helper()
-			writeTestFile(t, filepath.Join(directory, sbomName(fixtureExpectation)), []byte("{}\n"))
+			writeTestFile(t, filepath.Join(directory, NewVerifier().sbomName(fixtureExpectation)), []byte("{}\n"))
 		}},
 		{name: "partial checksums", mutate: func(t *testing.T, directory string) {
 			t.Helper()
@@ -205,15 +205,15 @@ func TestVerifyRejectsSubjectAndChecksumDrift(t *testing.T) {
 			t.Parallel()
 			directory := releaseFixture(t)
 			test.mutate(t, directory)
-			if _, err := Verify(directory, fixtureExpectation); err == nil {
-				t.Fatal("Verify() error = nil")
+			if _, err := NewVerifier().Verify(directory, fixtureExpectation); err == nil {
+				t.Fatal("NewVerifier().Verify() error = nil")
 			}
 		})
 	}
-	if _, err := Verify("relative", fixtureExpectation); err == nil {
+	if _, err := NewVerifier().Verify("relative", fixtureExpectation); err == nil {
 		t.Fatal("relative subject directory was accepted")
 	}
-	if _, err := Verify(t.TempDir(), Expectation{}); err == nil {
+	if _, err := NewVerifier().Verify(t.TempDir(), Expectation{}); err == nil {
 		t.Fatal("invalid expectation was accepted")
 	}
 }
@@ -222,7 +222,7 @@ func TestReleaseMetadataAndSBOMValidationRejectsDrift(t *testing.T) {
 	t.Parallel()
 	metadata := fixtureMetadata(t, t.TempDir())
 	valid := metadata
-	if err := validateReleaseMetadata(valid, fixtureExpectation); err != nil {
+	if err := NewVerifier().validateReleaseMetadata(valid, fixtureExpectation); err != nil {
 		t.Fatal(err)
 	}
 	mutations := []func(*releaseMetadata){
@@ -240,13 +240,13 @@ func TestReleaseMetadataAndSBOMValidationRejectsDrift(t *testing.T) {
 		candidate.Targets = slices.Clone(valid.Targets)
 		candidate.Payloads = slices.Clone(valid.Payloads)
 		mutate(&candidate)
-		if err := validateReleaseMetadata(candidate, fixtureExpectation); err == nil {
+		if err := NewVerifier().validateReleaseMetadata(candidate, fixtureExpectation); err == nil {
 			t.Fatalf("metadata mutation %d was accepted", index)
 		}
 	}
 	sbom := filepath.Join(t.TempDir(), "sbom.json")
 	writeTestFile(t, sbom, []byte(`{"spdxVersion":"SPDX-2.2"}`))
-	if err := validateSBOM(sbom, fixtureExpectation); err == nil {
+	if err := NewVerifier().validateSBOM(sbom, fixtureExpectation); err == nil {
 		t.Fatal("invalid SBOM identity was accepted")
 	}
 }
@@ -283,13 +283,13 @@ func TestArchiveValidationRejectsPathModePayloadAndMembershipDrift(t *testing.T)
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			file := filepath.Join(t.TempDir(), target.Archive)
-			writeTarArchive(t, file, archiveRoot(target.Archive), test.entries)
-			err := inspectArchive(file, target, []releaseFile{payload}, nil)
+			writeTarArchive(t, file, (archiveInspector{}).archiveRoot(target.Archive), test.entries)
+			err := (archiveInspector{}).inspectArchive(file, target, []releaseFile{payload}, nil)
 			if test.name == "valid" && err != nil {
 				t.Fatal(err)
 			}
 			if test.name != "valid" && err == nil {
-				t.Fatal("inspectArchive() error = nil")
+				t.Fatal("(archiveInspector{}).inspectArchive() error = nil")
 			}
 		})
 	}
@@ -309,8 +309,8 @@ func releaseFixture(t *testing.T) string {
 		t.Fatal(err)
 	}
 	metadataContent = append(metadataContent, '\n')
-	writeTestFile(t, filepath.Join(directory, releaseMetadataName(fixtureExpectation)), metadataContent)
-	writeChecksums(t, directory, expectedSubjectNames(fixtureExpectation)[1:])
+	writeTestFile(t, filepath.Join(directory, NewVerifier().releaseMetadataName(fixtureExpectation)), metadataContent)
+	writeChecksums(t, directory, NewVerifier().expectedSubjectNames(fixtureExpectation)[1:])
 	return directory
 }
 
@@ -321,21 +321,21 @@ func fixtureMetadata(t *testing.T, directory string) releaseMetadata {
 		"docs/configuration.md": "configuration", "docs/installation.md": "installation",
 		"docs/security.md": "security", "protocol-descriptors.pb": "descriptors",
 	}
-	payloads := make([]releaseFile, 0, len(expectedPayloadNames))
-	for _, name := range expectedPayloadNames {
+	payloads := make([]releaseFile, 0, len(NewVerifier().expectedPayloadNames()))
+	for _, name := range NewVerifier().expectedPayloadNames() {
 		content := payloadContents[name]
 		payloads = append(payloads, releaseFile{Name: name, SHA256: digestText(content), Size: int64(len(content))})
 	}
-	targets := make([]releaseTarget, 0, len(supportedTargets))
+	targets := make([]releaseTarget, 0, len(NewVerifier().supportedTargets()))
 	artifacts := make([]releaseFile, 0, 7)
-	for _, current := range supportedTargets {
+	for _, current := range NewVerifier().supportedTargets() {
 		extension := ".tar.gz"
 		binaries := []string{"spice-agent", "spice-agentd"}
 		if current.goos == "windows" {
 			extension = ".zip"
 			binaries = []string{"spice-agent.exe", "spice-agentd.exe"}
 		}
-		archive := artifactBase(fixtureExpectation) + "_" + current.goos + "_" + current.goarch + extension
+		archive := NewVerifier().artifactBase(fixtureExpectation) + "_" + current.goos + "_" + current.goarch + extension
 		target := releaseTarget{GOOS: current.goos, GOARCH: current.goarch, Archive: archive, Binaries: binaries}
 		targets = append(targets, target)
 		entries := make([]archiveFixtureEntry, 0, len(payloads)+len(binaries))
@@ -347,13 +347,13 @@ func fixtureMetadata(t *testing.T, directory string) releaseMetadata {
 		}
 		path := filepath.Join(directory, archive)
 		if current.goos == "windows" {
-			writeZipArchive(t, path, archiveRoot(archive), entries)
+			writeZipArchive(t, path, (archiveInspector{}).archiveRoot(archive), entries)
 		} else {
-			writeTarArchive(t, path, archiveRoot(archive), entries)
+			writeTarArchive(t, path, (archiveInspector{}).archiveRoot(archive), entries)
 		}
 		artifacts = append(artifacts, fileMetadata(t, path))
 	}
-	sbom := sbomName(fixtureExpectation)
+	sbom := NewVerifier().sbomName(fixtureExpectation)
 	sbomContent := []byte(`{"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"spice-agent-coding v0.1.0-preview.2","documentNamespace":"https://github.com/spice-framework/spice-agent-coding/releases/v0.1.0-preview.2/spdx/test","packages":[{"name":"github.com/spice-framework/spice-agent-coding","versionInfo":"v0.1.0-preview.2"}]}` + "\n")
 	writeTestFile(t, filepath.Join(directory, sbom), sbomContent)
 	artifacts = append(artifacts, fileMetadata(t, filepath.Join(directory, sbom)))

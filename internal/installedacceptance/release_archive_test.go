@@ -40,7 +40,7 @@ func TestVerifiedNativeReleaseArchive(t *testing.T) {
 	if releaseCandidateRoot == nil || *releaseCandidateRoot == "" {
 		t.Fatal("-spice-release-candidate-root is required")
 	}
-	set, err := releaseinstallation.VerifyCandidate(*releaseCandidateRoot, *verifiedArtifactDirectory)
+	set, err := releaseinstallation.NewVerifier().VerifyCandidate(*releaseCandidateRoot, *verifiedArtifactDirectory)
 	if err != nil {
 		t.Fatalf("validate independently verified release subjects: %v", err)
 	}
