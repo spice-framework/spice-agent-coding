@@ -17,7 +17,7 @@ type opencodeRepository struct {
 	tree   opencodeTree
 }
 
-func newOpenCodeRepository(source, target string) (opencodeRepository, error) {
+func (repository opencodeRepository) newOpenCodeRepository(source, target string) (opencodeRepository, error) {
 	if !filepath.IsAbs(source) || !filepath.IsAbs(target) || filepath.Clean(source) == filepath.Clean(target) {
 		return opencodeRepository{}, errors.New("OpenCode repository copy requires distinct absolute roots")
 	}
@@ -25,8 +25,8 @@ func newOpenCodeRepository(source, target string) (opencodeRepository, error) {
 }
 
 func (repository opencodeRepository) Copy(ctx context.Context) error {
-	environment := minimumEvaluationEnvironment(repository.target)
-	status, err := boundedCommandOutput(
+	environment := (opencodeEnvironment{}).minimumEvaluationEnvironment(repository.target)
+	status, err := (opencodeCommand{}).boundedCommandOutput(
 		ctx, repository.source, environment, maximumOpenCodeInventoryBytes,
 		"git", "status", "--porcelain=v1", "-z", "--untracked-files=all",
 	)
@@ -36,7 +36,7 @@ func (repository opencodeRepository) Copy(ctx context.Context) error {
 	if status != "" {
 		return errors.New("OpenCode evaluation refuses a dirty source repository")
 	}
-	inventory, err := boundedCommandOutput(
+	inventory, err := (opencodeCommand{}).boundedCommandOutput(
 		ctx, repository.source, environment, maximumOpenCodeInventoryBytes,
 		"git", "ls-files", "-z", "--cached",
 	)
@@ -63,7 +63,7 @@ func (repository opencodeRepository) Copy(ctx context.Context) error {
 
 func (repository opencodeRepository) copyFile(relative string, total *int64) error {
 	clean := filepath.Clean(filepath.FromSlash(relative))
-	if unsafeOpenCodeCopyPath(clean, relative, repository.tree) {
+	if (opencodeRepository{}).unsafeOpenCodeCopyPath(clean, relative, repository.tree) {
 		return errors.New("OpenCode source repository contains an unsafe tracked path")
 	}
 	source := filepath.Join(repository.source, clean)
@@ -82,15 +82,15 @@ func (repository opencodeRepository) copyFile(relative string, total *int64) err
 	if err = os.MkdirAll(filepath.Dir(destination), 0o700); err != nil {
 		return fmt.Errorf("create OpenCode repository directory: %w", err)
 	}
-	return copyOpenCodeFile(source, destination, info.Size())
+	return (opencodeRepository{}).copyOpenCodeFile(source, destination, info.Size())
 }
 
-func unsafeOpenCodeCopyPath(clean, relative string, tree opencodeTree) bool {
+func (repository opencodeRepository) unsafeOpenCodeCopyPath(clean, relative string, tree opencodeTree) bool {
 	return clean == "." || filepath.IsAbs(clean) || clean == ".." ||
 		strings.HasPrefix(clean, ".."+string(filepath.Separator)) || tree.ContainsUnsafePath(relative)
 }
 
-func copyOpenCodeFile(source, destination string, size int64) error {
+func (repository opencodeRepository) copyOpenCodeFile(source, destination string, size int64) error {
 	input, err := os.Open(source) // #nosec G304 -- source is a validated tracked path.
 	if err != nil {
 		return fmt.Errorf("open OpenCode source file: %w", err)

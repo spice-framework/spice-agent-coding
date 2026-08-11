@@ -45,7 +45,7 @@ func (opencodeCredential) Copy(source, destination string) error {
 	entryDecoder := json.NewDecoder(bytes.NewReader(raw))
 	entryDecoder.DisallowUnknownFields()
 	var entry opencodeCredentialEntry
-	if err = entryDecoder.Decode(&entry); err != nil || entry.Type != openCodeCredentialType || !validOpenCodeCredential(entry.Key) {
+	if err = entryDecoder.Decode(&entry); err != nil || entry.Type != openCodeCredentialType || !(opencodeCredential{}).validOpenCodeCredential(entry.Key) {
 		return errors.New("configured OpenRouter credential is invalid")
 	}
 	isolated, err := json.Marshal(opencodeCredentialStore{openCodeProvider: raw})
@@ -61,7 +61,7 @@ func (opencodeCredential) Copy(source, destination string) error {
 	return nil
 }
 
-func validOpenCodeCredential(value string) bool {
+func (owner opencodeCredential) validOpenCodeCredential(value string) bool {
 	if value == "" || len(value) > 4096 || !utf8.ValidString(value) || strings.TrimSpace(value) != value {
 		return false
 	}

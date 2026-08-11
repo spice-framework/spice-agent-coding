@@ -16,9 +16,9 @@ type opencodeBootstrapper struct {
 	archive    opencodeArchive
 }
 
-func newOpenCodeBootstrapper() opencodeBootstrapper {
+func (bootstrapper opencodeBootstrapper) newOpenCodeBootstrapper() opencodeBootstrapper {
 	return opencodeBootstrapper{
-		catalog: opencodeCatalog{}, downloader: newOpenCodeDownloader(), archive: newOpenCodeArchive(),
+		catalog: opencodeCatalog{}, downloader: (opencodeDownloader{}).newOpenCodeDownloader(), archive: (opencodeArchive{}).newOpenCodeArchive(),
 	}
 }
 
@@ -48,8 +48,8 @@ func (bootstrapper opencodeBootstrapper) Install(ctx context.Context, root strin
 			return "", fmt.Errorf("protect OpenCode executable: %w", err)
 		}
 	}
-	version, err := boundedCommandOutput(
-		ctx, root, minimumEvaluationEnvironment(root), maximumOpenCodeDiagnosticBytes, executable, "--version",
+	version, err := (opencodeCommand{}).boundedCommandOutput(
+		ctx, root, (opencodeEnvironment{}).minimumEvaluationEnvironment(root), maximumOpenCodeDiagnosticBytes, executable, "--version",
 	)
 	if err != nil {
 		return "", fmt.Errorf("execute reviewed OpenCode package: %w", err)

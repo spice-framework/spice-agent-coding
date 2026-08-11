@@ -1,6 +1,9 @@
 package main
 
-func retryableOpenCodeClassification(classification string) bool {
+// opencodeRetry owns retry classification and attempt aggregation.
+type opencodeRetry struct{}
+
+func (owner opencodeRetry) retryableOpenCodeClassification(classification string) bool {
 	switch classification {
 	case "rate-limited", "infrastructure-model", "infrastructure-timeout":
 		return true
@@ -9,13 +12,13 @@ func retryableOpenCodeClassification(classification string) bool {
 	}
 }
 
-func combineOpenCodeAttempts(attempts []opencodeEvaluationResult) opencodeEvaluationResult {
+func (owner opencodeRetry) combineOpenCodeAttempts(attempts []opencodeEvaluationResult) opencodeEvaluationResult {
 	if len(attempts) == 0 {
 		return opencodeEvaluationResult{Classification: "infrastructure-harness", Detail: "no-attempt", Variance: "invalid"}
 	}
 	result := attempts[len(attempts)-1]
 	result.Attempts = len(attempts)
-	result.Variance = classifyOpenCodeVariance(attempts)
+	result.Variance = (opencodeRetry{}).classifyOpenCodeVariance(attempts)
 	result.Duration = 0
 	result.Cost = 0
 	result.Tools = 0
@@ -29,7 +32,7 @@ func combineOpenCodeAttempts(attempts []opencodeEvaluationResult) opencodeEvalua
 	return result
 }
 
-func classifyOpenCodeVariance(attempts []opencodeEvaluationResult) string {
+func (owner opencodeRetry) classifyOpenCodeVariance(attempts []opencodeEvaluationResult) string {
 	if len(attempts) < 2 {
 		return "not-retried"
 	}
@@ -43,7 +46,7 @@ func classifyOpenCodeVariance(attempts []opencodeEvaluationResult) string {
 		return "recovered-pass"
 	case last.Classification == "rubric-failed":
 		return "recovered-rubric"
-	case retryableOpenCodeClassification(last.Classification):
+	case (opencodeRetry{}).retryableOpenCodeClassification(last.Classification):
 		return "transient-variance"
 	default:
 		return "classification-variance"

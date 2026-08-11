@@ -22,7 +22,7 @@ type opencodeEventCapture struct {
 	summary      opencodeEventSummary
 }
 
-func newOpenCodeEventCapture(cancel context.CancelFunc, maximumTools, maximumSteps int) *opencodeEventCapture {
+func (capture *opencodeEventCapture) newOpenCodeEventCapture(cancel context.CancelFunc, maximumTools, maximumSteps int) *opencodeEventCapture {
 	return &opencodeEventCapture{cancel: cancel, maximumTools: maximumTools, maximumSteps: maximumSteps}
 }
 
@@ -84,7 +84,7 @@ func (capture *opencodeEventCapture) consume(line []byte) error {
 	case "text":
 		return capture.consumeText(event.Part)
 	case "error":
-		capture.summary.ErrorClass = classifyOpenCodeError(event.Error)
+		capture.summary.ErrorClass = (&opencodeEventCapture{}).classifyOpenCodeError(event.Error)
 	case "reasoning":
 		return errors.New("reasoning output was not requested")
 	default:
@@ -137,7 +137,7 @@ func (capture *opencodeEventCapture) fail(reason string) {
 	}
 }
 
-func classifyOpenCodeError(value opencodeEventError) string {
+func (capture *opencodeEventCapture) classifyOpenCodeError(value opencodeEventError) string {
 	message := strings.ToLower(value.Name + " " + value.Data.Message)
 	switch {
 	case value.Data.StatusCode == http.StatusTooManyRequests || strings.Contains(message, "rate limit") || strings.Contains(message, "too many requests"):

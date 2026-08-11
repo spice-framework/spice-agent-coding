@@ -17,7 +17,7 @@ type opencodeFreeRouteValidator struct {
 	client *http.Client
 }
 
-func newOpenCodeFreeRouteValidator() opencodeFreeRouteValidator {
+func (validator opencodeFreeRouteValidator) newOpenCodeFreeRouteValidator() opencodeFreeRouteValidator {
 	baseTransport, ok := http.DefaultTransport.(*http.Transport)
 	if !ok {
 		panic("OpenCode evaluator requires the standard HTTP transport")
@@ -37,7 +37,7 @@ func (validator opencodeFreeRouteValidator) Validate(ctx context.Context, expect
 		available[model.ID] = model
 	}
 	for _, wanted := range expected {
-		if !validOpenCodeFreeRoute(available[wanted.Route], wanted.Route) {
+		if !(opencodeFreeRouteValidator{}).validOpenCodeFreeRoute(available[wanted.Route], wanted.Route) {
 			return fmt.Errorf("OpenRouter route %s is not an exact zero-cost tool route", wanted.Label)
 		}
 	}
@@ -75,7 +75,7 @@ func (validator opencodeFreeRouteValidator) fetch(ctx context.Context) (catalog 
 	return catalog, nil
 }
 
-func validOpenCodeFreeRoute(model opencodeOpenRouterModel, expected string) bool {
+func (validator opencodeFreeRouteValidator) validOpenCodeFreeRoute(model opencodeOpenRouterModel, expected string) bool {
 	return model.ID == expected && strings.HasSuffix(model.ID, ":free") && model.Pricing.Prompt == "0" &&
 		model.Pricing.Completion == "0" && slices.Contains(model.SupportedParameters, "max_tokens") &&
 		slices.Contains(model.SupportedParameters, "tools") && slices.Contains(model.SupportedParameters, "tool_choice")

@@ -13,6 +13,7 @@
     "internal/installedacceptance",
     "internal/processcontainment",
     "internal/processplatform",
+    "internal/qualitygate",
     "internal/releaseassets",
     "internal/releaseinstallation",
     "internal/runidentity",

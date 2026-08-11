@@ -24,15 +24,15 @@ type releaseMetadata struct {
 	Version    string `json:"version"`
 }
 
-func checkReleaseMetadata(root string) error {
+func (owner releaseMetadata) checkReleaseMetadata(root string) error {
 	content, err := os.ReadFile(filepath.Join(root, "spice-release.json")) // #nosec G304 -- fixed repository metadata path.
 	if err != nil {
 		return fmt.Errorf("read release metadata: %w", err)
 	}
-	return validateReleaseMetadata(content)
+	return (releaseMetadata{}).validateReleaseMetadata(content)
 }
 
-func validateReleaseMetadata(content []byte) error {
+func (owner releaseMetadata) validateReleaseMetadata(content []byte) error {
 	expected := releaseMetadata{
 		Schema: 1, Profile: releaseProfile, Repository: releaseRepository, Module: modulePath, Version: releaseVersion,
 	}

@@ -21,7 +21,7 @@ func TestFormattingBatchesPreserveEveryFileWithinWindowsCommandBounds(t *testing
 		))
 	}
 	for _, option := range []string{"-l", "-w"} {
-		batches := formattingBatches(option, files)
+		batches := (sourceFormatter{}).formattingBatches(option, files)
 		var flattened []string
 		for _, batch := range batches {
 			if len(batch) == 0 || len(batch) > maximumFormattingBatchFiles {
@@ -40,7 +40,7 @@ func TestFormattingBatchesPreserveEveryFileWithinWindowsCommandBounds(t *testing
 			t.Fatal("formatting batches omitted, duplicated, or reordered files")
 		}
 	}
-	if batches := formattingBatches("-l", nil); len(batches) != 0 {
+	if batches := (sourceFormatter{}).formattingBatches("-l", nil); len(batches) != 0 {
 		t.Fatalf("empty formatting batches = %#v", batches)
 	}
 }
@@ -48,11 +48,11 @@ func TestFormattingBatchesPreserveEveryFileWithinWindowsCommandBounds(t *testing
 func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 	t.Parallel()
 	for _, mode := range []string{"fast", "check", "fmt", "verify", "release-artifacts", "unknown"} {
-		if networkAllowed(mode) {
+		if (qualityGate{}).networkAllowed(mode) {
 			t.Fatalf("networkAllowed(%q) = true", mode)
 		}
 	}
-	if !networkAllowed("tools-bootstrap") {
+	if !(qualityGate{}).networkAllowed("tools-bootstrap") {
 		t.Fatal("networkAllowed(tools-bootstrap) = false")
 	}
 }
@@ -74,7 +74,7 @@ func TestReleaseArtifactEntrypointRequiresExactExplicitDirectoryContract(t *test
 			t.Parallel()
 			root := t.TempDir()
 			writeFile(t, root, "Makefile", test.content)
-			err := checkReleaseArtifactEntrypoint(root)
+			err := (qualityGate{}).checkReleaseArtifactEntrypoint(root)
 			if test.wantErr && err == nil {
 				t.Fatal("checkReleaseArtifactEntrypoint() error = nil")
 			}
@@ -108,7 +108,7 @@ dev-daemon dev-terminal: export GOSUMDB := off
 			t.Parallel()
 			root := t.TempDir()
 			writeFile(t, root, "Makefile", test.content)
-			err := checkDevelopmentEntrypoints(root)
+			err := (qualityGate{}).checkDevelopmentEntrypoints(root)
 			if test.wantErr && err == nil {
 				t.Fatal("checkDevelopmentEntrypoints() error = nil")
 			}
@@ -129,10 +129,10 @@ func TestReleaseArtifactGateUsesOneOfflineBuildTaggedTest(t *testing.T) {
 		"-args", "-spice-release-candidate-root=" + root,
 		"-spice-release-artifact-dir=" + directory,
 	}
-	if got := releaseArtifactTestArguments(root, directory); !slices.Equal(got, want) {
+	if got := (moduleVerifier{}).releaseArtifactTestArguments(root, directory); !slices.Equal(got, want) {
 		t.Fatalf("release artifact arguments = %q, want %q", got, want)
 	}
-	if err := verifyReleaseArtifacts(t.Context(), t.TempDir(), "relative"); err == nil {
+	if err := (moduleVerifier{}).verifyReleaseArtifacts(t.Context(), t.TempDir(), "relative"); err == nil {
 		t.Fatal("release artifact gate accepted a relative directory")
 	}
 }
@@ -144,7 +144,7 @@ func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 		stalePreview3WorkflowCommit  = "a8f9cc6ffd3a2744c5cae3b52c05e6e91cbc875e"
 		immediatePriorWorkflowCommit = "e1f1dad30f62387bb11d73f94c626fb20d9ca43e"
 	)
-	valid := expectedReleaseWorkflow()
+	valid := (qualityGate{}).expectedReleaseWorkflow()
 	for _, test := range []struct {
 		name     string
 		workflow string
@@ -180,7 +180,7 @@ func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 			if !test.omit {
 				writeFile(t, root, ".github/workflows/release.yml", test.workflow)
 			}
-			err := checkReleaseWorkflow(root)
+			err := (qualityGate{}).checkReleaseWorkflow(root)
 			if test.name == "valid" && err != nil {
 				t.Fatal(err)
 			}
@@ -210,7 +210,7 @@ func TestReleaseEntrypointRequiresExactVerifyAlias(t *testing.T) {
 			t.Parallel()
 			root := t.TempDir()
 			writeFile(t, root, "Makefile", test.content)
-			err := checkReleaseEntrypoint(root)
+			err := (qualityGate{}).checkReleaseEntrypoint(root)
 			if test.wantErr && err == nil {
 				t.Fatal("checkReleaseEntrypoint() error = nil")
 			}
@@ -219,21 +219,19 @@ func TestReleaseEntrypointRequiresExactVerifyAlias(t *testing.T) {
 			}
 		})
 	}
-	if err := checkReleaseEntrypoint(t.TempDir()); !errors.Is(err, os.ErrNotExist) {
+	if err := (qualityGate{}).checkReleaseEntrypoint(t.TempDir()); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("missing Makefile error = %v", err)
 	}
 }
 
 func TestExactGoExecutable(t *testing.T) {
 	t.Parallel()
-	if goExecutableName("windows") != "go.exe" || goExecutableName("linux") != "go" {
+	if (commandRunner{}).goExecutableName("windows") != "go.exe" || (commandRunner{}).goExecutableName("linux") != "go" {
 		t.Fatal("go executable name is not platform-correct")
 	}
-	actualName := filepath.Base(exactGoExecutable())
-	if (actualName != "go" && actualName != "go.exe") || filepath.Base(filepath.Dir(exactGoExecutable())) != "bin" ||
-		qualityExecutable("go") != exactGoExecutable() ||
-		qualityExecutable("gofumpt") != "gofumpt" {
-		t.Fatalf("exact Go executable = %q", exactGoExecutable())
+	actualName := filepath.Base((commandRunner{}).exactGoExecutable())
+	if (actualName != "go" && actualName != "go.exe") || filepath.Base(filepath.Dir((commandRunner{}).exactGoExecutable())) != "bin" || (commandRunner{}).qualityExecutable("go") != (commandRunner{}).exactGoExecutable() || (commandRunner{}).qualityExecutable("gofumpt") != "gofumpt" {
+		t.Fatalf("exact Go executable = %q", (commandRunner{}).exactGoExecutable())
 	}
 }
 
@@ -241,14 +239,14 @@ func TestStyleArgumentsAreStrictAndRepositoryWide(t *testing.T) {
 	t.Parallel()
 
 	want := []string{"-spicestyle.config=.spice/style.json", "./..."}
-	if got := styleArguments(); !slices.Equal(got, want) {
+	if got := (sourceFormatter{}).styleArguments(); !slices.Equal(got, want) {
 		t.Fatalf("style arguments = %#v, want %#v", got, want)
 	}
 }
 
 func TestGeneratedApplicationChecksCoverAllTargetsAndModes(t *testing.T) {
 	t.Parallel()
-	checks := generatedApplicationChecks()
+	checks := (moduleVerifier{}).generatedApplicationChecks()
 	if len(checks) != 6 {
 		t.Fatalf("generated checks = %d, want 6", len(checks))
 	}
@@ -276,7 +274,7 @@ func TestBootstrapDownloadArguments(t *testing.T) {
 	t.Parallel()
 	moduleFile := filepath.Join("private", "graph.mod")
 	want := "mod download -modfile=" + moduleFile + " all"
-	if got := strings.Join(bootstrapDownloadArguments(moduleFile), " "); got != want {
+	if got := strings.Join((dependencyBootstrapper{}).bootstrapDownloadArguments(moduleFile), " "); got != want {
 		t.Fatalf("bootstrapDownloadArguments() = %q, want %q", got, want)
 	}
 }
@@ -294,7 +292,7 @@ func TestBootstrapPreservesRepositoryOnSuccessFailureAndCancellation(t *testing.
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			root := bootstrapFixture(t, true)
-			before, err := sourceTreeDigests(root)
+			before, err := (moduleVerifier{}).sourceTreeDigests(root)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -315,11 +313,11 @@ func TestBootstrapPreservesRepositoryOnSuccessFailureAndCancellation(t *testing.
 				}
 				return test.runnerErr
 			}
-			err = bootstrapDependencies(ctx, root, runner)
+			err = (dependencyBootstrapper{}).bootstrapDependencies(ctx, root, runner)
 			if !errors.Is(err, test.runnerErr) {
 				t.Fatalf("bootstrapDependencies() error = %v, want %v", err, test.runnerErr)
 			}
-			after, digestErr := sourceTreeDigests(root)
+			after, digestErr := (moduleVerifier{}).sourceTreeDigests(root)
 			if digestErr != nil {
 				t.Fatal(digestErr)
 			}
@@ -354,7 +352,7 @@ func TestBootstrapPreservesRepositoryOnSuccessFailureAndCancellation(t *testing.
 func TestBootstrapDetectsRepositoryMutation(t *testing.T) {
 	t.Parallel()
 	root := bootstrapFixture(t, false)
-	err := bootstrapDependencies(context.Background(), root, func(_ context.Context, directory string, _ ...string) error {
+	err := (dependencyBootstrapper{}).bootstrapDependencies(context.Background(), root, func(_ context.Context, directory string, _ ...string) error {
 		return os.WriteFile(filepath.Join(directory, "unexpected"), []byte("mutation"), 0o600)
 	})
 	if err == nil || !strings.Contains(err.Error(), "modified the repository") {
@@ -366,7 +364,7 @@ func TestBootstrapAllowsMissingToolsModule(t *testing.T) {
 	t.Parallel()
 	root := bootstrapFixture(t, false)
 	calls := 0
-	err := bootstrapDependencies(context.Background(), root, func(_ context.Context, _ string, _ ...string) error {
+	err := (dependencyBootstrapper{}).bootstrapDependencies(context.Background(), root, func(_ context.Context, _ string, _ ...string) error {
 		calls++
 		return nil
 	})
@@ -378,7 +376,7 @@ func TestBootstrapAllowsMissingToolsModule(t *testing.T) {
 func TestBootstrapEnvironmentRejectsCredentials(t *testing.T) {
 	t.Setenv("OPENAI_API_KEY", "must-not-leak")
 	t.Setenv("SPICE_TEST_TOKEN", "must-not-leak")
-	environment := strings.Join(commandEnvironment(true, nil), "\n")
+	environment := strings.Join((commandRunner{}).commandEnvironment(true, nil), "\n")
 	for _, required := range []string{
 		"GOAUTH=off", "GOPROXY=https://proxy.golang.org", "GOSUMDB=sum.golang.org",
 	} {
@@ -434,7 +432,7 @@ func TestValidateCompatibility(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			err := validateCompatibility([]byte(test.content))
+			err := (qualityGate{}).validateCompatibility([]byte(test.content))
 			if test.wantErr == "" && err != nil {
 				t.Fatalf("validateCompatibility() error = %v", err)
 			}
@@ -476,11 +474,11 @@ func TestIdentityAndPins(t *testing.T) {
 		"go.uber.org/nilaway v0.0.0-20260724203407-f4f8ac24c032",
 		"golang.org/x/tools v0.48.0", "golang.org/x/vuln v1.1.4", "mvdan.cc/gofumpt v0.10.0",
 	}, "\n"))
-	if err := checkIdentity(root); err != nil {
+	if err := (qualityGate{}).checkIdentity(root); err != nil {
 		t.Fatalf("checkIdentity() error = %v", err)
 	}
 	writeFile(t, root, "go.mod", "module example.com/wrong\n")
-	if err := checkIdentity(root); err == nil || !strings.Contains(err.Error(), "canonical selection") {
+	if err := (qualityGate{}).checkIdentity(root); err == nil || !strings.Contains(err.Error(), "canonical selection") {
 		t.Fatalf("checkIdentity() error = %v, want identity diagnostic", err)
 	}
 }
@@ -499,26 +497,26 @@ func TestFilesCoverageAndModeBoundaries(t *testing.T) {
 	writeFile(t, root, "root.go", "package fixture")
 	writeFile(t, root, "internal/value.go", "package value")
 	writeFile(t, root, "tools/ignored.go", "package ignored")
-	files, err := goFiles(root)
+	files, err := (sourceFormatter{}).goFiles(root)
 	if err != nil || len(files) != 2 || !slices.IsSorted(files) {
 		t.Fatalf("goFiles() = %v, %v", files, err)
 	}
-	digests, err := treeDigests(root)
+	digests, err := (moduleVerifier{}).treeDigests(root)
 	if err != nil || len(digests) != 3 {
 		t.Fatalf("treeDigests() = %d, %v", len(digests), err)
 	}
-	missing, err := treeDigests(filepath.Join(root, "missing"))
+	missing, err := (moduleVerifier{}).treeDigests(filepath.Join(root, "missing"))
 	if err != nil || len(missing) != 0 {
 		t.Fatalf("treeDigests(missing) = %v, %v", missing, err)
 	}
-	percentage, err := totalCoverage("total: (statements) 90.0%")
+	percentage, err := (testVerifier{}).totalCoverage("total: (statements) 90.0%")
 	if err != nil || percentage != 90 {
 		t.Fatalf("totalCoverage() = %v, %v", percentage, err)
 	}
-	if _, err := totalCoverage("invalid"); err == nil {
+	if _, err := (testVerifier{}).totalCoverage("invalid"); err == nil {
 		t.Fatal("totalCoverage(invalid) error = nil")
 	}
-	if err := run(t.Context(), root, "unknown"); err == nil || !strings.Contains(err.Error(), "unknown mode") {
+	if err := (qualityGate{}).run(t.Context(), root, "unknown"); err == nil || !strings.Contains(err.Error(), "unknown mode") {
 		t.Fatalf("run(unknown) error = %v", err)
 	}
 }
@@ -532,7 +530,7 @@ func TestExcludeGeneratedCoverage(t *testing.T) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := excludeGeneratedCoverage(path); err != nil {
+	if err := (testVerifier{}).excludeGeneratedCoverage(path); err != nil {
 		t.Fatal(err)
 	}
 	filtered, err := os.ReadFile(path)
@@ -557,7 +555,7 @@ func TestCoverageTestPackagesExcludeOnlyProcessAcceptance(t *testing.T) {
 		modulePath + "/internal/daemon",
 		modulePath + "/internal/processcontainment",
 	}
-	if got := coverageTestPackages(packages); !slices.Equal(got, want) {
+	if got := (testVerifier{}).coverageTestPackages(packages); !slices.Equal(got, want) {
 		t.Fatalf("coverage test packages = %v, want %v", got, want)
 	}
 	if len(packages) != 4 {
@@ -567,7 +565,7 @@ func TestCoverageTestPackagesExcludeOnlyProcessAcceptance(t *testing.T) {
 
 func TestEnvironmentAndCancellation(t *testing.T) {
 	t.Parallel()
-	offline := commandEnvironment(false, map[string]string{"GOFLAGS": "-mod=vendor"})
+	offline := (commandRunner{}).commandEnvironment(false, map[string]string{"GOFLAGS": "-mod=vendor"})
 	if !slices.Contains(offline, "GOPROXY=off") || !slices.Contains(offline, "GOWORK=off") ||
 		!slices.Contains(offline, "GOFLAGS=-mod=vendor") {
 		t.Fatalf("offline environment is not isolated")
@@ -580,7 +578,7 @@ func TestEnvironmentAndCancellation(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	err := command(ctx, t.TempDir(), nil, "go", "version")
+	err := (commandRunner{}).command(ctx, t.TempDir(), nil, "go", "version")
 	if err == nil || !errors.Is(ctx.Err(), context.Canceled) {
 		t.Fatalf("command(cancelled) error = %v", err)
 	}

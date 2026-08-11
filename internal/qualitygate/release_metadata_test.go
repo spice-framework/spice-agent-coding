@@ -18,7 +18,7 @@ func TestReleaseMetadataIsStrictAndCanonical(t *testing.T) {
 		"}\n"
 	root := t.TempDir()
 	writeFile(t, root, "spice-release.json", valid)
-	if err := checkReleaseMetadata(root); err != nil {
+	if err := (releaseMetadata{}).checkReleaseMetadata(root); err != nil {
 		t.Fatal(err)
 	}
 
@@ -39,12 +39,12 @@ func TestReleaseMetadataIsStrictAndCanonical(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			if err := validateReleaseMetadata([]byte(test.content)); err == nil {
+			if err := (releaseMetadata{}).validateReleaseMetadata([]byte(test.content)); err == nil {
 				t.Fatal("validateReleaseMetadata() error = nil")
 			}
 		})
 	}
-	if err := checkReleaseMetadata(t.TempDir()); !errors.Is(err, os.ErrNotExist) {
+	if err := (releaseMetadata{}).checkReleaseMetadata(t.TempDir()); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("missing metadata error = %v", err)
 	}
 }

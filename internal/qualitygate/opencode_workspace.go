@@ -15,17 +15,17 @@ type opencodeWorkspace struct {
 	auth       string
 }
 
-func newOpenCodeWorkspace() (*opencodeWorkspace, error) {
+func (workspace *opencodeWorkspace) newOpenCodeWorkspace() (*opencodeWorkspace, error) {
 	root, err := os.MkdirTemp("", "spice-opencode-evaluation-")
 	if err != nil {
 		return nil, fmt.Errorf("create OpenCode evaluation workspace: %w", err)
 	}
-	workspace := &opencodeWorkspace{
+	result := &opencodeWorkspace{
 		root: root, repository: filepath.Join(root, "repository"), config: filepath.Join(root, "opencode.json"),
 		auth: filepath.Join(root, "data", "opencode", "auth.json"),
 	}
 	for _, directory := range []string{
-		workspace.repository, filepath.Join(root, "home"), filepath.Join(root, "config"), filepath.Join(root, "data"),
+		result.repository, filepath.Join(root, "home"), filepath.Join(root, "config"), filepath.Join(root, "data"),
 		filepath.Join(root, "cache"), filepath.Join(root, "state"), filepath.Join(root, "appdata"),
 		filepath.Join(root, "localappdata"), filepath.Join(root, "tmp"), filepath.Join(root, "opencode-config"),
 	} {
@@ -34,7 +34,7 @@ func newOpenCodeWorkspace() (*opencodeWorkspace, error) {
 			return nil, errors.Join(fmt.Errorf("create OpenCode evaluation directory: %w", err), cleanupErr)
 		}
 	}
-	return workspace, nil
+	return result, nil
 }
 
 func (workspace *opencodeWorkspace) Close() error {

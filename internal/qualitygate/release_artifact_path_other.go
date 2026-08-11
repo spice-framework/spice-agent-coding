@@ -7,7 +7,10 @@ import (
 	"path/filepath"
 )
 
-func normalizeReleaseArtifactDirectory(directory string) (string, error) {
+// releaseArtifactPath owns platform-native release artifact path validation.
+type releaseArtifactPath struct{}
+
+func (owner releaseArtifactPath) normalizeReleaseArtifactDirectory(directory string) (string, error) {
 	if directory == "" || !filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
 		return "", errors.New("release artifact gate requires a canonical absolute -artifacts directory")
 	}

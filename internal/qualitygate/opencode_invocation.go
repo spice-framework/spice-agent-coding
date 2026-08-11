@@ -24,8 +24,8 @@ func (opencodeInvocation) Run(
 	}
 	invocationContext, cancel := context.WithTimeout(ctx, maximumOpenCodeInvocationDuration)
 	defer cancel()
-	capture := newOpenCodeEventCapture(cancel, evaluation.MaximumTools, evaluation.MaximumSteps)
-	stderr := newOpenCodeBoundedBuffer(maximumOpenCodeDiagnosticBytes)
+	capture := (&opencodeEventCapture{}).newOpenCodeEventCapture(cancel, evaluation.MaximumTools, evaluation.MaximumSteps)
+	stderr := (&opencodeBoundedBuffer{}).newOpenCodeBoundedBuffer(maximumOpenCodeDiagnosticBytes)
 	command := exec.CommandContext( // #nosec G204 -- exact executable, model, agent, and discrete flags are gate-owned.
 		invocationContext,
 		executable,

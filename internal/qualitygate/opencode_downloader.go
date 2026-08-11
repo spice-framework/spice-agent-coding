@@ -20,7 +20,7 @@ type opencodeDownloader struct {
 	client *http.Client
 }
 
-func newOpenCodeDownloader() opencodeDownloader {
+func (downloader opencodeDownloader) newOpenCodeDownloader() opencodeDownloader {
 	baseTransport, ok := http.DefaultTransport.(*http.Transport)
 	if !ok {
 		panic("OpenCode evaluator requires the standard HTTP transport")

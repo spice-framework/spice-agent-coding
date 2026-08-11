@@ -15,14 +15,14 @@ type opencodeEnvironment struct {
 	configContent string
 }
 
-func newOpenCodeEnvironment(root, config, configContent string) opencodeEnvironment {
+func (environment opencodeEnvironment) newOpenCodeEnvironment(root, config, configContent string) opencodeEnvironment {
 	return opencodeEnvironment{
 		root: filepath.Clean(root), home: filepath.Join(root, "home"), config: config, configContent: configContent,
 	}
 }
 
 func (environment opencodeEnvironment) Values() []string {
-	values := minimumEvaluationEnvironment(environment.root)
+	values := (opencodeEnvironment{}).minimumEvaluationEnvironment(environment.root)
 	paths := map[string]string{
 		"HOME":                    environment.home,
 		"USERPROFILE":             environment.home,
@@ -48,7 +48,7 @@ func (environment opencodeEnvironment) Values() []string {
 	return values
 }
 
-func minimumEvaluationEnvironment(root string) []string {
+func (environment opencodeEnvironment) minimumEvaluationEnvironment(root string) []string {
 	values := []string{
 		"GOWORK=off",
 		"GOTOOLCHAIN=local",

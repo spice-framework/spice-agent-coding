@@ -10,7 +10,7 @@ import (
 func TestNormalizeReleaseArtifactDirectoryPreservesCanonicalAbsolutePath(t *testing.T) {
 	t.Parallel()
 	directory := filepath.Join(t.TempDir(), "verified subjects")
-	if got, err := normalizeReleaseArtifactDirectory(directory); err != nil || got != directory {
+	if got, err := (releaseArtifactPath{}).normalizeReleaseArtifactDirectory(directory); err != nil || got != directory {
 		t.Fatalf("normalized directory = %q, %v", got, err)
 	}
 }
@@ -18,7 +18,7 @@ func TestNormalizeReleaseArtifactDirectoryPreservesCanonicalAbsolutePath(t *test
 func TestNormalizeReleaseArtifactDirectoryRejectsUnsafeUnixForms(t *testing.T) {
 	t.Parallel()
 	for _, directory := range []string{"relative/subjects", "/tmp/../escape", "/tmp//subjects"} {
-		if got, err := normalizeReleaseArtifactDirectory(directory); err == nil {
+		if got, err := (releaseArtifactPath{}).normalizeReleaseArtifactDirectory(directory); err == nil {
 			t.Errorf("normalizeReleaseArtifactDirectory(%q) = %q, nil", directory, got)
 		}
 	}

@@ -20,7 +20,8 @@ The active migration boundary covers both process entrypoints; the
 application-owned command, daemon lifecycle, daemon-process and shared
 process-table containment, identity, terminal, connector, and TUI-session
 packages; deterministic release-asset rendering and installed-subject
-verification; and the hermetic
+verification; the repository quality gate and OpenCode evaluation harness; and
+the hermetic
 architecture, development-loop, installed-distribution, and runtime-plugin
 acceptance fixtures plus distribution identity and test-path support listed in
 `.spice/style.json`. Within that boundary:

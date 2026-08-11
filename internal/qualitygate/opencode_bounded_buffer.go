@@ -12,7 +12,7 @@ type opencodeBoundedBuffer struct {
 	exceeded bool
 }
 
-func newOpenCodeBoundedBuffer(maximum int) *opencodeBoundedBuffer {
+func (buffer *opencodeBoundedBuffer) newOpenCodeBoundedBuffer(maximum int) *opencodeBoundedBuffer {
 	return &opencodeBoundedBuffer{maximum: maximum}
 }
 

@@ -34,7 +34,7 @@ func (evaluation opencodeCase) Allows(tool string) bool {
 	return slices.Contains(evaluation.AllowedTools, tool)
 }
 
-func openCodeEvaluationCases() []opencodeCase {
+func (evaluation opencodeCase) openCodeEvaluationCases() []opencodeCase {
 	readTools := []string{"glob", "grep", "list", "read"}
 	return []opencodeCase{
 		{

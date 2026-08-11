@@ -22,10 +22,10 @@ type opencodeEvaluation struct {
 	tree          opencodeTree
 }
 
-func newOpenCodeEvaluation() opencodeEvaluation {
+func (evaluation opencodeEvaluation) newOpenCodeEvaluation() opencodeEvaluation {
 	return opencodeEvaluation{
-		catalog: opencodeCatalog{}, bootstrapper: newOpenCodeBootstrapper(), configuration: newOpenCodeConfiguration(),
-		credential: opencodeCredential{}, freeRoutes: newOpenCodeFreeRouteValidator(), invocation: opencodeInvocation{},
+		catalog: opencodeCatalog{}, bootstrapper: (opencodeBootstrapper{}).newOpenCodeBootstrapper(), configuration: (opencodeConfiguration{}).newOpenCodeConfiguration(),
+		credential: opencodeCredential{}, freeRoutes: (opencodeFreeRouteValidator{}).newOpenCodeFreeRouteValidator(), invocation: opencodeInvocation{},
 		rubric: opencodeRubric{}, tree: opencodeTree{},
 	}
 }
@@ -36,7 +36,7 @@ func (evaluation opencodeEvaluation) Run(ctx context.Context, source string, des
 	}
 	evaluationContext, cancel := context.WithTimeout(ctx, maximumOpenCodeEvaluationDuration)
 	defer cancel()
-	workspace, err := newOpenCodeWorkspace()
+	workspace, err := (&opencodeWorkspace{}).newOpenCodeWorkspace()
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (evaluation opencodeEvaluation) Run(ctx context.Context, source string, des
 	if err != nil {
 		return err
 	}
-	return writeOpenCodeResults(destination, results)
+	return (opencodeEvaluation{}).writeOpenCodeResults(destination, results)
 }
 
 func (evaluation opencodeEvaluation) prepare(
@@ -72,7 +72,7 @@ func (evaluation opencodeEvaluation) prepare(
 	if err = evaluation.credential.Copy(evaluation.credential.SourcePath(home), workspace.auth); err != nil {
 		return "", nil, nil, err
 	}
-	environment := newOpenCodeEnvironment(workspace.root, workspace.config, string(configurationContent)).Values()
+	environment := (opencodeEnvironment{}).newOpenCodeEnvironment(workspace.root, workspace.config, string(configurationContent)).Values()
 	executable, err := evaluation.bootstrapper.Install(ctx, workspace.root)
 	if err != nil {
 		return "", nil, nil, fmt.Errorf("OpenCode advisory infrastructure unavailable: %w", err)
@@ -95,9 +95,9 @@ func (evaluation opencodeEvaluation) evaluateMatrix(
 	environment []string,
 	models []opencodeModel,
 ) ([]opencodeEvaluationResult, error) {
-	results := make([]opencodeEvaluationResult, 0, len(models)*len(openCodeEvaluationCases()))
+	results := make([]opencodeEvaluationResult, 0, len(models)*len((opencodeCase{}).openCodeEvaluationCases()))
 	for modelIndex, model := range models {
-		for caseIndex, evaluationCase := range openCodeEvaluationCases() {
+		for caseIndex, evaluationCase := range (opencodeCase{}).openCodeEvaluationCases() {
 			label := fmt.Sprintf("%02d-%02d-%s-%s", modelIndex, caseIndex, model.Label, evaluationCase.Name)
 			result, executeErr := evaluation.runRetriedCase(
 				ctx, source, workspace, executable, environment, model, evaluationCase, label,
@@ -117,7 +117,7 @@ func (evaluation opencodeEvaluation) evaluateMatrix(
 	return results, nil
 }
 
-func writeOpenCodeResults(destination io.Writer, results []opencodeEvaluationResult) error {
+func (evaluation opencodeEvaluation) writeOpenCodeResults(destination io.Writer, results []opencodeEvaluationResult) error {
 	if _, err := fmt.Fprintf(destination, "OpenCode advisory matrix (%s; exact free routes; no raw model output)\n", openCodeReviewedWorkflowPackageVersion); err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (evaluation opencodeEvaluation) runRetriedCase(
 		if err != nil {
 			return opencodeEvaluationResult{}, err
 		}
-		repository, err := newOpenCodeRepository(source, repositoryRoot)
+		repository, err := (opencodeRepository{}).newOpenCodeRepository(source, repositoryRoot)
 		if err != nil {
 			return opencodeEvaluationResult{}, err
 		}
@@ -162,11 +162,11 @@ func (evaluation opencodeEvaluation) runRetriedCase(
 			return opencodeEvaluationResult{}, err
 		}
 		attempts = append(attempts, result)
-		if !retryableOpenCodeClassification(result.Classification) {
+		if !(opencodeRetry{}).retryableOpenCodeClassification(result.Classification) {
 			break
 		}
 	}
-	return combineOpenCodeAttempts(attempts), nil
+	return (opencodeRetry{}).combineOpenCodeAttempts(attempts), nil
 }
 
 func (evaluation opencodeEvaluation) validateConfiguration(
@@ -175,7 +175,7 @@ func (evaluation opencodeEvaluation) validateConfiguration(
 	environment []string,
 	repository string,
 ) error {
-	resolved, err := boundedCommandOutput(
+	resolved, err := (opencodeCommand{}).boundedCommandOutput(
 		ctx, repository, environment, maximumOpenCodeEventBytes, executable, "debug", "config", "--pure",
 	)
 	if err != nil {
@@ -214,7 +214,7 @@ func (evaluation opencodeEvaluation) runCase(
 	if err != nil {
 		return opencodeEvaluationResult{}, err
 	}
-	detail := openCodeInvocationDetail(classification, summary)
+	detail := (opencodeEvaluation{}).openCodeInvocationDetail(classification, summary)
 	if classification == "" {
 		rubric := evaluation.rubric.Evaluate(ctx, repository, evaluationCase, pristine, before, after, original, summary)
 		classification = rubric.Classification
@@ -223,14 +223,14 @@ func (evaluation opencodeEvaluation) runCase(
 	return opencodeEvaluationResult{
 		Model: model.Label, Case: evaluationCase.Name, Classification: classification, Detail: detail, Duration: duration,
 		Cost: summary.Cost, Tools: len(summary.Tools), Steps: summary.Steps,
-		Before: shortOpenCodeDigest(before.HexDigest()), After: shortOpenCodeDigest(after.HexDigest()),
+		Before: (opencodeEvaluation{}).shortOpenCodeDigest(before.HexDigest()), After: (opencodeEvaluation{}).shortOpenCodeDigest(after.HexDigest()),
 	}, nil
 }
 
-func openCodeInvocationDetail(classification string, summary opencodeEventSummary) string {
+func (evaluation opencodeEvaluation) openCodeInvocationDetail(classification string, summary opencodeEventSummary) string {
 	switch classification {
 	case "safety-failed":
-		return openCodeSafetyDetail(summary.SafetyFailure)
+		return (opencodeEvaluation{}).openCodeSafetyDetail(summary.SafetyFailure)
 	case "rate-limited":
 		return "provider-rate-limit"
 	case "infrastructure-auth":
@@ -248,7 +248,7 @@ func openCodeInvocationDetail(classification string, summary opencodeEventSummar
 	}
 }
 
-func openCodeSafetyDetail(value string) string {
+func (evaluation opencodeEvaluation) openCodeSafetyDetail(value string) string {
 	switch value {
 	case "event output cap exceeded":
 		return "event-output-cap"
@@ -267,7 +267,7 @@ func openCodeSafetyDetail(value string) string {
 	}
 }
 
-func shortOpenCodeDigest(value string) string {
+func (evaluation opencodeEvaluation) shortOpenCodeDigest(value string) string {
 	if len(value) < 16 || strings.ContainsAny(value, "\r\n\x00") {
 		return "invalid"
 	}

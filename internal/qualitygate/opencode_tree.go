@@ -18,14 +18,14 @@ func (opencodeTree) Snapshot(root string) (opencodeTreeSnapshot, error) {
 	if !filepath.IsAbs(root) {
 		return opencodeTreeSnapshot{}, errors.New("OpenCode tree root must be absolute")
 	}
-	paths, err := inventoryOpenCodeTree(root)
+	paths, err := (opencodeTree{}).inventoryOpenCodeTree(root)
 	if err != nil {
 		return opencodeTreeSnapshot{}, err
 	}
-	return digestOpenCodeTree(root, paths)
+	return (opencodeTree{}).digestOpenCodeTree(root, paths)
 }
 
-func inventoryOpenCodeTree(root string) ([]string, error) {
+func (owner opencodeTree) inventoryOpenCodeTree(root string) ([]string, error) {
 	paths := make([]string, 0)
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -61,7 +61,7 @@ func inventoryOpenCodeTree(root string) ([]string, error) {
 	return paths, nil
 }
 
-func digestOpenCodeTree(root string, paths []string) (opencodeTreeSnapshot, error) {
+func (owner opencodeTree) digestOpenCodeTree(root string, paths []string) (opencodeTreeSnapshot, error) {
 	treeDigest := sha256.New()
 	files := make(map[string][sha256.Size]byte, len(paths))
 	for _, relative := range paths {

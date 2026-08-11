@@ -7,7 +7,3 @@ type opencodeEventPart struct {
 	Cost   float64             `json:"cost"`
 	Tokens opencodeEventTokens `json:"tokens"`
 }
-
-type opencodeEventTokens struct {
-	Output float64 `json:"output"`
-}

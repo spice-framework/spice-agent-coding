@@ -12,7 +12,7 @@ type opencodeConfiguration struct {
 	catalog opencodeCatalog
 }
 
-func newOpenCodeConfiguration() opencodeConfiguration {
+func (configuration opencodeConfiguration) newOpenCodeConfiguration() opencodeConfiguration {
 	return opencodeConfiguration{catalog: opencodeCatalog{}}
 }
 
@@ -33,40 +33,39 @@ func (configuration opencodeConfiguration) ValidateResolved(content []byte) erro
 	if err := json.Unmarshal(content, &resolved); err != nil {
 		return errors.New("decode resolved OpenCode configuration")
 	}
-	if err := rejectOpenCodeIntegrations(resolved); err != nil {
+	if err := (opencodeConfiguration{}).rejectOpenCodeIntegrations(resolved); err != nil {
 		return err
 	}
 	var value opencodeConfigurationValue
 	if err := json.Unmarshal(content, &value); err != nil {
 		return errors.New("decode resolved OpenCode safety configuration")
 	}
-	if !matchesOpenCodeConfiguration(value, configuration.expected()) {
+	if !(opencodeConfiguration{}).matchesOpenCodeConfiguration(value, configuration.expected()) {
 		return errors.New("resolved OpenCode configuration differs from the isolated contract")
 	}
 	return nil
 }
 
-func rejectOpenCodeIntegrations(resolved map[string]json.RawMessage) error {
+func (configuration opencodeConfiguration) rejectOpenCodeIntegrations(resolved map[string]json.RawMessage) error {
 	for _, forbidden := range []string{"formatter", "instructions", "lsp", "tools"} {
 		raw, exists := resolved[forbidden]
-		if exists && !disabledOpenCodeIntegration(raw) {
+		if exists && !(opencodeConfiguration{}).disabledOpenCodeIntegration(raw) {
 			return errors.New("resolved OpenCode configuration enabled a forbidden integration")
 		}
 	}
 	return nil
 }
 
-func disabledOpenCodeIntegration(raw json.RawMessage) bool {
+func (configuration opencodeConfiguration) disabledOpenCodeIntegration(raw json.RawMessage) bool {
 	trimmed := bytes.TrimSpace(raw)
 	return bytes.Equal(trimmed, []byte("null")) || bytes.Equal(trimmed, []byte("{}")) ||
 		bytes.Equal(trimmed, []byte("[]")) || bytes.Equal(trimmed, []byte("false"))
 }
 
-func matchesOpenCodeConfiguration(value, want opencodeConfigurationValue) bool {
+func (configuration opencodeConfiguration) matchesOpenCodeConfiguration(value, want opencodeConfigurationValue) bool {
 	return !value.Autoupdate && value.Share == "disabled" && !value.Snapshot && value.SubagentDepth == 0 &&
 		slices.Equal(value.EnabledProviders, want.EnabledProviders) && len(value.MCP) == 0 && len(value.Plugin) == 0 &&
-		maps.Equal(value.Permission, want.Permission) && equalOpenCodeAgents(value.Agent, want.Agent) &&
-		equalOpenCodeProviders(value.Provider, want.Provider)
+		maps.Equal(value.Permission, want.Permission) && (opencodeConfiguration{}).equalOpenCodeAgents(value.Agent, want.Agent) && (opencodeConfiguration{}).equalOpenCodeProviders(value.Provider, want.Provider)
 }
 
 func (configuration opencodeConfiguration) expected() opencodeConfigurationValue {
@@ -108,7 +107,7 @@ func (configuration opencodeConfiguration) expected() opencodeConfigurationValue
 	}
 }
 
-func equalOpenCodeAgents(left, right map[string]opencodeAgentConfiguration) bool {
+func (configuration opencodeConfiguration) equalOpenCodeAgents(left, right map[string]opencodeAgentConfiguration) bool {
 	if len(left) != len(right) {
 		return false
 	}
@@ -122,7 +121,7 @@ func equalOpenCodeAgents(left, right map[string]opencodeAgentConfiguration) bool
 	return true
 }
 
-func equalOpenCodeProviders(left, right map[string]opencodeProviderConfiguration) bool {
+func (configuration opencodeConfiguration) equalOpenCodeProviders(left, right map[string]opencodeProviderConfiguration) bool {
 	if len(left) != 1 || len(right) != 1 {
 		return false
 	}

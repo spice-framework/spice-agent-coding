@@ -56,7 +56,7 @@ func TestOpenCodeCatalogPinsExactPackagesAndFreeModels(t *testing.T) {
 			t.Fatalf("model = %+v", model)
 		}
 	}
-	cases := openCodeEvaluationCases()
+	cases := (opencodeCase{}).openCodeEvaluationCases()
 	auditPrompt, auditErr := cases[0].Prompt()
 	defectPrompt, defectErr := cases[1].Prompt()
 	if auditErr != nil || defectErr != nil || !strings.Contains(auditPrompt, "APP_BOUNDARY") ||
@@ -65,8 +65,7 @@ func TestOpenCodeCatalogPinsExactPackagesAndFreeModels(t *testing.T) {
 		!strings.Contains(auditPrompt, "internal/terminal/terminal_managed_connector_bean.go") {
 		t.Fatal("OpenCode objective prompts lost required facts")
 	}
-	if qualityGateTimeout("verify") != 15*time.Minute ||
-		qualityGateTimeout("opencode-eval") != maximumOpenCodeEvaluationDuration+time.Minute {
+	if (qualityGate{}).qualityGateTimeout("verify") != 15*time.Minute || (qualityGate{}).qualityGateTimeout("opencode-eval") != maximumOpenCodeEvaluationDuration+time.Minute {
 		t.Fatal("OpenCode outer deadline drifted")
 	}
 	if cases[0].MaximumSteps != 5 || cases[0].MaximumTools != 8 || cases[1].MaximumSteps != 6 || cases[1].MaximumTools != 12 {
@@ -79,7 +78,7 @@ func TestOpenCodeCatalogPinsExactPackagesAndFreeModels(t *testing.T) {
 
 func TestOpenCodeConfigurationFailsClosed(t *testing.T) {
 	t.Parallel()
-	configuration := newOpenCodeConfiguration()
+	configuration := (opencodeConfiguration{}).newOpenCodeConfiguration()
 	valid, err := configuration.Encode()
 	if err != nil {
 		t.Fatal(err)
@@ -150,7 +149,7 @@ func TestOpenCodeCredentialCopiesOnlyOpenRouterWithoutReflection(t *testing.T) {
 	if err = credential.Copy(source, filepath.Join(root, "rejected.json")); err == nil || strings.Contains(err.Error(), secret) {
 		t.Fatalf("unsafe credential error = %v", err)
 	}
-	if validOpenCodeCredential("") || validOpenCodeCredential(" bad") || validOpenCodeCredential("bad\n") || !validOpenCodeCredential("safe") {
+	if (opencodeCredential{}).validOpenCodeCredential("") || (opencodeCredential{}).validOpenCodeCredential(" bad") || (opencodeCredential{}).validOpenCodeCredential("bad\n") || !(opencodeCredential{}).validOpenCodeCredential("safe") {
 		t.Fatal("credential value validation drifted")
 	}
 }
@@ -158,7 +157,7 @@ func TestOpenCodeCredentialCopiesOnlyOpenRouterWithoutReflection(t *testing.T) {
 func TestOpenCodeArchiveValidatesExactContents(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	archive := newOpenCodeArchive()
+	archive := (opencodeArchive{}).newOpenCodeArchive()
 	rootSpecification := (opencodeCatalog{}).RootPackage()
 	rootPath := filepath.Join(root, "root.tgz")
 	writeOpenCodeArchive(t, rootPath, map[string][]byte{
@@ -263,7 +262,7 @@ func TestOpenCodeFreeRouteValidatorSeparatesPaidOrIncapableRoutes(t *testing.T) 
 func TestOpenCodeEventCaptureEnforcesCostToolStepAndOutputCaps(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
-	capture := newOpenCodeEventCapture(cancel, 2, 2)
+	capture := (&opencodeEventCapture{}).newOpenCodeEventCapture(cancel, 2, 2)
 	lines := []string{
 		`{"type":"step_start","part":{"type":"step-start"}}`,
 		`{"type":"tool_use","part":{"type":"tool","tool":"read"}}`,
@@ -282,7 +281,7 @@ func TestOpenCodeEventCaptureEnforcesCostToolStepAndOutputCaps(t *testing.T) {
 		t.Fatal("valid event stream cancelled")
 	}
 	_, cancel = context.WithCancel(context.Background())
-	capture = newOpenCodeEventCapture(cancel, 0, 1)
+	capture = (&opencodeEventCapture{}).newOpenCodeEventCapture(cancel, 0, 1)
 	if _, err := capture.Write([]byte(`{"type":"tool_use","part":{"type":"tool","tool":"read"}}` + "\n")); err != nil {
 		t.Fatal(err)
 	}
@@ -290,7 +289,7 @@ func TestOpenCodeEventCaptureEnforcesCostToolStepAndOutputCaps(t *testing.T) {
 		t.Fatal("tool cap violation succeeded")
 	}
 	_, cancel = context.WithCancel(context.Background())
-	capture = newOpenCodeEventCapture(cancel, 1, 1)
+	capture = (&opencodeEventCapture{}).newOpenCodeEventCapture(cancel, 1, 1)
 	if _, err := capture.Write([]byte(`{"type":"step_finish","part":{"type":"step-finish","cost":0.01,"tokens":{"output":1}}}` + "\n")); err != nil {
 		t.Fatal(err)
 	}
@@ -298,7 +297,7 @@ func TestOpenCodeEventCaptureEnforcesCostToolStepAndOutputCaps(t *testing.T) {
 		t.Fatal("positive cost succeeded")
 	}
 	_, cancel = context.WithCancel(context.Background())
-	capture = newOpenCodeEventCapture(cancel, 1, 1)
+	capture = (&opencodeEventCapture{}).newOpenCodeEventCapture(cancel, 1, 1)
 	if _, err := capture.Write([]byte(`{"type":"error","error":{"name":"APIError","data":{"message":"too many requests","statusCode":429}}}` + "\n")); err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +315,7 @@ func TestOpenCodeRepositoryCopyAndTreeDigestsAreIsolated(t *testing.T) {
 	if err := os.MkdirAll(target, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	repository, err := newOpenCodeRepository(source, target)
+	repository, err := (opencodeRepository{}).newOpenCodeRepository(source, target)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -346,7 +345,7 @@ func TestOpenCodeRepositoryCopyAndTreeDigestsAreIsolated(t *testing.T) {
 	if err = os.MkdirAll(dirtyTarget, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	dirty, err := newOpenCodeRepository(source, dirtyTarget)
+	dirty, err := (opencodeRepository{}).newOpenCodeRepository(source, dirtyTarget)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -371,7 +370,7 @@ func TestOpenCodeSeededDefectAndAuditRubricAreDeterministic(t *testing.T) {
 	if err := os.WriteFile(path, []byte(original), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	repository, err := newOpenCodeRepository(t.TempDir(), root)
+	repository, err := (opencodeRepository{}).newOpenCodeRepository(t.TempDir(), root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -395,7 +394,7 @@ func TestOpenCodeSeededDefectAndAuditRubricAreDeterministic(t *testing.T) {
 	if err != nil || after.Digest != pristine.Digest {
 		t.Fatalf("restored tree = %v", err)
 	}
-	audit := openCodeEvaluationCases()[0]
+	audit := (opencodeCase{}).openCodeEvaluationCases()[0]
 	summary := opencodeEventSummary{Steps: 1, Tools: []string{"read"}, Text: openCodeAuditMarker + " PASS"}
 	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, audit, pristine, pristine, after, nil, summary); got.Classification != "pass" || got.Detail != "requirements-satisfied" {
 		t.Fatalf("audit rubric = %+v", got)
@@ -409,7 +408,7 @@ func TestOpenCodeSeededDefectAndAuditRubricAreDeterministic(t *testing.T) {
 	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, audit, pristine, pristine, after, nil, summary); got.Classification != "rubric-failed" || got.Detail != "completion-marker-missing" {
 		t.Fatalf("missing-marker rubric = %+v", got)
 	}
-	defect := openCodeEvaluationCases()[1]
+	defect := (opencodeCase{}).openCodeEvaluationCases()[1]
 	summary.Text = defect.Marker
 	if got := (opencodeRubric{}).Evaluate(context.Background(), repository, defect, pristine, after, after, saved, summary); got.Classification != "rubric-failed" || got.Detail != "repair-not-attempted" {
 		t.Fatalf("unattempted repair rubric = %+v", got)
@@ -418,7 +417,7 @@ func TestOpenCodeSeededDefectAndAuditRubricAreDeterministic(t *testing.T) {
 
 func TestOpenCodeWorkspaceAndEnvironmentRemainDisposable(t *testing.T) {
 	t.Parallel()
-	workspace, err := newOpenCodeWorkspace()
+	workspace, err := (&opencodeWorkspace{}).newOpenCodeWorkspace()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -430,17 +429,17 @@ func TestOpenCodeWorkspaceAndEnvironmentRemainDisposable(t *testing.T) {
 	if _, err = workspace.CaseRepository("../escape"); err == nil {
 		t.Fatal("unsafe case repository succeeded")
 	}
-	configuration, err := newOpenCodeConfiguration().Encode()
+	configuration, err := (opencodeConfiguration{}).newOpenCodeConfiguration().Encode()
 	if err != nil {
 		t.Fatal(err)
 	}
-	values := newOpenCodeEnvironment(root, workspace.config, string(configuration)).Values()
+	values := (opencodeEnvironment{}).newOpenCodeEnvironment(root, workspace.config, string(configuration)).Values()
 	joined := strings.Join(values, "\n")
 	if strings.Contains(joined, "OPENROUTER_API_KEY") || !strings.Contains(joined, "GOPROXY=off") ||
 		!strings.Contains(joined, "OPENCODE_CONFIG_CONTENT=") || !strings.Contains(joined, root) {
 		t.Fatal("isolated OpenCode environment drifted")
 	}
-	rubricEnvironment, err := openCodeRubricEnvironment(repository)
+	rubricEnvironment, err := (opencodeRubric{}).openCodeRubricEnvironment(repository)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -462,26 +461,23 @@ func TestOpenCodeWorkspaceAndEnvironmentRemainDisposable(t *testing.T) {
 
 func TestOpenCodeBoundedBufferAndErrorClassification(t *testing.T) {
 	t.Parallel()
-	buffer := newOpenCodeBoundedBuffer(3)
+	buffer := (&opencodeBoundedBuffer{}).newOpenCodeBoundedBuffer(3)
 	if written, err := buffer.Write([]byte("abc")); err != nil || written != 3 || buffer.String() != "abc" {
 		t.Fatalf("bounded write = %d, %v", written, err)
 	}
 	if _, err := buffer.Write([]byte("d")); err == nil || !buffer.Exceeded() {
 		t.Fatal("oversized buffer write succeeded")
 	}
-	if classifyOpenCodeError(opencodeEventError{Data: opencodeEventErrorData{StatusCode: 401}}) != "infrastructure-auth" ||
-		classifyOpenCodeError(opencodeEventError{Data: opencodeEventErrorData{StatusCode: 500}}) != "infrastructure-model" {
+	if (&opencodeEventCapture{}).classifyOpenCodeError(opencodeEventError{Data: opencodeEventErrorData{StatusCode: 401}}) != "infrastructure-auth" || (&opencodeEventCapture{}).classifyOpenCodeError(opencodeEventError{Data: opencodeEventErrorData{StatusCode: 500}}) != "infrastructure-model" {
 		t.Fatal("OpenCode error classification drifted")
 	}
-	if shortOpenCodeDigest(strings.Repeat("a", 64)) != strings.Repeat("a", 16) || shortOpenCodeDigest("short") != "invalid" {
+	if (opencodeEvaluation{}).shortOpenCodeDigest(strings.Repeat("a", 64)) != strings.Repeat("a", 16) || (opencodeEvaluation{}).shortOpenCodeDigest("short") != "invalid" {
 		t.Fatal("OpenCode digest projection drifted")
 	}
-	if openCodeSafetyDetail("tool cap exceeded") != "tool-cap" ||
-		openCodeSafetyDetail("untrusted model detail") != "event-safety" {
+	if (opencodeEvaluation{}).openCodeSafetyDetail("tool cap exceeded") != "tool-cap" || (opencodeEvaluation{}).openCodeSafetyDetail("untrusted model detail") != "event-safety" {
 		t.Fatal("OpenCode safety detail projection drifted")
 	}
-	if !retryableOpenCodeClassification("rate-limited") || !retryableOpenCodeClassification("infrastructure-timeout") ||
-		retryableOpenCodeClassification("infrastructure-auth") || maximumOpenCodeAttempts != 2 {
+	if !(opencodeRetry{}).retryableOpenCodeClassification("rate-limited") || !(opencodeRetry{}).retryableOpenCodeClassification("infrastructure-timeout") || (opencodeRetry{}).retryableOpenCodeClassification("infrastructure-auth") || maximumOpenCodeAttempts != 2 {
 		t.Fatal("OpenCode retry classification drifted")
 	}
 	attempts := []opencodeEvaluationResult{
@@ -494,7 +490,7 @@ func TestOpenCodeBoundedBufferAndErrorClassification(t *testing.T) {
 			Duration: 2 * time.Second, Tools: 2, Steps: 2, Before: "before-two", After: "after-two",
 		},
 	}
-	combined := combineOpenCodeAttempts(attempts)
+	combined := (opencodeRetry{}).combineOpenCodeAttempts(attempts)
 	if combined.Classification != "pass" || combined.Attempts != 2 || combined.Variance != "recovered-pass" ||
 		combined.Duration != 3*time.Second || combined.Tools != 3 || combined.Steps != 3 || combined.Before != "before-two" {
 		t.Fatalf("combined OpenCode attempts = %+v", combined)

@@ -16,7 +16,7 @@ type opencodeArchive struct {
 	maximumEntryBytes int64
 }
 
-func newOpenCodeArchive() opencodeArchive {
+func (archive opencodeArchive) newOpenCodeArchive() opencodeArchive {
 	return opencodeArchive{maximumEntryBytes: 256 << 20}
 }
 
@@ -111,7 +111,7 @@ func (archive opencodeArchive) readEntry(
 		}
 		return nil
 	}
-	if executableDestination == "" || !stringsEqualArchivePath(header.Name, filepath.Base(executableDestination)) {
+	if executableDestination == "" || !(opencodeArchive{}).stringsEqualArchivePath(header.Name, filepath.Base(executableDestination)) {
 		return nil
 	}
 	return archive.writeExecutable(reader, header.Size, executableDestination)
@@ -134,6 +134,6 @@ func (archive opencodeArchive) writeExecutable(reader io.Reader, size int64, des
 	return nil
 }
 
-func stringsEqualArchivePath(name, executableBase string) bool {
+func (archive opencodeArchive) stringsEqualArchivePath(name, executableBase string) bool {
 	return name == "package/bin/"+executableBase
 }

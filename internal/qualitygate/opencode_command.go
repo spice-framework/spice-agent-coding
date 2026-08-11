@@ -17,8 +17,8 @@ func (opencodeCommand) Output(
 	executable string,
 	arguments ...string,
 ) (string, error) {
-	stdout := newOpenCodeBoundedBuffer(maximum)
-	stderr := newOpenCodeBoundedBuffer(maximumOpenCodeDiagnosticBytes)
+	stdout := (&opencodeBoundedBuffer{}).newOpenCodeBoundedBuffer(maximum)
+	stderr := (&opencodeBoundedBuffer{}).newOpenCodeBoundedBuffer(maximumOpenCodeDiagnosticBytes)
 	command := exec.CommandContext(ctx, executable, arguments...) // #nosec G204 -- executable and discrete arguments are gate-owned.
 	command.Dir = directory
 	command.Env = environment
@@ -34,7 +34,7 @@ func (opencodeCommand) Output(
 	return stdout.String(), nil
 }
 
-func boundedCommandOutput(
+func (owner opencodeCommand) boundedCommandOutput(
 	ctx context.Context,
 	directory string,
 	environment []string,
