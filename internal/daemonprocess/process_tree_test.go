@@ -9,7 +9,7 @@ import (
 )
 
 func TestRootExitBoundsInheritedPipeAndReapsDescendant(t *testing.T) {
-	starter := helperStarter(t, "orphan", testpath.TempDir(t), 1024)
+	starter := helperStarter(t, "orphan", testpath.NewSupport().TempDir(t), 1024)
 	// Keep this regression tight independently of the race-runtime allowance
 	// used by helpers that perform a graceful EOF shutdown.
 	starter.terminate = 100 * time.Millisecond
@@ -31,7 +31,7 @@ func TestRootExitBoundsInheritedPipeAndReapsDescendant(t *testing.T) {
 }
 
 func TestAtomicLaunchContainsImmediateExitBeforeReaping(t *testing.T) {
-	starter := helperStarter(t, "early", testpath.TempDir(t), 256)
+	starter := helperStarter(t, "early", testpath.NewSupport().TempDir(t), 256)
 	for iteration := range 20 {
 		candidate := requireOwnedCandidate(t, starter)
 		wait, cancel := context.WithTimeout(t.Context(), 2*time.Second)

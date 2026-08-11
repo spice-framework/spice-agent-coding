@@ -78,7 +78,7 @@ func TestProcessPlatformHelper(t *testing.T) {
 }
 
 func TestResolverUsesOnlyExplicitLookupState(t *testing.T) {
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	bin := filepath.Join(root, "bin")
 	if err := os.Mkdir(bin, 0o700); err != nil {
 		t.Fatal(err)
@@ -111,7 +111,7 @@ func TestResolverUsesOnlyExplicitLookupState(t *testing.T) {
 		}
 	}
 
-	ambient := testpath.TempDir(t)
+	ambient := testpath.NewSupport().TempDir(t)
 	t.Setenv("PATH", ambient)
 	missing, err := agentprocess.NewLookup("ambient-only", root, []string{"PATH="})
 	if err != nil {
@@ -147,7 +147,7 @@ func TestResolverUsesOnlyExplicitLookupState(t *testing.T) {
 }
 
 func TestLauncherPreservesExactProcessIntentWithoutShell(t *testing.T) {
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	executable := installProcessHelper(t, root, "fixture")
 	var stdout, stderr bytes.Buffer
 	injection := `; echo injected && $(private-command)`
@@ -198,7 +198,7 @@ func TestLauncherPreservesExactProcessIntentWithoutShell(t *testing.T) {
 }
 
 func TestVerifiedLauncherUsesExecutableLeaseAndRejectsInvalidBoundaries(t *testing.T) {
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	executable := installProcessHelper(t, root, "verified")
 	content, err := os.ReadFile(executable)
 	if err != nil {
@@ -303,7 +303,7 @@ func (buffer *signalingBuffer) String() string {
 }
 
 func TestRootOutcomeIsSeparateFromTreeContainment(t *testing.T) {
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	executable := installProcessHelper(t, root, "tree")
 	input, releaseRoot := io.Pipe()
 	t.Cleanup(func() {
@@ -356,7 +356,7 @@ func TestRootOutcomeIsSeparateFromTreeContainment(t *testing.T) {
 }
 
 func TestLauncherCancellationAndPartialOwnership(t *testing.T) {
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	executable := installProcessHelper(t, root, "blocked")
 	spec := helperSpec(t, executable, root, "blocked", strings.NewReader(""), io.Discard, io.Discard, nil)
 	launcher := mustLauncher(t)
@@ -414,7 +414,7 @@ func TestLauncherCancellationAndPartialOwnership(t *testing.T) {
 }
 
 func TestLauncherPassesExactImmutableSpecToPlatform(t *testing.T) {
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	executable := filepath.Join(root, "executable"+executableSuffix())
 	stdin := strings.NewReader("input")
 	stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
@@ -456,7 +456,7 @@ func TestLauncherPassesExactImmutableSpecToPlatform(t *testing.T) {
 }
 
 func TestLauncherRegistrationFailureTransfersProcessOwnership(t *testing.T) {
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	executable := installProcessHelper(t, root, "registration")
 	spec := helperSpec(t, executable, root, "blocked", strings.NewReader(""), io.Discard, io.Discard, nil)
 	registrationFailure := errors.New("private registration failure")
@@ -486,7 +486,7 @@ func TestLauncherRegistrationFailureTransfersProcessOwnership(t *testing.T) {
 }
 
 func TestLauncherStartFailureIsRedacted(t *testing.T) {
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	privatePath := filepath.Join(root, "private-secret-executable"+executableSuffix())
 	spec := helperSpec(t, privatePath, root, "echo", strings.NewReader(""), io.Discard, io.Discard, nil)
 	owned, err := mustLauncher(t).Start(t.Context(), spec)

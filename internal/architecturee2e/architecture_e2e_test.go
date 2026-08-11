@@ -52,7 +52,7 @@ var endpointSequence atomic.Uint64
 func TestGeneratedDistributionExecutesCompiledAndRuntimeToolsAcrossReconnect(t *testing.T) {
 	root := repositoryRoot(t)
 	executable, digest := buildFixture(t, root)
-	workspace := testpath.TempDir(t)
+	workspace := testpath.NewSupport().TempDir(t)
 	if err := os.WriteFile(filepath.Join(workspace, "README.md"), []byte(workspaceMarker+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +126,7 @@ func TestGeneratedDistributionExecutesCompiledAndRuntimeToolsAcrossReconnect(t *
 func TestGeneratedCompletedRunRemainsReplayableWithProductionLimits(t *testing.T) {
 	root := repositoryRoot(t)
 	executable, digest := buildFixture(t, root)
-	workspace := testpath.TempDir(t)
+	workspace := testpath.NewSupport().TempDir(t)
 	if err := os.WriteFile(filepath.Join(workspace, "README.md"), []byte(workspaceMarker+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -835,7 +835,7 @@ func buildFixture(t *testing.T, root string) (string, string) {
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
-	path := filepath.Join(testpath.TempDir(t), name)
+	path := filepath.Join(testpath.NewSupport().TempDir(t), name)
 	// Hosted runners build all repository packages concurrently. Keep the
 	// fixture bounded while allowing a cold vendor-only compile to finish under
 	// that expected contention.
@@ -875,7 +875,7 @@ func localEndpoint(t *testing.T) (endpoint.Transport, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	directory = testpath.Resolve(t, directory)
+	directory = testpath.NewSupport().Resolve(t, directory)
 	if err = os.Chmod(directory, 0o700); err != nil {
 		t.Fatal(errors.Join(err, os.RemoveAll(directory)))
 	}

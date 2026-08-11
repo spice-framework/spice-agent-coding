@@ -9,16 +9,24 @@ import (
 	"testing"
 )
 
+// Support owns hermetic filesystem and process-environment test helpers.
+type Support struct{}
+
+// NewSupport returns stateless hermetic test support.
+func NewSupport() Support {
+	return Support{}
+}
+
 // TempDir returns a test-owned temporary directory with operating-system
 // symlinks resolved. This accounts for macOS's lexical /var to /private/var
 // alias without weakening production path or symlink validation.
-func TempDir(tb testing.TB) string {
+func (support Support) TempDir(tb testing.TB) string {
 	tb.Helper()
-	return Resolve(tb, tb.TempDir())
+	return support.Resolve(tb, tb.TempDir())
 }
 
 // Resolve returns the canonical absolute spelling of an existing test path.
-func Resolve(tb testing.TB, path string) string {
+func (Support) Resolve(tb testing.TB, path string) string {
 	tb.Helper()
 	resolved, err := filepath.EvalSymlinks(path)
 	if err != nil {
@@ -35,7 +43,7 @@ func Resolve(tb testing.TB, path string) string {
 // represented exactly once. Avoiding duplicate keys is required on Windows,
 // where child-process selection among differently cased or repeated entries is
 // not a useful test contract.
-func Environment(overrides map[string]string) []string {
+func (support Support) Environment(overrides map[string]string) []string {
 	keys := make([]string, 0, len(overrides))
 	for key := range overrides {
 		keys = append(keys, key)
@@ -44,7 +52,7 @@ func Environment(overrides map[string]string) []string {
 	result := make([]string, 0, len(os.Environ())+len(keys))
 	for _, entry := range os.Environ() {
 		name, _, _ := strings.Cut(entry, "=")
-		if !environmentOverridden(name, keys) {
+		if !support.environmentOverridden(name, keys) {
 			result = append(result, entry)
 		}
 	}
@@ -54,7 +62,7 @@ func Environment(overrides map[string]string) []string {
 	return result
 }
 
-func environmentOverridden(candidate string, keys []string) bool {
+func (Support) environmentOverridden(candidate string, keys []string) bool {
 	for _, key := range keys {
 		if candidate == key || runtime.GOOS == "windows" && strings.EqualFold(candidate, key) {
 			return true

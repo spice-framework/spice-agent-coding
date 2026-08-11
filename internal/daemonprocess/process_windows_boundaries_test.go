@@ -27,7 +27,7 @@ func TestWindowsPlatformBoundaryValidation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	directory := testpath.TempDir(t)
+	directory := testpath.NewSupport().TempDir(t)
 	valid := processSpec{
 		executable:  filepath.Join(directory, (&Starter{}).daemonExecutableName()),
 		argument:    daemonArgument,
@@ -88,7 +88,7 @@ func TestWindowsParameterAndEnvironmentBoundaries(t *testing.T) {
 		t.Fatalf("empty-value environment key = %q, %t", key, ok)
 	}
 
-	directory := testpath.TempDir(t)
+	directory := testpath.NewSupport().TempDir(t)
 	valid := processSpec{
 		executable: filepath.Join(directory, (&Starter{}).daemonExecutableName()), argument: daemonArgument,
 		directory: directory, environment: []string{"A=b"},

@@ -20,18 +20,29 @@ var (
 	Commit  = "development"
 )
 
+// Build owns one immutable snapshot of the distribution identity.
+type Build struct {
+	version string
+	commit  string
+}
+
+// NewBuild captures the linker-injected distribution identity.
+func NewBuild() Build {
+	return Build{version: Version, commit: Commit}
+}
+
 // WriteVersion writes the stable human-readable executable identity.
-func WriteVersion(writer io.Writer, component string) error {
+func (build Build) WriteVersion(writer io.Writer, component string) error {
 	if writer == nil {
 		return fmt.Errorf("version output is required")
 	}
 	if component != DaemonComponent && component != TerminalComponent {
 		return fmt.Errorf("unsupported distribution component %q", component)
 	}
-	if Version == "" || Commit == "" {
+	if build.version == "" || build.commit == "" {
 		return fmt.Errorf("distribution identity is incomplete")
 	}
-	if _, err := fmt.Fprintf(writer, "%s %s (%s)\n", component, Version, Commit); err != nil {
+	if _, err := fmt.Fprintf(writer, "%s %s (%s)\n", component, build.version, build.commit); err != nil {
 		return fmt.Errorf("write distribution identity: %w", err)
 	}
 	return nil

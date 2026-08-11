@@ -26,7 +26,7 @@ func TestNewAndStarterRejectInvalidProcessBoundaries(t *testing.T) {
 		t.Fatalf("NewStarter(valid) = %v, %v", starter, err)
 	}
 
-	directory := testpath.TempDir(t)
+	directory := testpath.NewSupport().TempDir(t)
 	executable := filepath.Join(directory, (&Starter{}).daemonExecutableName())
 	launcher := filepath.Join(directory, launcherExecutableName())
 	valid.Directory = directory

@@ -21,7 +21,7 @@ type command struct {
 
 func (command command) execute(ctx context.Context, arguments []string) int {
 	if len(arguments) == 1 && arguments[0] == "--version" {
-		if err := distribution.WriteVersion(command.stdout, distribution.DaemonComponent); err != nil {
+		if err := distribution.NewBuild().WriteVersion(command.stdout, distribution.DaemonComponent); err != nil {
 			return daemoncommand.ExitFailure
 		}
 		return daemoncommand.ExitSuccess

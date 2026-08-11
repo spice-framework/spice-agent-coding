@@ -319,7 +319,7 @@ func unixHelperStarter(t *testing.T, mode string) *Starter {
 	launcher := filepath.Join(filepath.Dir(executable), launcherExecutableName())
 	environment := replaceEnvironment(os.Environ(), unixHelperModeEnvironment, mode)
 	starter, err := newTestStarter(Config{
-		Directory: testpath.TempDir(t), Environment: environment, StderrBytes: 1024,
+		Directory: testpath.NewSupport().TempDir(t), Environment: environment, StderrBytes: 1024,
 		GracefulTimeout: 2 * time.Second, TerminateDelay: 100 * time.Millisecond,
 	}, executable, launcher)
 	if err != nil {

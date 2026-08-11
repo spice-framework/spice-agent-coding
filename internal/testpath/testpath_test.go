@@ -8,18 +8,19 @@ import (
 )
 
 func TestTempDirIsCanonicalAndExisting(t *testing.T) {
-	directory := TempDir(t)
+	support := NewSupport()
+	directory := support.TempDir(t)
 	if !filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
 		t.Fatalf("canonical temporary directory = %q", directory)
 	}
-	if resolved := Resolve(t, directory); resolved != directory {
+	if resolved := support.Resolve(t, directory); resolved != directory {
 		t.Fatalf("resolved temporary directory = %q, want %q", resolved, directory)
 	}
 }
 
 func TestEnvironmentReplacesInheritedValuesExactlyOnce(t *testing.T) {
 	t.Setenv("SPICE_TESTPATH_ENVIRONMENT", "inherited")
-	environment := Environment(map[string]string{
+	environment := NewSupport().Environment(map[string]string{
 		"SPICE_TESTPATH_ENVIRONMENT": "replacement",
 		"SPICE_TESTPATH_SECOND":      "second",
 	})

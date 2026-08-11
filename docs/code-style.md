@@ -20,7 +20,8 @@ The active migration boundary covers both process entrypoints; the
 application-owned command, daemon lifecycle, daemon-process containment,
 identity, terminal, connector, and TUI-session packages; and the hermetic
 architecture, development-loop, installed-distribution, and runtime-plugin
-acceptance fixtures listed in `.spice/style.json`. Within that boundary:
+acceptance fixtures plus distribution identity and test-path support listed in
+`.spice/style.json`. Within that boundary:
 
 - each source file has one primary type and the filename follows that type;
 - behavior belongs to the owning type instead of loose package functions;
@@ -29,6 +30,12 @@ acceptance fixtures listed in `.spice/style.json`. Within that boundary:
 - each exceptional Spice provider occupies one dedicated `*_bean.go` file;
 - generated sources remain manifest-owned and are never edited by hand; and
 - tests use only the exact Go testing entrypoint exception.
+
+The exact `distribution.Commit` and `distribution.Version` string variables
+are the only active package-variable exceptions. Go release builds require
+those stable linker `-X` symbols; the profile matches each exception by file,
+symbol, and Go type, while application behavior consumes an immutable
+constructed identity snapshot.
 
 The source-root list is deliberately explicit while older packages are
 migrated. Expanding it is a monotonic quality change: first refactor and test a

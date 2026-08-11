@@ -83,7 +83,7 @@ func copyStdinOrExit(exitCode int) {
 
 func TestStarterUsesSiblingDiscreteArgumentAndGracefulEOF(t *testing.T) {
 	t.Parallel()
-	starter := helperStarter(t, "eof", testpath.TempDir(t), 256)
+	starter := helperStarter(t, "eof", testpath.NewSupport().TempDir(t), 256)
 	candidate := requireOwnedCandidate(t, starter)
 	if candidate == nil || candidate.Done() == nil {
 		t.Fatal("starter returned an invalid candidate")
@@ -105,7 +105,7 @@ func TestStarterUsesSiblingDiscreteArgumentAndGracefulEOF(t *testing.T) {
 
 func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 	t.Parallel()
-	early := helperStarter(t, "early", testpath.TempDir(t), 256)
+	early := helperStarter(t, "early", testpath.NewSupport().TempDir(t), 256)
 	candidate := requireOwnedCandidate(t, early)
 	wait, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 	defer cancel()
@@ -114,7 +114,7 @@ func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 		t.Fatalf("early exit containment/result = %v/%v", err, candidate.Result())
 	}
 
-	blocked := helperStarter(t, "blocked", testpath.TempDir(t), 256)
+	blocked := helperStarter(t, "blocked", testpath.NewSupport().TempDir(t), 256)
 	candidate = requireOwnedCandidate(t, blocked)
 	waitHelperReady(t, requireProcess(t, candidate))
 	short, stop := context.WithTimeout(t.Context(), 10*time.Millisecond)
@@ -139,7 +139,7 @@ func TestCandidateReportsEarlyExitAndWaitHonorsContext(t *testing.T) {
 
 func TestStarterPreservesWorkingDirectoryEnvironmentAndBoundsStderr(t *testing.T) {
 	t.Parallel()
-	directory := testpath.TempDir(t)
+	directory := testpath.NewSupport().TempDir(t)
 	starter := helperStarter(t, "report", directory, 1024)
 	candidate := requireOwnedCandidate(t, starter)
 	process := requireProcess(t, candidate)
@@ -168,7 +168,7 @@ func TestStarterPreservesWorkingDirectoryEnvironmentAndBoundsStderr(t *testing.T
 
 func TestStarterRejectsInvalidConfigurationAndRedactsFailures(t *testing.T) {
 	t.Parallel()
-	directory := testpath.TempDir(t)
+	directory := testpath.NewSupport().TempDir(t)
 	launcher := filepath.Join(directory, launcherExecutableName())
 	daemon := filepath.Join(directory, (&Starter{}).daemonExecutableName())
 	valid := Config{
@@ -178,7 +178,7 @@ func TestStarterRejectsInvalidConfigurationAndRedactsFailures(t *testing.T) {
 	if _, err := newTestStarter(Config{}, daemon, launcher); err == nil {
 		t.Fatal("unbounded process configuration succeeded")
 	}
-	if _, err := newTestStarter(valid, filepath.Join(testpath.TempDir(t), (&Starter{}).daemonExecutableName()), launcher); err == nil {
+	if _, err := newTestStarter(valid, filepath.Join(testpath.NewSupport().TempDir(t), (&Starter{}).daemonExecutableName()), launcher); err == nil {
 		t.Fatal("non-sibling daemon executable succeeded")
 	}
 	starter, err := newTestStarter(valid, daemon, launcher)
@@ -309,7 +309,7 @@ func installHelperExecutable(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	directory := testpath.TempDir(t)
+	directory := testpath.NewSupport().TempDir(t)
 	target := filepath.Join(directory, (&Starter{}).daemonExecutableName())
 	staging := target + ".staging"
 	source, err := os.Open(current)

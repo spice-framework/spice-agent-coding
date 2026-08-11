@@ -9,10 +9,12 @@
     "internal/daemoncommand",
     "internal/daemonprocess",
     "internal/devacceptance",
+    "internal/distribution",
     "internal/installedacceptance",
     "internal/processplatform",
     "internal/runidentity",
     "internal/runtimepluginfixture",
+    "internal/testpath",
     "internal/terminal",
     "internal/terminalcommand",
     "internal/terminalconnector",
@@ -78,5 +80,20 @@
       "reason": "Exact generated-package conformance application marker; not production application precedent"
     }
   ],
-  "packageVariableExceptions": []
+  "packageVariableExceptions": [
+    {
+      "glob": "internal/distribution/build.go",
+      "symbol": "Commit",
+      "type": "string",
+      "reason": "Go linker -X requires the exact package variable used by release builds",
+      "issue": "CODING-LINKER-IDENTITY-001"
+    },
+    {
+      "glob": "internal/distribution/build.go",
+      "symbol": "Version",
+      "type": "string",
+      "reason": "Go linker -X requires the exact package variable used by release builds",
+      "issue": "CODING-LINKER-IDENTITY-001"
+    }
+  ]
 }

@@ -83,7 +83,7 @@ func TestUnixProcessBoundaryFormattingAndNilSafety(t *testing.T) {
 func TestUnixAnchorFailureAbortsRootAndReturnsTerminalWaitFailure(t *testing.T) {
 	t.Parallel()
 
-	root := testpath.TempDir(t)
+	root := testpath.NewSupport().TempDir(t)
 	executable := installProcessHelper(t, root, "anchor-failure")
 	spec := helperSpec(t, executable, root, "blocked", strings.NewReader(""), io.Discard, io.Discard, nil)
 	snapshotFailure := errors.New("private process snapshot failure")

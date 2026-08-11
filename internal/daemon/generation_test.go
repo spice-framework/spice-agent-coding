@@ -332,7 +332,7 @@ func runSpice(t *testing.T, root string, arguments ...string) (string, string, e
 	// #nosec G204,G702 -- executable and arguments are fixed daemon generation checks.
 	command := exec.CommandContext(ctx, exactGoExecutable(), commandArguments...)
 	command.Dir = root
-	command.Env = testpath.Environment(map[string]string{
+	command.Env = testpath.NewSupport().Environment(map[string]string{
 		"GOFLAGS": "-mod=vendor", "GOPROXY": "off", "GOTOOLCHAIN": "local", "GOWORK": "off",
 	})
 	var stdout bytes.Buffer
