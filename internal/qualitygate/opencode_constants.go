@@ -9,6 +9,7 @@ const (
 	maximumOpenCodeRepositoryBytes         = 512 << 20
 	maximumOpenCodeRepositoryFileBytes     = 32 << 20
 	maximumOpenCodeInventoryBytes          = 4 << 20
+	maximumOpenCodeCatalogBytes            = 1 << 20
 	maximumOpenCodeEventBytes              = 256 << 10
 	maximumOpenCodeDiagnosticBytes         = 32 << 10
 	maximumOpenCodePromptBytes             = 2048

@@ -220,6 +220,15 @@ func TestOpenCodeFreeRouteValidatorSeparatesPaidOrIncapableRoutes(t *testing.T) 
 	if err := validator.Validate(context.Background(), models); err == nil {
 		t.Fatal("incapable OpenRouter route succeeded")
 	}
+	validator.client = &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK, ContentLength: maximumOpenCodeCatalogBytes + 1,
+			Body: io.NopCloser(bytes.NewReader([]byte(`{"data":[]}`))), Header: make(http.Header),
+		}, nil
+	})}
+	if err := validator.Validate(context.Background(), models); err == nil {
+		t.Fatal("oversized OpenRouter catalog succeeded")
+	}
 }
 
 func TestOpenCodeEventCaptureEnforcesCostToolStepAndOutputCaps(t *testing.T) {
@@ -375,7 +384,7 @@ func TestOpenCodeWorkspaceAndEnvironmentRemainDisposable(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := workspace.root
-	repository, err := workspace.CaseRepository("case-1")
+	repository, err := workspace.CaseRepository("00-case-1")
 	if err != nil || !strings.HasPrefix(repository, root) {
 		t.Fatalf("case repository = %q, %v", repository, err)
 	}

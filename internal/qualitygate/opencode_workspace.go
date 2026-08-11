@@ -59,7 +59,7 @@ func (workspace *opencodeWorkspace) Close() error {
 }
 
 func (workspace *opencodeWorkspace) CaseRepository(label string) (string, error) {
-	if workspace == nil || workspace.root == "" || label == "" || strings.ContainsAny(label, `/\\\x00`) {
+	if workspace == nil || workspace.root == "" || label == "" || strings.ContainsAny(label, "/\\\x00") {
 		return "", errors.New("OpenCode case label is invalid")
 	}
 	directory := filepath.Join(workspace.root, "cases", label, "repository")

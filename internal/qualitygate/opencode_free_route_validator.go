@@ -56,12 +56,18 @@ func (validator opencodeFreeRouteValidator) fetch(ctx context.Context) (catalog 
 	defer func() {
 		fetchErr = errors.Join(fetchErr, response.Body.Close())
 	}()
-	if response.StatusCode != http.StatusOK || response.ContentLength > maximumOpenCodeEventBytes {
+	if response.StatusCode != http.StatusOK || response.ContentLength > maximumOpenCodeCatalogBytes {
 		return catalog, fmt.Errorf("query OpenRouter free-model catalog returned HTTP %d", response.StatusCode)
 	}
-	decoder := json.NewDecoder(io.LimitReader(response.Body, maximumOpenCodeEventBytes+1))
-	if err = decoder.Decode(&catalog); err != nil {
-		return catalog, errors.New("decode OpenRouter free-model catalog")
+	content, err := io.ReadAll(io.LimitReader(response.Body, maximumOpenCodeCatalogBytes+1))
+	if err != nil {
+		return catalog, fmt.Errorf("read OpenRouter free-model catalog: %w", err)
+	}
+	if len(content) > maximumOpenCodeCatalogBytes {
+		return catalog, errors.New("OpenRouter free-model catalog exceeds its byte cap")
+	}
+	if err = json.Unmarshal(content, &catalog); err != nil {
+		return catalog, fmt.Errorf("decode OpenRouter free-model catalog: %w", err)
 	}
 	if len(catalog.Data) == 0 {
 		return catalog, errors.New("OpenRouter free-model catalog is empty")
