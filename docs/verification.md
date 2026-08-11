@@ -64,3 +64,10 @@ only on the committed vendor and compiled protocol graphs.
 The repository-owned verifier is cross-platform. `make fast`, `make check`, and
 `make verify` force `GOPROXY=off`; missing cache entries fail instead of causing
 hidden downloads. `make fmt` is the only target that rewrites Go source.
+
+`make eval-opencode` is a separate, networked, advisory developer harness. It
+downloads and integrity-checks the exact OpenCode evaluator, runs only exact
+zero-cost OpenRouter `:free` routes inside disposable repository and home/config
+roots, and reports a deterministic local rubric. It is intentionally excluded
+from every normal and release verification target. See
+[Advisory OpenCode evaluation](opencode-evaluation.md).

@@ -33,3 +33,11 @@ goimports/x-tools 0.48.0, gosec 2.28.0, govulncheck 1.1.4, and NilAway at
 variables. The gate permits module network access only during explicit
 preparation and runs later checks with `GOPROXY=off`, `GOWORK=off`, and the
 local Go 1.26.5 toolchain.
+
+The optional `make eval-opencode` developer harness is separately networked and
+non-gating. It pins `opencode-ai@1.18.16` and every supported native package by
+SHA-512, downloads registry archives without running npm lifecycle scripts, and
+extracts only the expected executable. Before authenticated requests it also
+requires the three exact OpenRouter `:free` routes to advertise zero prompt and
+completion prices and tool support. No evaluator package enters the product Go
+module or release graph; see [Advisory OpenCode evaluation](opencode-evaluation.md).

@@ -51,6 +51,11 @@ module files. All ordinary quality targets remain offline. Use `make fast`,
 the pinned Spice `java-structured` profile; see [the code-style
 contract](docs/code-style.md).
 
+For optional model-side assessment, `make eval-opencode` runs the exact pinned
+OpenCode CLI against three zero-cost OpenRouter `:free` routes inside disposable,
+sanitized repository and home/config roots. It is advisory and never part of
+normal verification; see [the evaluation contract](docs/opencode-evaluation.md).
+
 Generated applications are committed for inspection. Do not edit them
 directly. Change the corresponding handwritten composition and run:
 

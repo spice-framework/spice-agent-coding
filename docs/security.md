@@ -29,3 +29,12 @@ Review release checksums, GitHub artifact attestations, the SBOM,
 release path uses separate protected attestation and publication environments;
 candidate code never receives OIDC or write authority. Do not run this preview
 against an untrusted workspace or install an untrusted runtime plugin.
+
+`make eval-opencode` is an explicit, advisory exception to normal offline
+verification. It uses only integrity-pinned OpenCode bytes and exact zero-cost
+OpenRouter `:free` routes, copies only the local OpenRouter credential into an
+owner-only disposable data root, and runs against a sanitized disposable copy
+with `--pure` and plugins, MCP, LSP, subagents, web, and shell disabled. The
+harness removes its temporary home/config/repository roots and never commits raw
+prompts, transcripts, model output, or credentials. See
+[Advisory OpenCode evaluation](opencode-evaluation.md).

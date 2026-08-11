@@ -42,7 +42,7 @@ func main() {
 }
 
 func execute() int {
-	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, verify, or release-artifacts")
+	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, verify, release-artifacts, or opencode-eval")
 	artifacts := flag.String("artifacts", "", "absolute independently verified release-subject directory")
 	flag.Parse()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -110,6 +110,12 @@ func runConfigured(ctx context.Context, root, mode, artifacts string) error {
 				identity,
 				{"verified release archive", func() error {
 					return verifyReleaseArtifacts(ctx, root, artifacts)
+				}},
+			}
+		case "opencode-eval":
+			steps = []step{
+				{"advisory OpenCode free-model evaluation", func() error {
+					return newOpenCodeEvaluation().Run(ctx, root, output)
 				}},
 			}
 		default:
