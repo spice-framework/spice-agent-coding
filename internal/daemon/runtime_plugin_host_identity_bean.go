@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ import (
 // process boundary. It neither discovers nor launches plugins.
 //
 // @Bean(name="runtimePluginHostIdentity")
+// @Singleton
 func NewRuntimePluginHostIdentity(build client.Build) (*pluginv1.BuildIdentity, error) {
 	if err := build.Validate(); err != nil {
 		return nil, fmt.Errorf("construct runtime plugin host identity: %w", err)

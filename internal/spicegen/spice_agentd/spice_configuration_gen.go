@@ -55,13 +55,6 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 			Required:    true,
 		},
 		spiceconfig.Property{
-			Key:         "agent.workspace",
-			Kind:        spiceconfig.KindString,
-			Environment: "SPICE_AGENT_WORKSPACE",
-			Default:     ".",
-			HasDefault:  true,
-		},
-		spiceconfig.Property{
 			Key:         "agent.run-authority-directory",
 			Kind:        spiceconfig.KindString,
 			Environment: "SPICE_AGENT_RUN_AUTHORITY_DIRECTORY",
@@ -192,6 +185,13 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 			Kind:        spiceconfig.KindDuration,
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_CONTAINMENT_TIMEOUT",
 			Default:     "5s",
+			HasDefault:  true,
+		},
+		spiceconfig.Property{
+			Key:         "agent.workspace",
+			Kind:        spiceconfig.KindString,
+			Environment: "SPICE_AGENT_WORKSPACE",
+			Default:     ".",
 			HasDefault:  true,
 		},
 		spiceconfig.Property{

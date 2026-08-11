@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"crypto/rand"
@@ -13,6 +13,7 @@ import (
 // kernel's exact interface dependency.
 //
 // @Bean(name="daemonIDSource")
+// @Singleton
 func NewIDSource() (agent.IDSource, error) {
 	return runidentity.NewSource(rand.Reader)
 }

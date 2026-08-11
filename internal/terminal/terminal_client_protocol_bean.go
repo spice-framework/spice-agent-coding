@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"github.com/spice-framework/spice-agent/client"
@@ -10,6 +10,7 @@ import (
 // distribution build.
 //
 // @Bean(name="terminalClientProtocol")
+// @Singleton
 func NewClientProtocol() (client.ProtocolRange, error) {
 	version, err := client.NewProtocolVersion(1, 3, 0)
 	if err != nil {

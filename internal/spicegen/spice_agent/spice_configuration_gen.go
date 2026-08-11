@@ -11,13 +11,6 @@ import (
 func ConfigurationSchema() (spiceconfig.Schema, error) {
 	return spiceconfig.NewSchema(
 		spiceconfig.Property{
-			Key:         "agent.workspace",
-			Kind:        spiceconfig.KindString,
-			Environment: "SPICE_AGENT_WORKSPACE",
-			Default:     ".",
-			HasDefault:  true,
-		},
-		spiceconfig.Property{
 			Key:        "agent.terminal.mode",
 			Kind:       spiceconfig.KindString,
 			Default:    "managed",
@@ -32,6 +25,13 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 			Kind:        spiceconfig.KindBoolean,
 			Environment: "SPICE_AGENT_TERMINAL_ACCESSIBLE",
 			Default:     "false",
+			HasDefault:  true,
+		},
+		spiceconfig.Property{
+			Key:         "agent.workspace",
+			Kind:        spiceconfig.KindString,
+			Environment: "SPICE_AGENT_WORKSPACE",
+			Default:     ".",
 			HasDefault:  true,
 		},
 		spiceconfig.Property{

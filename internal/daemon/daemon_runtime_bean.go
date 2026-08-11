@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 // constructor injection.
 //
 // @Bean(name="daemonRuntime")
+// @Singleton
 func NewRuntime(
 	scope endpoint.UserScope,
 	store *endpoint.Store,

@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"fmt"
@@ -15,6 +15,7 @@ import (
 // its complete owned dependency shutdown as generated cleanup.
 //
 // @Bean(name="runHost")
+// @Singleton
 func NewRunHost(
 	root *Root,
 	engine *agent.Engine,

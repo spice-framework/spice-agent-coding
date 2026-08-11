@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 // distribution's generated, validated agent.logging configuration.
 //
 // @Bean(name="agentLoggingConfig")
+// @Singleton
 func NewAgentLoggingConfig(properties Properties) (agentlogging.Config, error) {
 	config := agentlogging.DefaultConfig()
 	config.MailboxCapacity = properties.LoggingMailboxCapacity

@@ -1,6 +1,6 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 // ordinary reverse-order lifecycle.
 //
 // @Bean(name="codingConfig")
+// @Singleton
 func NewCodingConfig() (coding.Config, lifecycle.Cleanup, error) {
 	root, err := os.MkdirTemp("", "spice-agent-architecture-proof-")
 	if err != nil {

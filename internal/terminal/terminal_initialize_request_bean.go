@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"github.com/spice-framework/spice-agent/client"
@@ -9,6 +9,7 @@ import (
 // NewInitializeRequest contributes protocol-1.3 replay-safe initialization.
 //
 // @Bean(name="terminalInitializeRequest")
+// @Singleton
 func NewInitializeRequest(
 	protocol client.ProtocolRange,
 	build client.Build,

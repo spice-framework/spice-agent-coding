@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -18,6 +18,7 @@ import (
 // managed connector but never initializes it.
 //
 // @Bean(name="terminalClientConnector")
+// @Singleton
 func NewClientConnector(
 	properties Properties,
 	managedConnector *managed.Connector,

@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/spice-framework/spice-agent-coding/internal/daemonprocess"
+	workspaceconfig "github.com/spice-framework/spice-agent-coding/internal/workspace"
 	coding "github.com/spice-framework/spice-agent-tools-coding"
 )
 
@@ -15,8 +16,9 @@ import (
 // compiled coding tool.
 //
 // @Bean(name="codingConfig")
+// @Singleton
 func NewCodingConfig(
-	properties Properties,
+	properties workspaceconfig.Properties,
 	registry daemonprocess.RootRegistry,
 ) (coding.Config, error) {
 	if registry == nil {

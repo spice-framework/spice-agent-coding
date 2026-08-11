@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	openaiprovider "github.com/spice-framework/spice-agent-provider-openai"
@@ -10,6 +10,7 @@ import (
 // starter's exact typed configuration bean.
 //
 // @Bean(name="openAIConfig")
+// @Singleton
 func NewOpenAIConfig(properties Properties) openaiprovider.Config {
 	return openaiprovider.Config{
 		APIKey:       properties.APIKey,

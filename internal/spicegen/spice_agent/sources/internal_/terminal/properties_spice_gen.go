@@ -15,14 +15,6 @@ import (
 // BindProperties_940b9db9 binds the validated configuration declared by spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties.
 func BindProperties_940b9db9(configurationSnapshot spiceconfig.Snapshot) (terminal.Properties, error) {
 	value := terminal.Properties{}
-	if _, configured := configurationSnapshot.Lookup("agent.workspace"); configured {
-		rawValue, valueErr := configurationSnapshot.RequiredString("agent.workspace")
-		if valueErr != nil {
-			return terminal.Properties{}, fmt.Errorf("decode configuration property agent.workspace for github.com/spice-framework/spice-agent-coding/internal/terminal.Properties.Workspace: %w", valueErr)
-		}
-		convertedValue := string(rawValue)
-		value.Workspace = convertedValue
-	}
 	if _, configured := configurationSnapshot.Lookup("agent.terminal.mode"); configured {
 		rawValue, valueErr := configurationSnapshot.RequiredString("agent.terminal.mode")
 		if valueErr != nil {

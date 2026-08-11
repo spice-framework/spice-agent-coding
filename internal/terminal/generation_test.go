@@ -42,7 +42,7 @@ func TestTerminalGenerationAndBeanExplanationAreCurrent(t *testing.T) {
 		}
 	}
 	stdout, stderr, err := runTerminalSpice(
-		t, root, "beans", "--explain", "--format=json", "./internal/terminal",
+		t, root, "beans", "--explain", "--format=json", "./internal/terminal", "./internal/workspace",
 	)
 	if err != nil || stderr != "" {
 		t.Fatalf("spice beans = stdout %q, stderr %q, error %v", stdout, stderr, err)
@@ -69,8 +69,9 @@ func TestGeneratedTerminalConstructsInspectableGraphWithoutConnecting(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
+	workspace := t.TempDir()
 	values, err := spiceconfig.NewMapSource("test", map[string]string{
-		"agent.workspace":     t.TempDir(),
+		"agent.workspace":     workspace,
 		"agent.terminal.mode": "check",
 	})
 	if err != nil {
@@ -102,7 +103,8 @@ func TestGeneratedTerminalConstructsInspectableGraphWithoutConnecting(t *testing
 	if application.Logger() == nil || application.LoggingController() == nil {
 		t.Fatal("generated terminal did not expose its instance-owned core logger")
 	}
-	if components.Properties.TerminalMode != "check" ||
+	if components.TerminalProperties.TerminalMode != "check" ||
+		components.WorkspaceProperties.Workspace != workspace ||
 		components.TerminalWorkspace.Title().String() == "" ||
 		components.TerminalInitialStatus.Level() != agenttui.StatusReconnecting {
 		t.Fatal("generated typed terminal configuration was not injected")

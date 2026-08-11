@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 // NewManagedDiscovery binds protected discovery without reading endpoint data.
 //
 // @Bean(name="terminalManagedDiscovery")
+// @Singleton
 func NewManagedDiscovery(store *endpoint.Store) (*localclient.Discovery, lifecycle.Cleanup, error) {
 	discovery, err := localclient.NewDiscovery(store)
 	if err != nil {

@@ -23,7 +23,6 @@ type Properties struct {
 	ProviderTimeout        time.Duration `spice:"openai.timeout,default=2m,env=OPENAI_TIMEOUT"`
 	ProviderRetries        int           `spice:"openai.max-retries,default=0,env=OPENAI_MAX_RETRIES"`
 	Model                  string        `spice:"model,required,env=OPENAI_MODEL"`
-	Workspace              string        `spice:"workspace,default=.,env=SPICE_AGENT_WORKSPACE"`
 	RunAuthorityDirectory  string        `spice:"run-authority-directory,env=SPICE_AGENT_RUN_AUTHORITY_DIRECTORY"`
 	LoggingMailboxCapacity int           `spice:"logging.mailbox-capacity,default=1024,env=SPICE_AGENT_LOGGING_MAILBOX_CAPACITY"`
 	LoggingIncludeProgress bool          `spice:"logging.include-progress,default=false,env=SPICE_AGENT_LOGGING_INCLUDE_PROGRESS"`

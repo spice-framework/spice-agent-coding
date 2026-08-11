@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"time"
@@ -12,6 +12,7 @@ import (
 // candidate ownership without starting it.
 //
 // @Bean(name="terminalDaemonStarter")
+// @Singleton
 func NewDaemonStarter() (*daemonprocess.Starter, error) {
 	return daemonprocess.NewStarter(daemonprocess.Config{
 		StderrBytes: 64 << 10, GracefulTimeout: 5 * time.Second,

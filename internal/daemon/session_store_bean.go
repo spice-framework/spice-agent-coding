@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	agentdaemon "github.com/spice-framework/spice-agent/daemon"
@@ -10,6 +10,7 @@ import (
 // lifetime.
 //
 // @Bean(name="sessionStore")
+// @Singleton
 func NewSessionStore(root *Root) (*agentdaemon.SessionStore, error) {
 	ctx, err := root.Context()
 	if err != nil {

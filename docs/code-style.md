@@ -31,6 +31,7 @@ acceptance fixtures plus distribution identity and test-path support listed in
 - constructors are explicit and return errors last;
 - mutable package state and `init` registration are forbidden;
 - each exceptional Spice provider occupies one dedicated `*_bean.go` file;
+- every current `@Bean` provider declares its singleton lifetime explicitly;
 - generated sources remain manifest-owned and are never edited by hand; and
 - tests use only the exact Go testing entrypoint exception.
 
@@ -45,6 +46,13 @@ migrated. Expanding it is a monotonic quality change: first refactor and test a
 package, then add that package to the enforced roots in the same green commit.
 Removing a governed root, weakening a rule, or adding a broad suppression is a
 policy regression and must fail review.
+
+`internal/workspace` is a target-scoping prerequisite written to the same
+profile: it centrally owns the typed workspace property used by both generated
+applications. It remains outside the schema-one root list until the shared
+Toolchain contract can analyze independent application targets without merging
+their configuration universes. That temporary executor limitation is not a
+style exception and does not permit duplicate declarations.
 
 The architecture proof is a conformance fixture rather than production
 application behavior, but its handwritten behavior is governed by the same

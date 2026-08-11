@@ -1,6 +1,6 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"github.com/spice-framework/spice-agent/interaction"
@@ -10,6 +10,7 @@ import (
 // this non-interactive proof.
 //
 // @Bean(name="architectureProofInteractionBroker")
+// @Singleton
 func NewInteractionBroker() interaction.Broker {
 	return interaction.UnavailableBroker{}
 }

@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 // NewDefinitionSet constructs the generated server-owned agent catalog.
 //
 // @Bean(name="definitionSet")
+// @Singleton
 func NewDefinitionSet(properties Properties) (agentdaemon.DefinitionSet, error) {
 	definition, err := agent.NewDefinition("coding", properties.Model, 32)
 	if err != nil {

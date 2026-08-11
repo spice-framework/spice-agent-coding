@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 // owned-candidate cleanup without performing I/O.
 //
 // @Bean(name="terminalManagedConnector")
+// @Singleton
 func NewManagedConnector(
 	discovery *localclient.Discovery,
 	starter *daemonprocess.Starter,

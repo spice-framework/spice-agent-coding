@@ -1,6 +1,6 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 // network or credential is used by the architecture proof.
 //
 // @Bean(name="responsesFixture")
+// @Singleton
 func NewResponsesFixture() (*ResponsesFixture, lifecycle.Cleanup, error) {
 	fixture := &ResponsesFixture{}
 	fixture.server = httptest.NewTLSServer(http.HandlerFunc(fixture.serveHTTP))

@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"errors"
@@ -11,6 +11,7 @@ import (
 // NewRuntimePluginActivation constructs a side-effect-free lifecycle bean.
 //
 // @Bean(name="runtimePluginActivation")
+// @Singleton
 func NewRuntimePluginActivation(
 	plan RuntimePluginPlan,
 	host *pluginhost.Host,

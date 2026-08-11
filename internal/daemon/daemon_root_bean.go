@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 // cancels it only after lifecycle stop hooks have drained the transport.
 //
 // @Bean(name="daemonRoot")
+// @Singleton
 func NewRoot(registry daemonprocess.RootRegistry) (*Root, lifecycle.Cleanup, error) {
 	if registry == nil {
 		return nil, nil, errors.New("daemon root registry is unavailable")

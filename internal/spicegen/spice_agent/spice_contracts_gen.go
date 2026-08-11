@@ -15,6 +15,7 @@ import (
 	spiceentrypoint "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent/sources/cmd/spice-agent"
 	terminal "github.com/spice-framework/spice-agent-coding/internal/terminal"
 	tuisession "github.com/spice-framework/spice-agent-coding/internal/tuisession"
+	workspace "github.com/spice-framework/spice-agent-coding/internal/workspace"
 	agenttui "github.com/spice-framework/spice-agent-tui"
 	client "github.com/spice-framework/spice-agent/client"
 	localclient "github.com/spice-framework/spice-agent/client/localclient"
@@ -93,16 +94,18 @@ type Components struct {
 	TerminalManagedConnector *managed.Connector
 	// TerminalInitializeRequest is bean "terminalInitializeRequest".
 	TerminalInitializeRequest client.InitializeRequest
-	// Properties is bean "Properties".
-	Properties terminal.Properties
-	// TerminalWorkspace is bean "terminalWorkspace".
-	TerminalWorkspace agenttui.WorkspaceState
-	// TerminalSessionConfig is bean "terminalSessionConfig".
-	TerminalSessionConfig tuisession.Config
+	// TerminalProperties is bean "Properties".
+	TerminalProperties terminal.Properties
 	// TerminalConfig is bean "terminalConfig".
 	TerminalConfig agenttui.TerminalConfig
 	// TerminalClientConnector is bean "terminalClientConnector".
 	TerminalClientConnector client.Connector
+	// WorkspaceProperties is bean "Properties".
+	WorkspaceProperties workspace.Properties
+	// TerminalWorkspace is bean "terminalWorkspace".
+	TerminalWorkspace agenttui.WorkspaceState
+	// TerminalSessionConfig is bean "terminalSessionConfig".
+	TerminalSessionConfig tuisession.Config
 	// TerminalSession is bean "terminalSession".
 	TerminalSession agenttui.Session
 	// TerminalShell is bean "terminalShell".
@@ -168,14 +171,14 @@ type BeanOverrides struct {
 	TerminalManagedConnector spicebean.Override[*managed.Connector]
 	// TerminalInitializeRequest replaces bean "terminalInitializeRequest".
 	TerminalInitializeRequest spicebean.Override[client.InitializeRequest]
-	// TerminalWorkspace replaces bean "terminalWorkspace".
-	TerminalWorkspace spicebean.Override[agenttui.WorkspaceState]
-	// TerminalSessionConfig replaces bean "terminalSessionConfig".
-	TerminalSessionConfig spicebean.Override[tuisession.Config]
 	// TerminalConfig replaces bean "terminalConfig".
 	TerminalConfig spicebean.Override[agenttui.TerminalConfig]
 	// TerminalClientConnector replaces bean "terminalClientConnector".
 	TerminalClientConnector spicebean.Override[client.Connector]
+	// TerminalWorkspace replaces bean "terminalWorkspace".
+	TerminalWorkspace spicebean.Override[agenttui.WorkspaceState]
+	// TerminalSessionConfig replaces bean "terminalSessionConfig".
+	TerminalSessionConfig spicebean.Override[tuisession.Config]
 	// TerminalSession replaces bean "terminalSession".
 	TerminalSession spicebean.Override[agenttui.Session]
 	// TerminalShell replaces bean "terminalShell".
@@ -286,17 +289,17 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.TerminalInitializeRequest.Enabled() {
 			result.TerminalInitializeRequest = layer.Overrides.TerminalInitializeRequest
 		}
-		if layer.Overrides.TerminalWorkspace.Enabled() {
-			result.TerminalWorkspace = layer.Overrides.TerminalWorkspace
-		}
-		if layer.Overrides.TerminalSessionConfig.Enabled() {
-			result.TerminalSessionConfig = layer.Overrides.TerminalSessionConfig
-		}
 		if layer.Overrides.TerminalConfig.Enabled() {
 			result.TerminalConfig = layer.Overrides.TerminalConfig
 		}
 		if layer.Overrides.TerminalClientConnector.Enabled() {
 			result.TerminalClientConnector = layer.Overrides.TerminalClientConnector
+		}
+		if layer.Overrides.TerminalWorkspace.Enabled() {
+			result.TerminalWorkspace = layer.Overrides.TerminalWorkspace
+		}
+		if layer.Overrides.TerminalSessionConfig.Enabled() {
+			result.TerminalSessionConfig = layer.Overrides.TerminalSessionConfig
 		}
 		if layer.Overrides.TerminalSession.Enabled() {
 			result.TerminalSession = layer.Overrides.TerminalSession

@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"errors"
@@ -14,6 +14,7 @@ import (
 // and never include a configured path, digest, endpoint, or manifest value.
 //
 // @Bean(name="runtimePluginPlan")
+// @Singleton
 func NewRuntimePluginPlan(properties RuntimePluginProperties) (RuntimePluginPlan, error) {
 	cleanupTimeout := properties.cleanupTimeout()
 	if properties.disabled() {

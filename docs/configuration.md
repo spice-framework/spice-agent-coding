@@ -4,6 +4,12 @@ The generated daemon reads configuration from the process environment. Spice
 validates required values before serving and marks the API key as a secret so
 it cannot appear in generated metadata or diagnostics.
 
+`internal/workspace.Properties` is the single typed owner of
+`agent.workspace`. Both generated applications explicitly compose that package,
+so the daemon coding tools and terminal presentation consume the same key,
+default, and `SPICE_AGENT_WORKSPACE` environment mapping without duplicating
+configuration declarations or sharing mutable state.
+
 | Variable | Required | Default | Meaning |
 | --- | --- | --- | --- |
 | `OPENAI_API_KEY` | yes | — | OpenAI credential; always secret-redacted |

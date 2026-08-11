@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"errors"
@@ -13,6 +13,7 @@ import (
 // policy selected by this distribution.
 //
 // @Bean(name="runtimePluginRestartPolicy")
+// @Singleton
 func NewRuntimePluginRestartPolicy(plan RuntimePluginPlan) (pluginhost.RestartPolicy, error) {
 	if err := plan.Validate(); err != nil {
 		return pluginhost.RestartPolicy{}, errors.New("runtime plugin restart policy requires a valid plan")

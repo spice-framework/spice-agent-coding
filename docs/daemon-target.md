@@ -31,6 +31,9 @@ three compiled coding tools, the runtime-plugin Host, the deterministic engine,
 the run host, the authenticated gRPC server, and the local endpoint runtime. It
 contains no reflection, service locator, parallel runtime registry,
 `RuntimeGraph`, or package scan.
+The daemon graph explicitly composes the shared `internal/workspace` typed
+property and injects it into `codingConfig`; `agent.workspace` retains its exact
+default and environment mapping.
 
 The daemon opts in by blank-importing
 `github.com/spice-framework/spice-agent/plugin/host/autoconfigure`. Spice

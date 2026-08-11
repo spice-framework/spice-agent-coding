@@ -10,9 +10,11 @@ import (
 
 	daemonprocess "github.com/spice-framework/spice-agent-coding/internal/daemonprocess"
 	spiceTerminal "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent/sources/internal_/terminal"
+	spiceWorkspace "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent/sources/internal_/workspace"
 	spiceAutoconfigure "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agent/sources/vendor_/github.com/spice-framework/spice-agent-tui/autoconfigure"
 	terminal "github.com/spice-framework/spice-agent-coding/internal/terminal"
 	tuisession "github.com/spice-framework/spice-agent-coding/internal/tuisession"
+	workspace "github.com/spice-framework/spice-agent-coding/internal/workspace"
 	agenttui "github.com/spice-framework/spice-agent-tui"
 	client "github.com/spice-framework/spice-agent/client"
 	localclient "github.com/spice-framework/spice-agent/client/localclient"
@@ -51,11 +53,12 @@ type applicationDependencies struct {
 	terminalManagedDiscovery  *localclient.Discovery
 	terminalManagedConnector  *managed.Connector
 	terminalInitializeRequest client.InitializeRequest
-	properties                terminal.Properties
-	terminalWorkspace         agenttui.WorkspaceState
-	terminalSessionConfig     tuisession.Config
+	terminalProperties        terminal.Properties
 	terminalConfig            agenttui.TerminalConfig
 	terminalClientConnector   client.Connector
+	workspaceProperties       workspace.Properties
+	terminalWorkspace         agenttui.WorkspaceState
+	terminalSessionConfig     tuisession.Config
 	terminalSession           agenttui.Session
 	terminalShell             agenttui.Shell
 }
@@ -490,16 +493,51 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = terminalInitializeRequest
-	properties, err := spiceTerminal.BindProperties_940b9db9(configurationSnapshot)
+	terminalProperties, err := spiceTerminal.BindProperties_940b9db9(configurationSnapshot)
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("bind configuration github.com/spice-framework/spice-agent-coding/internal/terminal.Properties for bean Properties (source spice:symbol:v1|type|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|10:Properties): %w", err))
 	}
-	_ = properties
+	_ = terminalProperties
+	terminalConfig, terminalConfigCleanup, err := func() (agenttui.TerminalConfig, spicelifecycle.Cleanup, error) {
+		if options.Overrides.TerminalConfig.Enabled() {
+			return options.Overrides.TerminalConfig.Acquire(ctx)
+		}
+		return spiceTerminal.ConstructTerminalConfig_ec99ff28(terminalProperties)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalConfig (github.com/spice-framework/spice-agent-tui.TerminalConfig, source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig): %w", err))
+	}
+	if terminalConfigCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig", terminalConfigCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean terminalConfig (source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig): %w", err))
+		}
+	}
+	_ = terminalConfig
+	terminalClientConnector, terminalClientConnectorCleanup, err := func() (client.Connector, spicelifecycle.Cleanup, error) {
+		if options.Overrides.TerminalClientConnector.Enabled() {
+			return options.Overrides.TerminalClientConnector.Acquire(ctx)
+		}
+		return spiceTerminal.ConstructTerminalClientConnector_123f20e3(terminalProperties, terminalManagedConnector, terminalEndpointStore)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalClientConnector (github.com/spice-framework/spice-agent/client.Connector, source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector): %w", err))
+	}
+	if terminalClientConnectorCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector", terminalClientConnectorCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean terminalClientConnector (source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector): %w", err))
+		}
+	}
+	_ = terminalClientConnector
+	workspaceProperties, err := spiceWorkspace.BindProperties_1313dff6(configurationSnapshot)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("bind configuration github.com/spice-framework/spice-agent-coding/internal/workspace.Properties for bean Properties (source spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties): %w", err))
+	}
+	_ = workspaceProperties
 	terminalWorkspace, terminalWorkspaceCleanup, err := func() (agenttui.WorkspaceState, spicelifecycle.Cleanup, error) {
 		if options.Overrides.TerminalWorkspace.Enabled() {
 			return options.Overrides.TerminalWorkspace.Acquire(ctx)
 		}
-		return spiceTerminal.ConstructTerminalWorkspace_8ebebbbd(properties)
+		return spiceTerminal.ConstructTerminalWorkspace_8ebebbbd(workspaceProperties)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalWorkspace (github.com/spice-framework/spice-agent-tui.WorkspaceState, source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|12:NewWorkspace): %w", err))
@@ -525,36 +563,6 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = terminalSessionConfig
-	terminalConfig, terminalConfigCleanup, err := func() (agenttui.TerminalConfig, spicelifecycle.Cleanup, error) {
-		if options.Overrides.TerminalConfig.Enabled() {
-			return options.Overrides.TerminalConfig.Acquire(ctx)
-		}
-		return spiceTerminal.ConstructTerminalConfig_ec99ff28(properties)
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalConfig (github.com/spice-framework/spice-agent-tui.TerminalConfig, source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig): %w", err))
-	}
-	if terminalConfigCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig", terminalConfigCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean terminalConfig (source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|17:NewTerminalConfig): %w", err))
-		}
-	}
-	_ = terminalConfig
-	terminalClientConnector, terminalClientConnectorCleanup, err := func() (client.Connector, spicelifecycle.Cleanup, error) {
-		if options.Overrides.TerminalClientConnector.Enabled() {
-			return options.Overrides.TerminalClientConnector.Acquire(ctx)
-		}
-		return spiceTerminal.ConstructTerminalClientConnector_123f20e3(properties, terminalManagedConnector, terminalEndpointStore)
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean terminalClientConnector (github.com/spice-framework/spice-agent/client.Connector, source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector): %w", err))
-	}
-	if terminalClientConnectorCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/terminal", "spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector", terminalClientConnectorCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean terminalClientConnector (source spice:symbol:v1|function|63:github.com/spice-framework/spice-agent-coding/internal/terminal|0:|18:NewClientConnector): %w", err))
-		}
-	}
-	_ = terminalClientConnector
 	terminalSession, terminalSessionCleanup, err := func() (agenttui.Session, spicelifecycle.Cleanup, error) {
 		if options.Overrides.TerminalSession.Enabled() {
 			return options.Overrides.TerminalSession.Acquire(ctx)
@@ -614,11 +622,12 @@ func constructApplicationDependencies(
 		terminalManagedDiscovery:  terminalManagedDiscovery,
 		terminalManagedConnector:  terminalManagedConnector,
 		terminalInitializeRequest: terminalInitializeRequest,
-		properties:                properties,
-		terminalWorkspace:         terminalWorkspace,
-		terminalSessionConfig:     terminalSessionConfig,
+		terminalProperties:        terminalProperties,
 		terminalConfig:            terminalConfig,
 		terminalClientConnector:   terminalClientConnector,
+		workspaceProperties:       workspaceProperties,
+		terminalWorkspace:         terminalWorkspace,
+		terminalSessionConfig:     terminalSessionConfig,
 		terminalSession:           terminalSession,
 		terminalShell:             terminalShell,
 	}, nil

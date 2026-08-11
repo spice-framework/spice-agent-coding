@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	agentdaemon "github.com/spice-framework/spice-agent/daemon"
@@ -11,6 +11,7 @@ import (
 // interface without a registry or implicit interface scan.
 //
 // @Bean(name="daemonInteractionBroker")
+// @Singleton
 func NewInteractionBroker(pending *agentdaemon.PendingHub) interaction.Broker {
 	return pending
 }

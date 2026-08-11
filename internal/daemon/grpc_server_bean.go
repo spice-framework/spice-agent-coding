@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"github.com/spice-framework/spice-agent/client"
@@ -13,6 +13,7 @@ import (
 // opening or publishing a listener.
 //
 // @Bean(name="grpcServer")
+// @Singleton
 func NewGRPCServer(
 	root *Root,
 	token endpoint.Token,

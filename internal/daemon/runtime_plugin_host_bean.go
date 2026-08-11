@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 // containment during rollback.
 //
 // @Bean(name="runtimePluginHost")
+// @Singleton
 func NewRuntimePluginHost(
 	hostIdentity *pluginv1.BuildIdentity,
 	compiled stage.ToolDispatcher,

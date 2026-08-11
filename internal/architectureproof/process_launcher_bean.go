@@ -1,6 +1,6 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"github.com/spice-framework/spice-agent-coding/internal/processplatform"
@@ -10,6 +10,7 @@ import (
 // NewProcessLauncher contributes a self-owned launcher for the embedded proof.
 //
 // @Bean(name="processLauncher")
+// @Singleton
 func NewProcessLauncher() (agentprocess.Launcher, error) {
 	return processplatform.NewLauncher(proofChildRegistrar{})
 }

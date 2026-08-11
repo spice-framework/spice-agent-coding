@@ -1,6 +1,6 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 // by Spice. It does not discover or register implementations at runtime.
 //
 // @Bean(name="proof")
+// @Singleton
 func NewProof(
 	engine *agent.Engine,
 	dispatcher stage.ToolDispatcher,

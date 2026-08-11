@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"errors"
@@ -13,6 +13,7 @@ import (
 // the daemon's fixed-code passive health contract.
 //
 // @Bean(name="runtimePluginHealthSource")
+// @Singleton
 func NewRuntimePluginHealthSource(
 	activation *RuntimePluginActivation,
 	host *pluginhost.Host,

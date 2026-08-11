@@ -75,14 +75,6 @@ func BindProperties_641bb6f4(configurationSnapshot spiceconfig.Snapshot) (daemon
 		convertedValue := string(rawValue)
 		value.Model = convertedValue
 	}
-	if _, configured := configurationSnapshot.Lookup("agent.workspace"); configured {
-		rawValue, valueErr := configurationSnapshot.RequiredString("agent.workspace")
-		if valueErr != nil {
-			return daemon.Properties{}, fmt.Errorf("decode configuration property agent.workspace for github.com/spice-framework/spice-agent-coding/internal/daemon.Properties.Workspace: %w", valueErr)
-		}
-		convertedValue := string(rawValue)
-		value.Workspace = convertedValue
-	}
 	if _, configured := configurationSnapshot.Lookup("agent.run-authority-directory"); configured {
 		rawValue, valueErr := configurationSnapshot.RequiredString("agent.run-authority-directory")
 		if valueErr != nil {

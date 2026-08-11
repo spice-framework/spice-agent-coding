@@ -1,6 +1,6 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"crypto/sha256"
@@ -22,6 +22,7 @@ import (
 // dispatcher at runtime.
 //
 // @Bean(name="architectureProofEngine")
+// @Singleton
 func NewEngine(
 	provider model.Provider,
 	toolPlans stage.ToolPlanSource,

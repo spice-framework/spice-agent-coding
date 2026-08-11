@@ -3,6 +3,8 @@ package daemon
 import (
 	"path/filepath"
 	"testing"
+
+	workspaceconfig "github.com/spice-framework/spice-agent-coding/internal/workspace"
 )
 
 func TestNewAgentLoggingConfigMapsValidatedDistributionProperties(t *testing.T) {
@@ -47,7 +49,7 @@ func TestWorkspaceFingerprintIsStableAndRejectsNonAbsoluteRoots(t *testing.T) {
 func TestNewCodingConfigCanonicalizesWorkspaceAndRequiresRegistry(t *testing.T) {
 	t.Parallel()
 	workspace := filepath.Join("relative", "workspace", "..", "root")
-	config, err := NewCodingConfig(Properties{Workspace: workspace}, &rootRegistryFixture{})
+	config, err := NewCodingConfig(workspaceconfig.Properties{Workspace: workspace}, &rootRegistryFixture{})
 	if err != nil {
 		t.Fatalf("NewCodingConfig() error = %v", err)
 	}
@@ -58,7 +60,7 @@ func TestNewCodingConfigCanonicalizesWorkspaceAndRequiresRegistry(t *testing.T) 
 	if config.Root != filepath.Clean(want) {
 		t.Fatalf("root = %q, want %q", config.Root, filepath.Clean(want))
 	}
-	if _, err = NewCodingConfig(Properties{Workspace: workspace}, nil); err == nil {
+	if _, err = NewCodingConfig(workspaceconfig.Properties{Workspace: workspace}, nil); err == nil {
 		t.Fatal("NewCodingConfig() accepted a nil registry")
 	}
 }

@@ -23,6 +23,10 @@ attached daemon remains externally owned. A daemon started by managed mode is a
 supported process whose lease and cleanup belong to that launcher instance.
 Each target independently owns dependency construction, configuration,
 cancellation, observability, rollback, and cleanup for its boundary.
+The exact `agent.workspace` / `SPICE_AGENT_WORKSPACE` declaration is owned once
+by `internal/workspace` and composed explicitly into both targets. Each target
+still resolves and consumes that immutable typed value inside its own graph;
+the shared declaration is not shared runtime state.
 
 The daemon explicitly blank-imports the Agent runtime-plugin host
 auto-configuration and the Agent logging auto-configuration. Its generated

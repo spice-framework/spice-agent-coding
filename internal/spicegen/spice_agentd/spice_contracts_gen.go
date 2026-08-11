@@ -14,6 +14,7 @@ import (
 	daemon "github.com/spice-framework/spice-agent-coding/internal/daemon"
 	daemonprocess "github.com/spice-framework/spice-agent-coding/internal/daemonprocess"
 	spiceentrypoint "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd/sources/cmd/spice-agentd"
+	workspace "github.com/spice-framework/spice-agent-coding/internal/workspace"
 	openaiprovider "github.com/spice-framework/spice-agent-provider-openai"
 	coding "github.com/spice-framework/spice-agent-tools-coding"
 	agent "github.com/spice-framework/spice-agent/agent"
@@ -85,10 +86,8 @@ type Components struct {
 	ServerLimits client.Limits
 	// RuntimePluginEndpointFactory is bean "runtimePluginEndpointFactory".
 	RuntimePluginEndpointFactory pluginhost.LocalEndpointFactory
-	// Properties is bean "Properties".
-	Properties daemon.Properties
-	// CodingConfig is bean "codingConfig".
-	CodingConfig coding.Config
+	// DaemonProperties is bean "Properties".
+	DaemonProperties daemon.Properties
 	// OpenAIConfig is bean "openAIConfig".
 	OpenAIConfig openaiprovider.Config
 	// RunAuthority is bean "runAuthority".
@@ -103,14 +102,6 @@ type Components struct {
 	AgentLoggingProcessor *logging.Processor
 	// AgentLoggingHealth is bean "agentLoggingHealth".
 	AgentLoggingHealth daemon2.HealthSource
-	// Read is bean "read".
-	Read tool.Tool
-	// Shell is bean "shell".
-	Shell tool.Tool
-	// Replace is bean "replace".
-	Replace tool.Tool
-	// RuntimePluginCompiledDispatcher is bean "runtimePluginCompiledDispatcher".
-	RuntimePluginCompiledDispatcher stage.ToolDispatcher
 	// OpenAIModelProvider is bean "openAIModelProvider".
 	OpenAIModelProvider model.Provider
 	// RuntimePluginProperties is bean "RuntimePluginProperties".
@@ -119,6 +110,18 @@ type Components struct {
 	RuntimePluginPlan daemon.RuntimePluginPlan
 	// RuntimePluginRestartPolicy is bean "runtimePluginRestartPolicy".
 	RuntimePluginRestartPolicy pluginhost.RestartPolicy
+	// WorkspaceProperties is bean "Properties".
+	WorkspaceProperties workspace.Properties
+	// CodingConfig is bean "codingConfig".
+	CodingConfig coding.Config
+	// Read is bean "read".
+	Read tool.Tool
+	// Shell is bean "shell".
+	Shell tool.Tool
+	// Replace is bean "replace".
+	Replace tool.Tool
+	// RuntimePluginCompiledDispatcher is bean "runtimePluginCompiledDispatcher".
+	RuntimePluginCompiledDispatcher stage.ToolDispatcher
 	// RuntimePluginHost is bean "runtimePluginHost".
 	RuntimePluginHost *pluginhost.Host
 	// RuntimePluginActivation is bean "runtimePluginActivation".
@@ -178,8 +181,6 @@ type BeanOverrides struct {
 	ServerLimits spicebean.Override[client.Limits]
 	// RuntimePluginEndpointFactory replaces bean "runtimePluginEndpointFactory".
 	RuntimePluginEndpointFactory spicebean.Override[pluginhost.LocalEndpointFactory]
-	// CodingConfig replaces bean "codingConfig".
-	CodingConfig spicebean.Override[coding.Config]
 	// OpenAIConfig replaces bean "openAIConfig".
 	OpenAIConfig spicebean.Override[openaiprovider.Config]
 	// RunAuthority replaces bean "runAuthority".
@@ -194,6 +195,14 @@ type BeanOverrides struct {
 	AgentLoggingProcessor spicebean.Override[*logging.Processor]
 	// AgentLoggingHealth replaces bean "agentLoggingHealth".
 	AgentLoggingHealth spicebean.Override[daemon2.HealthSource]
+	// OpenAIModelProvider replaces bean "openAIModelProvider".
+	OpenAIModelProvider spicebean.Override[model.Provider]
+	// RuntimePluginPlan replaces bean "runtimePluginPlan".
+	RuntimePluginPlan spicebean.Override[daemon.RuntimePluginPlan]
+	// RuntimePluginRestartPolicy replaces bean "runtimePluginRestartPolicy".
+	RuntimePluginRestartPolicy spicebean.Override[pluginhost.RestartPolicy]
+	// CodingConfig replaces bean "codingConfig".
+	CodingConfig spicebean.Override[coding.Config]
 	// Read replaces bean "read".
 	Read spicebean.Override[tool.Tool]
 	// Shell replaces bean "shell".
@@ -202,12 +211,6 @@ type BeanOverrides struct {
 	Replace spicebean.Override[tool.Tool]
 	// RuntimePluginCompiledDispatcher replaces bean "runtimePluginCompiledDispatcher".
 	RuntimePluginCompiledDispatcher spicebean.Override[stage.ToolDispatcher]
-	// OpenAIModelProvider replaces bean "openAIModelProvider".
-	OpenAIModelProvider spicebean.Override[model.Provider]
-	// RuntimePluginPlan replaces bean "runtimePluginPlan".
-	RuntimePluginPlan spicebean.Override[daemon.RuntimePluginPlan]
-	// RuntimePluginRestartPolicy replaces bean "runtimePluginRestartPolicy".
-	RuntimePluginRestartPolicy spicebean.Override[pluginhost.RestartPolicy]
 	// RuntimePluginHost replaces bean "runtimePluginHost".
 	RuntimePluginHost spicebean.Override[*pluginhost.Host]
 	// RuntimePluginActivation replaces bean "runtimePluginActivation".
@@ -303,9 +306,6 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.RuntimePluginEndpointFactory.Enabled() {
 			result.RuntimePluginEndpointFactory = layer.Overrides.RuntimePluginEndpointFactory
 		}
-		if layer.Overrides.CodingConfig.Enabled() {
-			result.CodingConfig = layer.Overrides.CodingConfig
-		}
 		if layer.Overrides.OpenAIConfig.Enabled() {
 			result.OpenAIConfig = layer.Overrides.OpenAIConfig
 		}
@@ -327,6 +327,18 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		if layer.Overrides.AgentLoggingHealth.Enabled() {
 			result.AgentLoggingHealth = layer.Overrides.AgentLoggingHealth
 		}
+		if layer.Overrides.OpenAIModelProvider.Enabled() {
+			result.OpenAIModelProvider = layer.Overrides.OpenAIModelProvider
+		}
+		if layer.Overrides.RuntimePluginPlan.Enabled() {
+			result.RuntimePluginPlan = layer.Overrides.RuntimePluginPlan
+		}
+		if layer.Overrides.RuntimePluginRestartPolicy.Enabled() {
+			result.RuntimePluginRestartPolicy = layer.Overrides.RuntimePluginRestartPolicy
+		}
+		if layer.Overrides.CodingConfig.Enabled() {
+			result.CodingConfig = layer.Overrides.CodingConfig
+		}
 		if layer.Overrides.Read.Enabled() {
 			result.Read = layer.Overrides.Read
 		}
@@ -338,15 +350,6 @@ func ComposeBeanOverrides(layers ...BeanOverrideLayer) (BeanOverrides, error) {
 		}
 		if layer.Overrides.RuntimePluginCompiledDispatcher.Enabled() {
 			result.RuntimePluginCompiledDispatcher = layer.Overrides.RuntimePluginCompiledDispatcher
-		}
-		if layer.Overrides.OpenAIModelProvider.Enabled() {
-			result.OpenAIModelProvider = layer.Overrides.OpenAIModelProvider
-		}
-		if layer.Overrides.RuntimePluginPlan.Enabled() {
-			result.RuntimePluginPlan = layer.Overrides.RuntimePluginPlan
-		}
-		if layer.Overrides.RuntimePluginRestartPolicy.Enabled() {
-			result.RuntimePluginRestartPolicy = layer.Overrides.RuntimePluginRestartPolicy
 		}
 		if layer.Overrides.RuntimePluginHost.Enabled() {
 			result.RuntimePluginHost = layer.Overrides.RuntimePluginHost

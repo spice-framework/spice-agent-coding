@@ -1,6 +1,6 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ import (
 // canonical generated named-tool map.
 //
 // @Bean(name="architectureProofToolDispatcher")
+// @Singleton
 func NewToolDispatcher(tools map[string]tool.Tool) (stage.ToolDispatcher, error) {
 	dispatcher, err := stage.NewDispatcher(tools)
 	if err != nil {

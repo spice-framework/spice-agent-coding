@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"runtime"
@@ -12,6 +12,7 @@ import (
 // NewClientBuild contributes immutable terminal build provenance.
 //
 // @Bean(name="terminalClientBuild")
+// @Singleton
 func NewClientBuild() (client.Build, error) {
 	return client.NewBuild(
 		distribution.TerminalComponent,

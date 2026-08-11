@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"github.com/spice-framework/spice-agent-coding/internal/tuisession"
@@ -13,6 +13,7 @@ import (
 // contract and registers its complete worker/stream cleanup with Spice.
 //
 // @Bean(name="terminalSession")
+// @Singleton
 func NewSession(
 	config tuisession.Config,
 	connector client.Connector,

@@ -59,10 +59,11 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 		pluginLaunches.Add(1)
 		return nil, errors.New("generated construction must not launch a runtime plugin")
 	})
+	workspace := t.TempDir()
 	values, err := spiceconfig.NewMapSource("test", map[string]string{
 		"agent.openai.api-key": daemonTestSecret,
 		"agent.model":          daemonTestModel,
-		"agent.workspace":      t.TempDir(),
+		"agent.workspace":      workspace,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -129,7 +130,9 @@ func TestGeneratedDaemonConstructsInspectableGraphWithoutPublication(t *testing.
 			health,
 		)
 	}
-	if components.Properties.Model != daemonTestModel || components.OpenAIConfig.APIKey != daemonTestSecret {
+	if components.DaemonProperties.Model != daemonTestModel ||
+		components.WorkspaceProperties.Workspace != workspace ||
+		components.OpenAIConfig.APIKey != daemonTestSecret {
 		t.Fatal("generated typed configuration was not injected")
 	}
 	if err = components.RuntimePluginRestartPolicy.Validate(); err != nil ||
@@ -216,7 +219,8 @@ func TestGeneratedDaemonIsDirectAndContainmentAdoptionPrecedesChildCapableBeans(
 	loggingHealth := bytes.Index(providers, []byte("ConstructAgentLoggingHealth"))
 	daemonEngine := bytes.Index(providers, []byte("ConstructDaemonEngine"))
 	if registry < 0 || launcher <= registry || codingConfig <= registry || shellTool <= launcher ||
-		runtimePlan <= shellTool || runtimeRestart <= runtimePlan || runtimeHost <= runtimeRestart ||
+		runtimePlan <= registry || runtimeRestart <= runtimePlan || runtimeHost <= runtimeRestart ||
+		runtimeHost <= shellTool ||
 		runtimePlanSource <= runtimeHost ||
 		runtimeActivation <= runtimeHost || runtimeHealth <= runtimeActivation ||
 		loggingConfig < 0 || loggingMailbox <= loggingConfig || loggingProcessor <= loggingMailbox ||

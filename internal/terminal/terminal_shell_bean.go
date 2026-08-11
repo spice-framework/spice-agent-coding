@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"errors"
@@ -17,6 +17,7 @@ import (
 // platform PTY.
 //
 // @Bean(name="terminalShell")
+// @Singleton
 func NewTerminalShell(
 	session agenttui.Session,
 	renderer agenttui.Renderer,

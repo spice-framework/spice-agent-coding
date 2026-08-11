@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"errors"
@@ -12,6 +12,7 @@ import (
 // launcher to the stronger runtime-plugin executable-lease contract.
 //
 // @Bean(name="verifiedProcessLauncher")
+// @Singleton
 func NewVerifiedProcessLauncher(
 	launcher agentprocess.Launcher,
 ) (agentprocess.VerifiedLauncher, error) {

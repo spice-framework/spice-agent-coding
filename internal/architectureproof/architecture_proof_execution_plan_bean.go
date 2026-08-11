@@ -1,12 +1,13 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 // NewExecutionPlanMetadata contributes the generated application's explicit
 // portable-snapshot contract. The graph has no observer or dispatcher-decorator
 // beans; no placeholder identity is invented for an absent executable.
 //
 // @Bean(name="architectureProofExecutionPlan")
+// @Singleton
 func NewExecutionPlanMetadata() ExecutionPlanMetadata {
 	return ExecutionPlanMetadata{
 		CompiledPlanIdentities: []string{

@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 // but cannot be authenticated.
 //
 // @Bean(name="daemonRootRegistry")
+// @Singleton
 func NewRootRegistry() (daemonprocess.RootRegistry, lifecycle.Cleanup, error) {
 	registry, err := (daemonprocess.RootRegistryFactory{}).Adopt()
 	if err != nil {

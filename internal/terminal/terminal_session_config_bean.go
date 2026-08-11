@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"github.com/spice-framework/spice-agent-coding/internal/tuisession"
@@ -12,6 +12,7 @@ import (
 // generated graph.
 //
 // @Bean(name="terminalSessionConfig")
+// @Singleton
 func NewSessionConfig(
 	initialize client.InitializeRequest,
 	definition client.DefinitionRef,

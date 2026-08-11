@@ -1,6 +1,6 @@
 package architectureproof
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"github.com/spice-framework/spice-agent/stage"
@@ -11,6 +11,7 @@ import (
 // for the exact deterministic static generation.
 //
 // @Bean(name="architectureProofToolPlanSource")
+// @Singleton
 func NewToolPlanSource(dispatcher stage.ToolDispatcher) (stage.ToolPlanSource, error) {
 	source, err := stage.NewStaticToolPlanSource(dispatcher)
 	if err != nil {

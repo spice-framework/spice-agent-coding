@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	agenttui "github.com/spice-framework/spice-agent-tui"
@@ -10,6 +10,7 @@ import (
 // by typed configuration. The default remains the normal styled terminal.
 //
 // @Bean(name="terminalConfig")
+// @Singleton
 func NewTerminalConfig(properties Properties) agenttui.TerminalConfig {
 	return agenttui.NewTerminalConfig(properties.TerminalAccessible)
 }

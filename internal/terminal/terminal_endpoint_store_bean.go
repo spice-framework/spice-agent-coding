@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 // NewEndpointStore opens protected coordination state without discovery.
 //
 // @Bean(name="terminalEndpointStore")
+// @Singleton
 func NewEndpointStore(scope endpoint.UserScope) (*endpoint.Store, lifecycle.Cleanup, error) {
 	store, err := scope.OpenStore(endpointPollInterval)
 	if err != nil {

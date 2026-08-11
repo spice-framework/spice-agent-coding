@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 // registers its retained directory handle for generated reverse cleanup.
 //
 // @Bean(name="runAuthority")
+// @Singleton
 func NewRunAuthority(
 	properties Properties,
 ) (*agentdaemon.RunAuthority, lifecycle.Cleanup, error) {

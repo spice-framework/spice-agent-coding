@@ -1,6 +1,6 @@
 package terminal
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	agenttui "github.com/spice-framework/spice-agent-tui"
@@ -9,6 +9,7 @@ import (
 // NewInitialStatus constructs the pre-negotiation status snapshot.
 //
 // @Bean(name="terminalInitialStatus")
+// @Singleton
 func NewInitialStatus() (agenttui.StatusState, error) {
 	message, err := agenttui.NewText("connecting to local Spice Agent daemon")
 	if err != nil {

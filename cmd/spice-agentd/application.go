@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/spice-framework/spice-agent-coding/internal/daemon"
 	spicegen "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd"
+	_ "github.com/spice-framework/spice-agent-coding/internal/workspace"
 )
 
 // @import { Application } from "github.com/spice-framework/spice/annotation/core"

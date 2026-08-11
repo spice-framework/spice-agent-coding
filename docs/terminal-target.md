@@ -45,7 +45,8 @@ daemon, or enter the terminal event loop.
 
 The graph includes typed beans for:
 
-- terminal properties and workspace presentation;
+- terminal properties, the shared typed workspace property, and workspace
+  presentation;
 - current-user endpoint scope/store, managed discovery, and startup lock;
 - the sibling daemon starter and managed connector;
 - the exact selected `client.Connector`;
@@ -57,6 +58,9 @@ All TUI defaults come from the explicitly blank-imported
 `github.com/spice-framework/spice-agent-tui/autoconfigure` starter. They remain
 normal fallback beans and can be replaced through typed Spice overrides. No
 runtime registry, reflection lookup, global container, or package scan exists.
+The shared workspace declaration is composed as an ordinary configuration
+provider; the terminal owns its resulting presentation value and no runtime
+container is shared with the daemon.
 
 ## Session behavior
 

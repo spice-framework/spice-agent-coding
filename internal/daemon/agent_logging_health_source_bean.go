@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	agentdaemon "github.com/spice-framework/spice-agent/daemon"
@@ -11,6 +11,7 @@ import (
 // alongside the distribution-owned runtime plugin health source.
 //
 // @Bean(name="agentLoggingHealth")
+// @Singleton
 func NewAgentLoggingHealthSource(
 	config agentlogging.Config,
 	processor *agentlogging.Processor,

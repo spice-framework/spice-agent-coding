@@ -1,6 +1,6 @@
 package daemon
 
-// @import { Bean } from "github.com/spice-framework/spice/annotation/core"
+// @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"crypto/sha256"
@@ -23,6 +23,7 @@ import (
 // RunHost owns its orderly shutdown.
 //
 // @Bean(name="daemonEngine")
+// @Singleton
 func NewEngine(
 	provider model.Provider,
 	toolPlans stage.ToolPlanSource,

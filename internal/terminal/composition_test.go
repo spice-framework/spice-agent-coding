@@ -4,6 +4,8 @@ import (
 	"runtime"
 	"testing"
 
+	workspaceconfig "github.com/spice-framework/spice-agent-coding/internal/workspace"
+
 	"github.com/spice-framework/spice-agent-coding/internal/distribution"
 	"github.com/spice-framework/spice-agent-coding/internal/tuisession"
 	agenttui "github.com/spice-framework/spice-agent-tui"
@@ -56,7 +58,7 @@ func TestTerminalPresentationValuesAreTyped(t *testing.T) {
 	if definition.ID() != "coding" || definition.Revision() != "v1" {
 		t.Fatal("terminal definition is not coding/v1")
 	}
-	workspace, err := NewWorkspace(Properties{Workspace: t.TempDir()})
+	workspace, err := NewWorkspace(workspaceconfig.Properties{Workspace: t.TempDir()})
 	if err != nil || workspace.Title().String() == "" {
 		t.Fatalf("workspace = %q, %v", workspace.Title().String(), err)
 	}

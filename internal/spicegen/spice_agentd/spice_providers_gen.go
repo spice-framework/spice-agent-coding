@@ -11,10 +11,12 @@ import (
 	daemon "github.com/spice-framework/spice-agent-coding/internal/daemon"
 	daemonprocess "github.com/spice-framework/spice-agent-coding/internal/daemonprocess"
 	spiceDaemon "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd/sources/internal_/daemon"
+	spiceWorkspace "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd/sources/internal_/workspace"
 	spiceAutoconfigure "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd/sources/vendor_/github.com/spice-framework/spice-agent-provider-openai/autoconfigure"
 	spiceAutoconfigure2 "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd/sources/vendor_/github.com/spice-framework/spice-agent-tools-coding/autoconfigure"
 	spiceAutoconfigure3 "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd/sources/vendor_/github.com/spice-framework/spice-agent/logging/autoconfigure"
 	spiceAutoconfigure4 "github.com/spice-framework/spice-agent-coding/internal/spicegen/spice_agentd/sources/vendor_/github.com/spice-framework/spice-agent/plugin/host/autoconfigure"
+	workspace "github.com/spice-framework/spice-agent-coding/internal/workspace"
 	openaiprovider "github.com/spice-framework/spice-agent-provider-openai"
 	coding "github.com/spice-framework/spice-agent-tools-coding"
 	agent "github.com/spice-framework/spice-agent/agent"
@@ -57,8 +59,7 @@ type applicationDependencies struct {
 	operationLedger                 *daemon2.Ledger
 	serverLimits                    client.Limits
 	runtimePluginEndpointFactory    pluginhost.LocalEndpointFactory
-	properties                      daemon.Properties
-	codingConfig                    coding.Config
+	daemonProperties                daemon.Properties
 	openAIConfig                    openaiprovider.Config
 	runAuthority                    *daemon2.RunAuthority
 	definitionSet                   daemon2.DefinitionSet
@@ -66,14 +67,16 @@ type applicationDependencies struct {
 	agentLoggingMailbox             *event.BestEffortObserver
 	agentLoggingProcessor           *logging.Processor
 	agentLoggingHealth              daemon2.HealthSource
-	read                            tool.Tool
-	shell                           tool.Tool
-	replace                         tool.Tool
-	runtimePluginCompiledDispatcher stage.ToolDispatcher
 	openAIModelProvider             model.Provider
 	runtimePluginProperties         daemon.RuntimePluginProperties
 	runtimePluginPlan               daemon.RuntimePluginPlan
 	runtimePluginRestartPolicy      pluginhost.RestartPolicy
+	workspaceProperties             workspace.Properties
+	codingConfig                    coding.Config
+	read                            tool.Tool
+	shell                           tool.Tool
+	replace                         tool.Tool
+	runtimePluginCompiledDispatcher stage.ToolDispatcher
 	runtimePluginHost               *pluginhost.Host
 	runtimePluginActivation         *daemon.RuntimePluginActivation
 	runtimePluginHealthSource       daemon2.HealthSource
@@ -381,31 +384,16 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = runtimePluginEndpointFactory
-	properties, err := spiceDaemon.BindProperties_641bb6f4(configurationSnapshot)
+	daemonProperties, err := spiceDaemon.BindProperties_641bb6f4(configurationSnapshot)
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("bind configuration github.com/spice-framework/spice-agent-coding/internal/daemon.Properties for bean Properties (source spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|10:Properties): %w", err))
 	}
-	_ = properties
-	codingConfig, codingConfigCleanup, err := func() (coding.Config, spicelifecycle.Cleanup, error) {
-		if options.Overrides.CodingConfig.Enabled() {
-			return options.Overrides.CodingConfig.Acquire(ctx)
-		}
-		return spiceDaemon.ConstructCodingConfig_4bbfc767(properties, daemonRootRegistry)
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean codingConfig (github.com/spice-framework/spice-agent-tools-coding.Config, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewCodingConfig): %w", err))
-	}
-	if codingConfigCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewCodingConfig", codingConfigCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean codingConfig (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewCodingConfig): %w", err))
-		}
-	}
-	_ = codingConfig
+	_ = daemonProperties
 	openAIConfig, openAIConfigCleanup, err := func() (openaiprovider.Config, spicelifecycle.Cleanup, error) {
 		if options.Overrides.OpenAIConfig.Enabled() {
 			return options.Overrides.OpenAIConfig.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructOpenAIConfig_f13e2cf9(properties)
+		return spiceDaemon.ConstructOpenAIConfig_f13e2cf9(daemonProperties)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean openAIConfig (github.com/spice-framework/spice-agent-provider-openai.Config, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewOpenAIConfig): %w", err))
@@ -420,7 +408,7 @@ func constructApplicationDependencies(
 		if options.Overrides.RunAuthority.Enabled() {
 			return options.Overrides.RunAuthority.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructRunAuthority_af30e6a5(properties)
+		return spiceDaemon.ConstructRunAuthority_af30e6a5(daemonProperties)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runAuthority (*github.com/spice-framework/spice-agent/daemon.RunAuthority, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewRunAuthority): %w", err))
@@ -435,7 +423,7 @@ func constructApplicationDependencies(
 		if options.Overrides.DefinitionSet.Enabled() {
 			return options.Overrides.DefinitionSet.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructDefinitionSet_a8acae3e(properties)
+		return spiceDaemon.ConstructDefinitionSet_a8acae3e(daemonProperties)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean definitionSet (github.com/spice-framework/spice-agent/daemon.DefinitionSet, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|16:NewDefinitionSet): %w", err))
@@ -450,7 +438,7 @@ func constructApplicationDependencies(
 		if options.Overrides.AgentLoggingConfig.Enabled() {
 			return options.Overrides.AgentLoggingConfig.Acquire(ctx)
 		}
-		return spiceDaemon.ConstructAgentLoggingConfig_b3cd42db(properties)
+		return spiceDaemon.ConstructAgentLoggingConfig_b3cd42db(daemonProperties)
 	}()
 	if err != nil {
 		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean agentLoggingConfig (github.com/spice-framework/spice-agent/logging.Config, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|21:NewAgentLoggingConfig): %w", err))
@@ -506,6 +494,76 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = agentLoggingHealth
+	openAIModelProvider, openAIModelProviderCleanup, err := func() (model.Provider, spicelifecycle.Cleanup, error) {
+		if options.Overrides.OpenAIModelProvider.Enabled() {
+			return options.Overrides.OpenAIModelProvider.Acquire(ctx)
+		}
+		return spiceAutoconfigure.ConstructOpenAIModelProvider_2228c855(openAIConfig)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean openAIModelProvider (github.com/spice-framework/spice-agent/model.Provider, source spice:symbol:v1|function|68:github.com/spice-framework/spice-agent-provider-openai/autoconfigure|0:|7:Default): %w", err))
+	}
+	if openAIModelProviderCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-provider-openai/autoconfigure", "spice:symbol:v1|function|68:github.com/spice-framework/spice-agent-provider-openai/autoconfigure|0:|7:Default", openAIModelProviderCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean openAIModelProvider (source spice:symbol:v1|function|68:github.com/spice-framework/spice-agent-provider-openai/autoconfigure|0:|7:Default): %w", err))
+		}
+	}
+	_ = openAIModelProvider
+	runtimePluginProperties, err := spiceDaemon.BindRuntimePluginProperties_9c54299d(configurationSnapshot)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("bind configuration github.com/spice-framework/spice-agent-coding/internal/daemon.RuntimePluginProperties for bean RuntimePluginProperties (source spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|23:RuntimePluginProperties): %w", err))
+	}
+	_ = runtimePluginProperties
+	runtimePluginPlan, runtimePluginPlanCleanup, err := func() (daemon.RuntimePluginPlan, spicelifecycle.Cleanup, error) {
+		if options.Overrides.RuntimePluginPlan.Enabled() {
+			return options.Overrides.RuntimePluginPlan.Acquire(ctx)
+		}
+		return spiceDaemon.ConstructRuntimePluginPlan_3ea2d428(runtimePluginProperties)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginPlan (github.com/spice-framework/spice-agent-coding/internal/daemon.RuntimePluginPlan, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewRuntimePluginPlan): %w", err))
+	}
+	if runtimePluginPlanCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewRuntimePluginPlan", runtimePluginPlanCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginPlan (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewRuntimePluginPlan): %w", err))
+		}
+	}
+	_ = runtimePluginPlan
+	runtimePluginRestartPolicy, runtimePluginRestartPolicyCleanup, err := func() (pluginhost.RestartPolicy, spicelifecycle.Cleanup, error) {
+		if options.Overrides.RuntimePluginRestartPolicy.Enabled() {
+			return options.Overrides.RuntimePluginRestartPolicy.Acquire(ctx)
+		}
+		return spiceDaemon.ConstructRuntimePluginRestartPolicy_e8e4c4c9(runtimePluginPlan)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginRestartPolicy (github.com/spice-framework/spice-agent/plugin/host.RestartPolicy, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|29:NewRuntimePluginRestartPolicy): %w", err))
+	}
+	if runtimePluginRestartPolicyCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|29:NewRuntimePluginRestartPolicy", runtimePluginRestartPolicyCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginRestartPolicy (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|29:NewRuntimePluginRestartPolicy): %w", err))
+		}
+	}
+	_ = runtimePluginRestartPolicy
+	workspaceProperties, err := spiceWorkspace.BindProperties_1313dff6(configurationSnapshot)
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("bind configuration github.com/spice-framework/spice-agent-coding/internal/workspace.Properties for bean Properties (source spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties): %w", err))
+	}
+	_ = workspaceProperties
+	codingConfig, codingConfigCleanup, err := func() (coding.Config, spicelifecycle.Cleanup, error) {
+		if options.Overrides.CodingConfig.Enabled() {
+			return options.Overrides.CodingConfig.Acquire(ctx)
+		}
+		return spiceDaemon.ConstructCodingConfig_4bbfc767(workspaceProperties, daemonRootRegistry)
+	}()
+	if err != nil {
+		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean codingConfig (github.com/spice-framework/spice-agent-tools-coding.Config, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewCodingConfig): %w", err))
+	}
+	if codingConfigCleanup != nil {
+		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewCodingConfig", codingConfigCleanup); err != nil {
+			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean codingConfig (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|15:NewCodingConfig): %w", err))
+		}
+	}
+	_ = codingConfig
 	read, readCleanup, err := func() (tool.Tool, spicelifecycle.Cleanup, error) {
 		if options.Overrides.Read.Enabled() {
 			return options.Overrides.Read.Acquire(ctx)
@@ -566,56 +624,6 @@ func constructApplicationDependencies(
 		}
 	}
 	_ = runtimePluginCompiledDispatcher
-	openAIModelProvider, openAIModelProviderCleanup, err := func() (model.Provider, spicelifecycle.Cleanup, error) {
-		if options.Overrides.OpenAIModelProvider.Enabled() {
-			return options.Overrides.OpenAIModelProvider.Acquire(ctx)
-		}
-		return spiceAutoconfigure.ConstructOpenAIModelProvider_2228c855(openAIConfig)
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean openAIModelProvider (github.com/spice-framework/spice-agent/model.Provider, source spice:symbol:v1|function|68:github.com/spice-framework/spice-agent-provider-openai/autoconfigure|0:|7:Default): %w", err))
-	}
-	if openAIModelProviderCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-provider-openai/autoconfigure", "spice:symbol:v1|function|68:github.com/spice-framework/spice-agent-provider-openai/autoconfigure|0:|7:Default", openAIModelProviderCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean openAIModelProvider (source spice:symbol:v1|function|68:github.com/spice-framework/spice-agent-provider-openai/autoconfigure|0:|7:Default): %w", err))
-		}
-	}
-	_ = openAIModelProvider
-	runtimePluginProperties, err := spiceDaemon.BindRuntimePluginProperties_9c54299d(configurationSnapshot)
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("bind configuration github.com/spice-framework/spice-agent-coding/internal/daemon.RuntimePluginProperties for bean RuntimePluginProperties (source spice:symbol:v1|type|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|23:RuntimePluginProperties): %w", err))
-	}
-	_ = runtimePluginProperties
-	runtimePluginPlan, runtimePluginPlanCleanup, err := func() (daemon.RuntimePluginPlan, spicelifecycle.Cleanup, error) {
-		if options.Overrides.RuntimePluginPlan.Enabled() {
-			return options.Overrides.RuntimePluginPlan.Acquire(ctx)
-		}
-		return spiceDaemon.ConstructRuntimePluginPlan_3ea2d428(runtimePluginProperties)
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginPlan (github.com/spice-framework/spice-agent-coding/internal/daemon.RuntimePluginPlan, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewRuntimePluginPlan): %w", err))
-	}
-	if runtimePluginPlanCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewRuntimePluginPlan", runtimePluginPlanCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginPlan (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|20:NewRuntimePluginPlan): %w", err))
-		}
-	}
-	_ = runtimePluginPlan
-	runtimePluginRestartPolicy, runtimePluginRestartPolicyCleanup, err := func() (pluginhost.RestartPolicy, spicelifecycle.Cleanup, error) {
-		if options.Overrides.RuntimePluginRestartPolicy.Enabled() {
-			return options.Overrides.RuntimePluginRestartPolicy.Acquire(ctx)
-		}
-		return spiceDaemon.ConstructRuntimePluginRestartPolicy_e8e4c4c9(runtimePluginPlan)
-	}()
-	if err != nil {
-		return nil, application.coordinator.Abort(ctx, fmt.Errorf("construct bean runtimePluginRestartPolicy (github.com/spice-framework/spice-agent/plugin/host.RestartPolicy, source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|29:NewRuntimePluginRestartPolicy): %w", err))
-	}
-	if runtimePluginRestartPolicyCleanup != nil {
-		if err := application.coordinator.RegisterModuleCleanup("spice.unassigned:github.com/spice-framework/spice-agent-coding/internal/daemon", "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|29:NewRuntimePluginRestartPolicy", runtimePluginRestartPolicyCleanup); err != nil {
-			return nil, application.coordinator.Abort(ctx, fmt.Errorf("register cleanup for bean runtimePluginRestartPolicy (source spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|29:NewRuntimePluginRestartPolicy): %w", err))
-		}
-	}
-	_ = runtimePluginRestartPolicy
 	runtimePluginHost, runtimePluginHostCleanup, err := func() (*pluginhost.Host, spicelifecycle.Cleanup, error) {
 		if options.Overrides.RuntimePluginHost.Enabled() {
 			return options.Overrides.RuntimePluginHost.Acquire(ctx)
@@ -757,8 +765,7 @@ func constructApplicationDependencies(
 		operationLedger:                 operationLedger,
 		serverLimits:                    serverLimits,
 		runtimePluginEndpointFactory:    runtimePluginEndpointFactory,
-		properties:                      properties,
-		codingConfig:                    codingConfig,
+		daemonProperties:                daemonProperties,
 		openAIConfig:                    openAIConfig,
 		runAuthority:                    runAuthority,
 		definitionSet:                   definitionSet,
@@ -766,14 +773,16 @@ func constructApplicationDependencies(
 		agentLoggingMailbox:             agentLoggingMailbox,
 		agentLoggingProcessor:           agentLoggingProcessor,
 		agentLoggingHealth:              agentLoggingHealth,
-		read:                            read,
-		shell:                           shell,
-		replace:                         replace,
-		runtimePluginCompiledDispatcher: runtimePluginCompiledDispatcher,
 		openAIModelProvider:             openAIModelProvider,
 		runtimePluginProperties:         runtimePluginProperties,
 		runtimePluginPlan:               runtimePluginPlan,
 		runtimePluginRestartPolicy:      runtimePluginRestartPolicy,
+		workspaceProperties:             workspaceProperties,
+		codingConfig:                    codingConfig,
+		read:                            read,
+		shell:                           shell,
+		replace:                         replace,
+		runtimePluginCompiledDispatcher: runtimePluginCompiledDispatcher,
 		runtimePluginHost:               runtimePluginHost,
 		runtimePluginActivation:         runtimePluginActivation,
 		runtimePluginHealthSource:       runtimePluginHealthSource,
