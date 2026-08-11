@@ -13,6 +13,7 @@
     "internal/installedacceptance",
     "internal/processcontainment",
     "internal/processplatform",
+    "internal/releaseassets",
     "internal/runidentity",
     "internal/runtimepluginfixture",
     "internal/testpath",

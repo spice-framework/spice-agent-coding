@@ -14,11 +14,12 @@ import (
 
 func TestRenderDescriptorsIsDeterministicAndComplete(t *testing.T) {
 	t.Parallel()
-	first, err := renderDescriptors()
+	command := releaseAssetsCommand{}
+	first, err := command.renderDescriptors()
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := renderDescriptors()
+	second, err := command.renderDescriptors()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,6 +50,7 @@ func TestRenderDescriptorsIsDeterministicAndComplete(t *testing.T) {
 
 func TestRenderNoticesUsesSortedVersionedModulesAndLicenseText(t *testing.T) {
 	t.Parallel()
+	command := releaseAssetsCommand{}
 	root := t.TempDir()
 	writeFixture(t, root, "vendor/modules.txt", strings.Join([]string{
 		"# example.com/zeta v1.2.3",
@@ -61,11 +63,11 @@ func TestRenderNoticesUsesSortedVersionedModulesAndLicenseText(t *testing.T) {
 	writeFixture(t, root, "vendor/example.com/zeta/LICENSE", "zeta license\r\n")
 	writeFixture(t, root, "vendor/example.com/alpha/NOTICE.txt", "alpha notice\rsecond line\r")
 
-	first, err := renderNotices(root)
+	first, err := command.renderNotices(root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := renderNotices(root)
+	second, err := command.renderNotices(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,6 +85,7 @@ func TestRenderNoticesUsesSortedVersionedModulesAndLicenseText(t *testing.T) {
 
 func TestParseVendorModulesRejectsInvalidAndDuplicatePaths(t *testing.T) {
 	t.Parallel()
+	command := releaseAssetsCommand{}
 	for _, test := range []struct {
 		name    string
 		content string
@@ -100,7 +103,7 @@ func TestParseVendorModulesRejectsInvalidAndDuplicatePaths(t *testing.T) {
 			if err := os.WriteFile(path, []byte(test.content), 0o600); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := parseVendorModules(path); err == nil {
+			if _, err := command.parseVendorModules(path); err == nil {
 				t.Fatal("parseVendorModules() error = nil")
 			}
 		})
@@ -109,20 +112,21 @@ func TestParseVendorModulesRejectsInvalidAndDuplicatePaths(t *testing.T) {
 
 func TestApplyCheckDetectsMissingAndStaleAssets(t *testing.T) {
 	t.Parallel()
+	command := releaseAssetsCommand{}
 	root := t.TempDir()
 	writeFixture(t, root, "vendor/modules.txt", "# example.com/module v1.0.0\n")
 	writeFixture(t, root, "vendor/example.com/module/LICENSE", "fixture license\n")
-	if err := apply(root, true); err == nil {
+	if err := command.apply(root, true); err == nil {
 		t.Fatal("apply(check) accepted missing assets")
 	}
-	if err := apply(root, false); err != nil {
+	if err := command.apply(root, false); err != nil {
 		t.Fatal(err)
 	}
-	if err := apply(root, true); err != nil {
+	if err := command.apply(root, true); err != nil {
 		t.Fatalf("apply(check) after render: %v", err)
 	}
 	writeFixture(t, root, noticesPath, "stale\n")
-	if err := apply(root, true); err == nil || !strings.Contains(err.Error(), "stale") {
+	if err := command.apply(root, true); err == nil || !strings.Contains(err.Error(), "stale") {
 		t.Fatalf("apply(check) error = %v", err)
 	}
 }
