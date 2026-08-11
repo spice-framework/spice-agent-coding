@@ -16,10 +16,11 @@ unsupported rules, broad variable exemptions, and unclassified package
 functions fail closed. `make check` and `make verify` execute the analyzer
 offline through that pinned tools graph.
 
-The active migration boundary covers both process entrypoints and the
+The active migration boundary covers both process entrypoints; the
 application-owned command, daemon lifecycle, daemon-process containment,
-identity, terminal, connector, and TUI-session packages listed in
-`.spice/style.json`. Within that boundary:
+identity, terminal, connector, and TUI-session packages; and the hermetic
+architecture, development-loop, installed-distribution, and runtime-plugin
+acceptance fixtures listed in `.spice/style.json`. Within that boundary:
 
 - each source file has one primary type and the filename follows that type;
 - behavior belongs to the owning type instead of loose package functions;
