@@ -428,6 +428,10 @@ func TestOpenCodeBoundedBufferAndErrorClassification(t *testing.T) {
 	if shortOpenCodeDigest(strings.Repeat("a", 64)) != strings.Repeat("a", 16) || shortOpenCodeDigest("short") != "invalid" {
 		t.Fatal("OpenCode digest projection drifted")
 	}
+	if openCodeSafetyDetail("tool cap exceeded") != "tool-cap" ||
+		openCodeSafetyDetail("untrusted model detail") != "event-safety" {
+		t.Fatal("OpenCode safety detail projection drifted")
+	}
 }
 
 type roundTripFunc func(*http.Request) (*http.Response, error)

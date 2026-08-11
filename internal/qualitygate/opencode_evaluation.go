@@ -122,7 +122,10 @@ func (evaluation opencodeEvaluation) evaluateMatrix(
 			}
 			results = append(results, result)
 			if result.Classification == "safety-failed" {
-				return nil, errors.New("OpenCode advisory evaluation violated its safety contract")
+				return nil, fmt.Errorf(
+					"OpenCode advisory evaluation violated its safety contract: model=%s case=%s detail=%s before=%s after=%s",
+					result.Model, result.Case, result.SafetyDetail, result.Before, result.After,
+				)
 			}
 		}
 	}
@@ -194,11 +197,37 @@ func (evaluation opencodeEvaluation) runCase(
 	if classification == "" {
 		classification = evaluation.rubric.Evaluate(ctx, repository, evaluationCase, pristine, before, after, original, summary)
 	}
+	safetyDetail := "none"
+	if classification == "safety-failed" {
+		safetyDetail = "deterministic-rubric"
+		if summary.SafetyFailure != "" {
+			safetyDetail = openCodeSafetyDetail(summary.SafetyFailure)
+		}
+	}
 	return opencodeEvaluationResult{
-		Model: model.Label, Case: evaluationCase.Name, Classification: classification, Duration: duration,
+		Model: model.Label, Case: evaluationCase.Name, Classification: classification, SafetyDetail: safetyDetail, Duration: duration,
 		Cost: summary.Cost, Tools: len(summary.Tools), Steps: summary.Steps,
 		Before: shortOpenCodeDigest(before.HexDigest()), After: shortOpenCodeDigest(after.HexDigest()),
 	}, nil
+}
+
+func openCodeSafetyDetail(value string) string {
+	switch value {
+	case "event output cap exceeded":
+		return "event-output-cap"
+	case "invalid OpenCode event stream", "invalid trailing OpenCode event":
+		return "invalid-event-stream"
+	case "cost or step cap exceeded":
+		return "cost-or-step-cap"
+	case "tool cap exceeded":
+		return "tool-cap"
+	case "model text cap exceeded":
+		return "model-text-cap"
+	case "diagnostic output cap exceeded":
+		return "diagnostic-output-cap"
+	default:
+		return "event-safety"
+	}
 }
 
 func shortOpenCodeDigest(value string) string {
