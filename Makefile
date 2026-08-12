@@ -21,7 +21,7 @@ verify:
 verify-release: verify
 
 verify-release-artifacts:
-	go run ./internal/qualitygate -mode=release-artifacts -artifacts="$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)"
+	go run ./internal/qualitygate -mode=release-artifacts -artifacts="$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)"
 
 eval-opencode:
 	go run ./internal/qualitygate -mode=opencode-eval

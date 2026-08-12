@@ -59,14 +59,15 @@ func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 
 func TestReleaseArtifactEntrypointRequiresExactExplicitDirectoryContract(t *testing.T) {
 	t.Parallel()
-	const valid = ".PHONY: verify-release-artifacts\n\nverify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)\"\n"
+	const valid = ".PHONY: verify-release-artifacts\n\nverify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)\"\n"
 	for _, test := range []struct {
 		name, content string
 		wantErr       bool
 	}{
 		{name: "valid", content: valid},
-		{name: "missing target", content: strings.Replace(valid, "\nverify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)\"\n", "\n", 1), wantErr: true},
-		{name: "implicit directory", content: strings.Replace(valid, " -artifacts=\"$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)\"", "", 1), wantErr: true},
+		{name: "missing target", content: strings.Replace(valid, "\nverify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)\"\n", "\n", 1), wantErr: true},
+		{name: "implicit directory", content: strings.Replace(valid, " -artifacts=\"$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)\"", "", 1), wantErr: true},
+		{name: "retired Agent directory", content: strings.Replace(valid, "SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR", "SPICE_AGENT_VERIFIED_ARTIFACT_DIR", 1), wantErr: true},
 		{name: "network helper", content: strings.Replace(valid, "go run", "gh release download && go run", 1), wantErr: true},
 		{name: "not phony", content: strings.Replace(valid, ".PHONY: verify-release-artifacts", ".PHONY: verify", 1), wantErr: true},
 	} {
@@ -386,6 +387,21 @@ func TestBootstrapEnvironmentRejectsCredentials(t *testing.T) {
 	}
 	if strings.Contains(environment, "must-not-leak") {
 		t.Fatalf("bootstrap environment contains an application credential:\n%s", environment)
+	}
+}
+
+func TestReleaseArtifactEnvironmentPropagatesGenericDistributionContract(t *testing.T) {
+	directory := filepath.Join(t.TempDir(), "verified subjects")
+	t.Setenv("SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR", directory)
+	t.Setenv("SPICE_DISTRIBUTION_EPHEMERAL_RUNNER", "1")
+	environment := (commandRunner{}).commandEnvironment(false, nil)
+	for _, required := range []string{
+		"SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR=" + directory,
+		"SPICE_DISTRIBUTION_EPHEMERAL_RUNNER=1",
+	} {
+		if !slices.Contains(environment, required) {
+			t.Fatalf("release-artifact environment lacks %q:\n%s", required, strings.Join(environment, "\n"))
+		}
 	}
 }
 

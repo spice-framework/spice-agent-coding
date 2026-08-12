@@ -17,7 +17,11 @@ import (
 	"github.com/spice-framework/spice-agent/daemon/endpoint"
 )
 
-const ephemeralRunnerEnvironment = "SPICE_AGENT_EPHEMERAL_RUNNER"
+const (
+	ephemeralRunnerEnvironment          = "SPICE_DISTRIBUTION_EPHEMERAL_RUNNER"
+	retiredArtifactDirectoryEnvironment = "SPICE_AGENT_VERIFIED_ARTIFACT_DIR"
+	retiredEphemeralRunnerEnvironment   = "SPICE_AGENT_EPHEMERAL_RUNNER"
+)
 
 var verifiedArtifactDirectory = flag.String(
 	"spice-release-artifact-dir",
@@ -104,6 +108,9 @@ func TestVerifiedNativeReleaseArchive(t *testing.T) {
 
 func releaseProcessEnvironment(t *testing.T) (*endpoint.Store, map[string]string) {
 	t.Helper()
+	if err := validateReleaseArtifactEnvironment(runtime.GOOS, os.LookupEnv); err != nil {
+		t.Fatal(err)
+	}
 	environment := map[string]string{
 		"OPENAI_API_KEY":                      "release-archive-check-only",
 		"OPENAI_BASE_URL":                     "https://127.0.0.1:1/v1",
@@ -116,9 +123,6 @@ func releaseProcessEnvironment(t *testing.T) (*endpoint.Store, map[string]string
 	}
 	switch runtime.GOOS {
 	case "windows":
-		if os.Getenv(ephemeralRunnerEnvironment) != "1" {
-			t.Fatalf("Windows release-byte execution requires %s=1 and an ephemeral runner", ephemeralRunnerEnvironment)
-		}
 		environment[ephemeralRunnerEnvironment] = "1"
 	case "linux", "darwin":
 		runtimeDirectory := filepath.Join(t.TempDir(), "xdg-runtime")
@@ -159,6 +163,106 @@ func releaseProcessEnvironment(t *testing.T) (*endpoint.Store, map[string]string
 	})
 	assertEndpointAbsent(t, store, nil)
 	return store, environment
+}
+
+func validateReleaseArtifactEnvironment(
+	goos string,
+	lookup func(string) (string, bool),
+) error {
+	for _, retired := range []string{
+		retiredArtifactDirectoryEnvironment,
+		retiredEphemeralRunnerEnvironment,
+	} {
+		if _, found := lookup(retired); found {
+			return fmt.Errorf("release-byte execution rejects retired environment variable %s", retired)
+		}
+	}
+	acknowledgement, _ := lookup(ephemeralRunnerEnvironment)
+	switch goos {
+	case "windows":
+		if acknowledgement != "1" {
+			return fmt.Errorf(
+				"Windows release-byte execution requires %s=1 and an ephemeral runner",
+				ephemeralRunnerEnvironment,
+			)
+		}
+	case "linux", "darwin":
+		if acknowledgement != "" {
+			return fmt.Errorf(
+				"%s release-byte execution requires empty %s",
+				goos,
+				ephemeralRunnerEnvironment,
+			)
+		}
+	default:
+		return fmt.Errorf("release-byte execution is unsupported on %s", goos)
+	}
+	return nil
+}
+
+func TestValidateReleaseArtifactEnvironmentRequiresGenericPlatformContract(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name        string
+		goos        string
+		environment map[string]string
+		wantError   string
+	}{
+		{
+			name: "Windows exact acknowledgement", goos: "windows",
+			environment: map[string]string{ephemeralRunnerEnvironment: "1"},
+		},
+		{name: "Windows missing acknowledgement", goos: "windows", wantError: ephemeralRunnerEnvironment + "=1"},
+		{
+			name: "Windows nonexact acknowledgement", goos: "windows",
+			environment: map[string]string{ephemeralRunnerEnvironment: "true"},
+			wantError:   ephemeralRunnerEnvironment + "=1",
+		},
+		{name: "Linux absent acknowledgement", goos: "linux"},
+		{
+			name: "Linux empty acknowledgement", goos: "linux",
+			environment: map[string]string{ephemeralRunnerEnvironment: ""},
+		},
+		{
+			name: "Linux nonempty acknowledgement", goos: "linux",
+			environment: map[string]string{ephemeralRunnerEnvironment: "1"},
+			wantError:   "requires empty",
+		},
+		{
+			name: "Darwin empty acknowledgement", goos: "darwin",
+			environment: map[string]string{ephemeralRunnerEnvironment: ""},
+		},
+		{name: "unsupported platform", goos: "plan9", wantError: "unsupported"},
+		{
+			name: "retired artifact directory", goos: "linux",
+			environment: map[string]string{retiredArtifactDirectoryEnvironment: ""},
+			wantError:   retiredArtifactDirectoryEnvironment,
+		},
+		{
+			name: "retired runner acknowledgement", goos: "windows",
+			environment: map[string]string{
+				ephemeralRunnerEnvironment:        "1",
+				retiredEphemeralRunnerEnvironment: "",
+			},
+			wantError: retiredEphemeralRunnerEnvironment,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			lookup := func(name string) (string, bool) {
+				value, found := test.environment[name]
+				return value, found
+			}
+			err := validateReleaseArtifactEnvironment(test.goos, lookup)
+			if test.wantError == "" && err != nil {
+				t.Fatal(err)
+			}
+			if test.wantError != "" && (err == nil || !strings.Contains(err.Error(), test.wantError)) {
+				t.Fatalf("validateReleaseArtifactEnvironment() error = %v, want %q", err, test.wantError)
+			}
+		})
+	}
 }
 
 func assertReleasedVersion(

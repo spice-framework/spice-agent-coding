@@ -165,7 +165,7 @@ func (owner qualityGate) checkReleaseArtifactEntrypoint(root string) error {
 		return fmt.Errorf("read Makefile: %w", err)
 	}
 	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
-	const target = "verify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_AGENT_VERIFIED_ARTIFACT_DIR)\"\n"
+	const target = "verify-release-artifacts:\n\tgo run ./internal/qualitygate -mode=release-artifacts -artifacts=\"$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)\"\n"
 	if strings.Count(normalized, target) != 1 {
 		return errors.New("makefile must expose the exact independently verified release-artifact gate")
 	}
