@@ -705,10 +705,7 @@ func TestReceiveAndPerformRejectInvalidState(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSession() error = %v", err)
 	}
-	concrete, ok := uiSession.(*Session)
-	if !ok {
-		t.Fatalf("session type = %T", uiSession)
-	}
+	concrete := uiSession
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 	if _, err = uiSession.Receive(nil); err == nil { //nolint:staticcheck // Boundary deliberately rejects a nil context.
 		t.Fatal("Receive(nil) error = nil")
@@ -868,10 +865,7 @@ func TestEventFrameValidationAndSummaries(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSession() error = %v", err)
 	}
-	session, ok := uiSession.(*Session)
-	if !ok {
-		t.Fatalf("session type = %T", uiSession)
-	}
+	session := uiSession
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 	run := mustRun(t, "run-events")
 	otherRun := mustRun(t, "other-run")
@@ -915,10 +909,7 @@ func TestInteractionFramesEnforceSnapshotAndContiguousChanges(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSession() error = %v", err)
 	}
-	session, ok := uiSession.(*Session)
-	if !ok {
-		t.Fatalf("session type = %T", uiSession)
-	}
+	session := uiSession
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 	run := mustRun(t, "run-interactions")
 	first := mustPending(t, run, "first", "First?")
@@ -1053,10 +1044,7 @@ func TestSelectionPresentationRetryAndHistoryBoundaries(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSession() error = %v", err)
 	}
-	session, ok := uiSession.(*Session)
-	if !ok {
-		t.Fatalf("session type = %T", uiSession)
-	}
+	session := uiSession
 	t.Cleanup(func() { cleanupTestSession(t, cleanup) })
 	if session.canRetryObservation(nil) || !session.canRetryObservation(io.EOF) || session.canRetryObservation(errors.New("fatal")) {
 		t.Fatal("retry classification is incorrect")
@@ -1081,10 +1069,7 @@ func TestRandomIdentifiersAndCloseDeadline(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSession() error = %v", err)
 	}
-	session, ok := uiSession.(*Session)
-	if !ok {
-		t.Fatalf("session type = %T", uiSession)
-	}
+	session := uiSession
 	if err = session.Close(nil); err == nil { //nolint:staticcheck // Boundary deliberately rejects a nil context.
 		t.Fatal("Close(nil) error = nil")
 	}

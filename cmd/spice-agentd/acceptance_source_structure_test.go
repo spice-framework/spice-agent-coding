@@ -20,19 +20,19 @@ func TestAcceptanceConstrainedSourcesAreTypeOwned(t *testing.T) {
 
 	expected := map[string]map[string][]string{
 		"spice-agent": {
-			"acceptance_adapter_testbuild.go": {"acceptanceAdapter"},
+			"acceptance_adapter_spice_acceptance.go": {"acceptanceAdapter"},
 		},
 		"spice-agentd": {
-			"acceptance_adapter_testbuild.go":                {"acceptanceAdapter"},
-			"acceptance_environment_testbuild.go":            {"acceptanceEnvironment"},
-			"acceptance_provider_configuration_testbuild.go": {"acceptanceProviderConfiguration"},
-			"acceptance_provider_testbuild.go":               {"acceptanceProvider", "newAcceptanceProvider"},
-			"acceptance_scenario_testbuild.go":               {"acceptanceScenario"},
-			"acceptance_stream_testbuild.go":                 {"acceptanceStream"},
-			"blocking_acceptance_stream_testbuild.go":        {"blockingAcceptanceStream", "newBlockingAcceptanceStream"},
-			"faulting_connection_testbuild.go":               {"faultingConnection", "newFaultingConnection"},
-			"faulting_listener_factory_testbuild.go":         {"faultingListenerFactory"},
-			"faulting_listener_testbuild.go":                 {"faultingListener", "newFaultingListener"},
+			"acceptance_adapter_spice_acceptance.go":                {"acceptanceAdapter"},
+			"acceptance_environment_spice_acceptance.go":            {"acceptanceEnvironment"},
+			"acceptance_provider_configuration_spice_acceptance.go": {"acceptanceProviderConfiguration"},
+			"acceptance_provider_spice_acceptance.go":               {"AcceptanceProvider", "NewAcceptanceProvider"},
+			"acceptance_scenario_spice_acceptance.go":               {"acceptanceScenario"},
+			"acceptance_stream_spice_acceptance.go":                 {"acceptanceStream"},
+			"blocking_acceptance_stream_spice_acceptance.go":        {"BlockingAcceptanceStream", "NewBlockingAcceptanceStream"},
+			"faulting_connection_spice_acceptance.go":               {"FaultingConnection", "NewFaultingConnection"},
+			"faulting_listener_factory_spice_acceptance.go":         {"faultingListenerFactory"},
+			"faulting_listener_spice_acceptance.go":                 {"FaultingListener", "NewFaultingListener"},
 		},
 	}
 
@@ -44,7 +44,14 @@ func TestAcceptanceConstrainedSourcesAreTypeOwned(t *testing.T) {
 	structure := acceptanceSourceStructure{}
 	for command, files := range expected {
 		directory := filepath.Join(commandRoot, command)
-		matches, err := filepath.Glob(filepath.Join(directory, "*_testbuild.go"))
+		retired, err := filepath.Glob(filepath.Join(directory, "*_testbuild.go"))
+		if err != nil {
+			t.Fatalf("discover %s retired constrained sources: %v", command, err)
+		}
+		if len(retired) != 0 {
+			t.Fatalf("%s retains retired constrained sources: %v", command, retired)
+		}
+		matches, err := filepath.Glob(filepath.Join(directory, "*_spice_acceptance.go"))
 		if err != nil {
 			t.Fatalf("discover %s constrained sources: %v", command, err)
 		}
@@ -73,19 +80,52 @@ func TestAcceptanceSourceStructureRejectsLooseDeclarations(t *testing.T) {
 	t.Parallel()
 
 	header := "//go:build spice_acceptance && !spice_generate\n\npackage main\n\n"
-	tests := map[string]string{
-		"wrong build constraint": "//go:build spice_acceptance\n\npackage main\n\ntype sample struct{}\n",
-		"second primary type":    header + "type sample struct{}\ntype extra struct{}\n",
-		"loose function":         header + "type sample struct{}\nfunc helper() {}\n",
-		"package variable":       header + "type sample struct{}\nvar value any\n",
-		"mismatched receiver":    header + "type sample struct{}\nfunc (extra) run() {}\n",
-		"foreign constructor":    header + "type sample struct{}\nfunc newExtra() *sample { return &sample{} }\n",
+	tests := map[string]struct {
+		source       string
+		primaryType  string
+		constructors []string
+	}{
+		"wrong build constraint": {
+			source:      "//go:build spice_acceptance\n\npackage main\n\ntype sample struct{}\n",
+			primaryType: "sample",
+		},
+		"second primary type": {
+			source:      header + "type sample struct{}\ntype extra struct{}\n",
+			primaryType: "sample",
+		},
+		"loose function": {
+			source:      header + "type sample struct{}\nfunc helper() {}\n",
+			primaryType: "sample",
+		},
+		"package variable": {
+			source:      header + "type sample struct{}\nvar value any\n",
+			primaryType: "sample",
+		},
+		"mismatched receiver": {
+			source:      header + "type sample struct{}\nfunc (extra) run() {}\n",
+			primaryType: "sample",
+		},
+		"foreign constructor": {
+			source:       header + "type Sample struct{}\nfunc NewExtra() *Sample { return &Sample{} }\n",
+			primaryType:  "Sample",
+			constructors: []string{"NewExtra"},
+		},
+		"constructor returns foreign type": {
+			source:       header + "type Sample struct{}\nfunc NewSample() *extra { return nil }\n",
+			primaryType:  "Sample",
+			constructors: []string{"NewSample"},
+		},
 	}
 	structure := acceptanceSourceStructure{}
-	for name, source := range tests {
+	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			if err := structure.validate("sample_testbuild.go", []byte(source), "sample", nil); err == nil {
+			if err := structure.validate(
+				"sample_spice_acceptance.go",
+				[]byte(test.source),
+				test.primaryType,
+				test.constructors,
+			); err == nil {
 				t.Fatal("malformed constrained source passed structural validation")
 			}
 		})
@@ -131,6 +171,12 @@ func (acceptanceSourceStructure) validate(
 				if !slices.Contains(constructors, current.Name.Name) {
 					return fmt.Errorf("loose package function %s", current.Name.Name)
 				}
+				if current.Name.Name != "New"+primaryType {
+					return fmt.Errorf("constructor %s does not match primary type %s", current.Name.Name, primaryType)
+				}
+				if !(acceptanceSourceStructure{}).constructorReturns(current, primaryType) {
+					return fmt.Errorf("constructor %s does not return *%s", current.Name.Name, primaryType)
+				}
 				continue
 			}
 			receiver := (acceptanceSourceStructure{}).receiverName(current.Recv.List[0].Type)
@@ -156,6 +202,18 @@ func (acceptanceSourceStructure) validate(
 		}
 	}
 	return nil
+}
+
+func (acceptanceSourceStructure) constructorReturns(function *ast.FuncDecl, primaryType string) bool {
+	if function.Type.Results == nil || len(function.Type.Results.List) != 1 {
+		return false
+	}
+	pointer, found := function.Type.Results.List[0].Type.(*ast.StarExpr)
+	if !found {
+		return false
+	}
+	result, found := pointer.X.(*ast.Ident)
+	return found && result.Name == primaryType
 }
 
 func (acceptanceSourceStructure) receiverName(expression ast.Expr) string {

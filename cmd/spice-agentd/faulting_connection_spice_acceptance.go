@@ -7,18 +7,18 @@ import (
 	"sync"
 )
 
-type faultingConnection struct {
+type FaultingConnection struct {
 	net.Conn
-	owner *faultingListener
+	owner *FaultingListener
 	once  sync.Once
 	err   error
 }
 
-func newFaultingConnection(connection net.Conn, owner *faultingListener) *faultingConnection {
-	return &faultingConnection{Conn: connection, owner: owner}
+func NewFaultingConnection(connection net.Conn, owner *FaultingListener) *FaultingConnection {
+	return &FaultingConnection{Conn: connection, owner: owner}
 }
 
-func (connection *faultingConnection) Close() error {
+func (connection *FaultingConnection) Close() error {
 	connection.once.Do(func() {
 		connection.err = connection.Conn.Close()
 		connection.owner.remove(connection)

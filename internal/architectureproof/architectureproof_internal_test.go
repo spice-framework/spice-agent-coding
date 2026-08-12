@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	workspaceconfig "github.com/spice-framework/spice-agent-coding/internal/workspace"
+
 	coding "github.com/spice-framework/spice-agent-tools-coding"
 	"github.com/spice-framework/spice-agent/agent"
 	"github.com/spice-framework/spice-agent/event"
@@ -242,7 +244,7 @@ func TestGeneratedExecutionPlanResumesExactStaticSnapshot(t *testing.T) {
 	}
 	metadata := NewExecutionPlanMetadata()
 	codingConfig := coding.Config{Root: t.TempDir()}
-	workspace, err := architectureProofWorkspaceFingerprint(codingConfig.Root)
+	workspaceFingerprint, err := workspaceconfig.NewFingerprint(codingConfig.Root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,7 +255,7 @@ func TestGeneratedExecutionPlanResumesExactStaticSnapshot(t *testing.T) {
 	identity, err := agent.NewPlanIdentity(
 		metadata.CompiledPlanIdentities,
 		metadata.SnapshotCompatibilityIdentity,
-		workspace,
+		workspaceFingerprint.String(),
 		lease.ToolPlanID(),
 		lease.Definitions(),
 	)

@@ -12,7 +12,7 @@ import (
 	"github.com/spice-framework/spice-agent/model"
 )
 
-type blockingAcceptanceStream struct {
+type BlockingAcceptanceStream struct {
 	directory  string
 	closed     chan struct{}
 	closeOnce  sync.Once
@@ -20,11 +20,11 @@ type blockingAcceptanceStream struct {
 	cancelOnce sync.Once
 }
 
-func newBlockingAcceptanceStream(directory string) *blockingAcceptanceStream {
-	return &blockingAcceptanceStream{directory: directory, closed: make(chan struct{})}
+func NewBlockingAcceptanceStream(directory string) *BlockingAcceptanceStream {
+	return &BlockingAcceptanceStream{directory: directory, closed: make(chan struct{})}
 }
 
-func (stream *blockingAcceptanceStream) Recv(ctx context.Context) (model.StreamEvent, error) {
+func (stream *BlockingAcceptanceStream) Recv(ctx context.Context) (model.StreamEvent, error) {
 	stream.readyOnce.Do(func() {
 		_ = os.WriteFile(filepath.Join(stream.directory, "provider.ready"), []byte("ready\n"), 0o600)
 	})
@@ -39,7 +39,7 @@ func (stream *blockingAcceptanceStream) Recv(ctx context.Context) (model.StreamE
 	}
 }
 
-func (stream *blockingAcceptanceStream) Close() error {
+func (stream *BlockingAcceptanceStream) Close() error {
 	stream.closeOnce.Do(func() { close(stream.closed) })
 	return nil
 }

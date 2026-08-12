@@ -27,25 +27,6 @@ func TestNewAgentLoggingConfigMapsValidatedDistributionProperties(t *testing.T) 
 	}
 }
 
-func TestWorkspaceFingerprintIsStableAndRejectsNonAbsoluteRoots(t *testing.T) {
-	t.Parallel()
-	root := t.TempDir()
-	first, err := workspaceFingerprint(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	second, err := workspaceFingerprint(filepath.Clean(root))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if first != second || len(first) != len("sha256:")+64 {
-		t.Fatalf("workspace fingerprints = %q, %q", first, second)
-	}
-	if _, err = workspaceFingerprint("relative"); err == nil {
-		t.Fatal("workspaceFingerprint() accepted a relative root")
-	}
-}
-
 func TestNewCodingConfigCanonicalizesWorkspaceAndRequiresRegistry(t *testing.T) {
 	t.Parallel()
 	workspace := filepath.Join("relative", "workspace", "..", "root")

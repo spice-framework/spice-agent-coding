@@ -17,7 +17,7 @@ import (
 
 const acceptanceProviderRecoveryText = "cancellation-recovery-complete"
 
-type acceptanceProvider struct {
+type AcceptanceProvider struct {
 	directory            string
 	prefix               string
 	cancellationScenario acceptanceScenario
@@ -26,8 +26,8 @@ type acceptanceProvider struct {
 	initialRequests      int
 }
 
-func newAcceptanceProvider(configuration acceptanceProviderConfiguration) *acceptanceProvider {
-	return &acceptanceProvider{
+func NewAcceptanceProvider(configuration acceptanceProviderConfiguration) *AcceptanceProvider {
+	return &AcceptanceProvider{
 		directory:            configuration.directory,
 		prefix:               configuration.prefix,
 		cancellationScenario: configuration.scenario,
@@ -35,7 +35,7 @@ func newAcceptanceProvider(configuration acceptanceProviderConfiguration) *accep
 	}
 }
 
-func (provider *acceptanceProvider) Stream(ctx context.Context, request model.Request) (model.Stream, error) {
+func (provider *AcceptanceProvider) Stream(ctx context.Context, request model.Request) (model.Stream, error) {
 	if ctx == nil || provider == nil {
 		return nil, errors.New("acceptance provider is unavailable")
 	}
@@ -93,7 +93,7 @@ func (provider *acceptanceProvider) Stream(ctx context.Context, request model.Re
 	}, nil
 }
 
-func (provider *acceptanceProvider) cancellationStream(request model.Request) (model.Stream, error) {
+func (provider *AcceptanceProvider) cancellationStream(request model.Request) (model.Stream, error) {
 	if provider.hasToolResult(request) {
 		return provider.recoveryStream()
 	}
@@ -111,7 +111,7 @@ func (provider *acceptanceProvider) cancellationStream(request model.Request) (m
 	}
 	switch provider.cancellationScenario {
 	case acceptanceScenarioProvider:
-		return newBlockingAcceptanceStream(provider.directory), nil
+		return NewBlockingAcceptanceStream(provider.directory), nil
 	case acceptanceScenarioShell:
 		arguments, err := json.Marshal(struct {
 			Argv []string `json:"argv"`
@@ -127,7 +127,7 @@ func (provider *acceptanceProvider) cancellationStream(request model.Request) (m
 	}
 }
 
-func (provider *acceptanceProvider) hasToolResult(request model.Request) bool {
+func (provider *AcceptanceProvider) hasToolResult(request model.Request) bool {
 	for _, current := range request.Messages() {
 		for _, part := range current.Parts() {
 			if part.Kind() == message.PartToolResult {
@@ -138,7 +138,7 @@ func (provider *acceptanceProvider) hasToolResult(request model.Request) bool {
 	return false
 }
 
-func (provider *acceptanceProvider) toolStream(
+func (provider *AcceptanceProvider) toolStream(
 	id, name string,
 	arguments json.RawMessage,
 ) (model.Stream, error) {
@@ -157,7 +157,7 @@ func (provider *acceptanceProvider) toolStream(
 	return &acceptanceStream{events: []model.StreamEvent{callEvent, completed}}, nil
 }
 
-func (provider *acceptanceProvider) recoveryStream() (model.Stream, error) {
+func (provider *AcceptanceProvider) recoveryStream() (model.Stream, error) {
 	textEvent, err := model.TextDelta(acceptanceProviderRecoveryText)
 	if err != nil {
 		return nil, err

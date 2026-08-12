@@ -244,13 +244,9 @@ func reconnectTestSession(
 	if err != nil {
 		t.Fatal(err)
 	}
-	session, ok := adapted.(*Session)
-	if !ok {
-		t.Fatalf("constructed session = %T", adapted)
-	}
-	session.clientSession = current
-	session.clientGeneration = 1
-	return session
+	adapted.clientSession = current
+	adapted.clientGeneration = 1
+	return adapted
 }
 
 func reconnectStatusError(t *testing.T, code client.ErrorCode, retryable bool) error {

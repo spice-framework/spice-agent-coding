@@ -46,7 +46,7 @@ func (acceptanceAdapter) applicationOptions(
 		if !configuration.valid() {
 			return spicegen.ApplicationOptions{}, errors.New("acceptance provider configuration is invalid")
 		}
-		provider := newAcceptanceProvider(configuration)
+		provider := NewAcceptanceProvider(configuration)
 		options.Overrides.OpenAIModelProvider = spicebean.Replace[model.Provider](provider)
 	}
 	return options, nil

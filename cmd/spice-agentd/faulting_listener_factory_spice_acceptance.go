@@ -18,7 +18,7 @@ func (factory *faultingListenerFactory) Listen(address string) (net.Listener, er
 	if err != nil {
 		return nil, err
 	}
-	wrapped := newFaultingListener(listener, factory.trigger, factory.ack)
+	wrapped := NewFaultingListener(listener, factory.trigger, factory.ack)
 	go wrapped.observeTrigger()
 	return wrapped, nil
 }

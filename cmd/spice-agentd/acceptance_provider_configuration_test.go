@@ -107,10 +107,10 @@ func TestAcceptanceTypesSatisfyRuntimeInterfacesWithoutPackageAssertions(t *test
 	t.Parallel()
 
 	var listenerFactory daemon.ListenerFactory = &faultingListenerFactory{}
-	var provider model.Provider = newAcceptanceProvider(acceptanceProviderConfiguration{})
+	var provider model.Provider = NewAcceptanceProvider(acceptanceProviderConfiguration{})
 	streams := []model.Stream{
 		&acceptanceStream{},
-		newBlockingAcceptanceStream(t.TempDir()),
+		NewBlockingAcceptanceStream(t.TempDir()),
 	}
 	if listenerFactory == nil || provider == nil || len(streams) != 2 {
 		t.Fatal("acceptance runtime interface assignment failed")

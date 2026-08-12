@@ -132,11 +132,11 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/sources/internal_/daemon/daemon_engine_bean_spice_gen.go",
-      "sha256": "sha256:0538c8f2edc62eda93b5fb41ac3a5b4522a80f05c4d38a23bd484dcbb44e9dc9",
+      "sha256": "sha256:0ab7528ea847aad81e595b37599a93510c06908ede2cb43a9827cbca0272ff1f",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/daemon/daemon_engine_bean.go",
-        "line": 25,
+        "line": 24,
         "column": 4,
         "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
       },
@@ -146,7 +146,7 @@
           "contribution": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine",
           "source": {
             "path": "internal/daemon/daemon_engine_bean.go",
-            "line": 25,
+            "line": 24,
             "column": 4,
             "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
           },
@@ -1314,7 +1314,7 @@
         },
         {
           "path": "internal/daemon/daemon_engine_bean.go",
-          "line": 25,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },
@@ -2031,7 +2031,7 @@
         },
         {
           "path": "internal/daemon/daemon_engine_bean.go",
-          "line": 25,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },
@@ -2580,7 +2580,7 @@
         },
         {
           "path": "internal/daemon/daemon_engine_bean.go",
-          "line": 25,
+          "line": 24,
           "column": 4,
           "symbol": "spice:symbol:v1|function|61:github.com/spice-framework/spice-agent-coding/internal/daemon|0:|9:NewEngine"
         },

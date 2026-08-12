@@ -35,7 +35,7 @@ func NewSession(
 	config Config,
 	connector client.Connector,
 	identifiers IdentifierSource,
-) (agenttui.Session, lifecycle.Cleanup, error) {
+) (*Session, lifecycle.Cleanup, error) {
 	if err := config.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("construct TUI session: %w", err)
 	}

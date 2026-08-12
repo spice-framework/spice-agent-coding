@@ -47,10 +47,11 @@ package, then add that package to the enforced roots in the same green commit.
 Removing a governed root, weakening a rule, or adding a broad suppression is a
 policy regression and must fail review.
 
-The `spice_acceptance && !spice_generate` command companions follow the same
-source-unit rules even though schema-one cannot select tagged files directly.
-Each companion has one filename-matched primary type, constructors stay with
-the type they create, and all other fixture behavior is receiver-owned. A
+The `spice_acceptance && !spice_generate` command companions use the canonical
+`*_spice_acceptance.go` selection suffix and follow the same source-unit rules
+even though schema-one cannot select tagged files directly. Each companion has
+one filename-matched primary type, constructors use the exact `New<Type>` form
+and return that owned type, and all other fixture behavior is receiver-owned. A
 default-build structural regression parses both command packages, requires the
 exact build constraint and file inventory, and rejects loose functions,
 receiver drift, multiple primary types, package variables, and package-level

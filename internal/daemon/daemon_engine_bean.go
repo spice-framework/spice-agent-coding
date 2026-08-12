@@ -3,12 +3,11 @@ package daemon
 // @import { Bean, Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
-	"path/filepath"
+	"fmt"
 	"time"
 
+	workspaceconfig "github.com/spice-framework/spice-agent-coding/internal/workspace"
 	coding "github.com/spice-framework/spice-agent-tools-coding"
 	"github.com/spice-framework/spice-agent/agent"
 	"github.com/spice-framework/spice-agent/client"
@@ -57,11 +56,11 @@ func NewEngine(
 		"tool:shell",
 	}
 	options.SnapshotCompatibilityIdentity = snapshotCompatibilityIdentity
-	workspace, err := workspaceFingerprint(codingConfig.Root)
+	workspaceFingerprint, err := workspaceconfig.NewFingerprint(codingConfig.Root)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("construct daemon engine: %w", err)
 	}
-	options.WorkspaceFingerprint = workspace
+	options.WorkspaceFingerprint = workspaceFingerprint.String()
 	return agent.NewEngineWithToolPlanSourceAndInteractionBroker(
 		provider,
 		toolPlans,
@@ -72,13 +71,4 @@ func NewEngine(
 		bestEffortObservers,
 		options,
 	)
-}
-
-func workspaceFingerprint(root string) (string, error) {
-	cleaned := filepath.Clean(root)
-	if root == "" || cleaned == "." || !filepath.IsAbs(cleaned) {
-		return "", errors.New("daemon engine requires an absolute coding workspace")
-	}
-	digest := sha256.Sum256([]byte(cleaned))
-	return "sha256:" + hex.EncodeToString(digest[:]), nil
 }

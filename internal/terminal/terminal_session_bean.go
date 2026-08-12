@@ -19,5 +19,9 @@ func NewSession(
 	connector client.Connector,
 	identifiers tuisession.IdentifierSource,
 ) (agenttui.Session, lifecycle.Cleanup, error) {
-	return tuisession.NewSession(config, connector, identifiers)
+	session, cleanup, err := tuisession.NewSession(config, connector, identifiers)
+	if err != nil {
+		return nil, nil, err
+	}
+	return session, cleanup, nil
 }
