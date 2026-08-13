@@ -64,6 +64,7 @@ type nativeTerminal struct {
 	resultMu   sync.Mutex
 	writeMu    sync.Mutex
 	closeOnce  sync.Once
+	closing    atomic.Bool
 	closeErr   error
 }
 
@@ -122,6 +123,7 @@ func (terminal *nativeTerminal) watchCancellation(ctx context.Context) {
 }
 
 func (terminal *nativeTerminal) closePTY() error {
+	terminal.closing.Store(true)
 	terminal.closeOnce.Do(func() { terminal.closeErr = terminal.pty.Close() })
 	return terminal.closeErr
 }
@@ -162,6 +164,7 @@ func nativeTerminalEnvironment(environment map[string]string) []string {
 
 func (terminal *nativeTerminal) capture() {
 	_, captureErr := io.Copy(terminal.output, terminal.pty)
+	captureErr = normalizeNativeTerminalCaptureError(terminal.closing.Load(), captureErr)
 	if flushErr := terminal.output.flush(); flushErr != nil {
 		captureErr = errors.Join(captureErr, flushErr)
 	}
@@ -183,6 +186,13 @@ func (terminal *nativeTerminal) capture() {
 	}
 	terminal.resultMu.Unlock()
 	close(terminal.done)
+}
+
+func normalizeNativeTerminalCaptureError(deliberateClose bool, err error) error {
+	if deliberateClose && errors.Is(err, os.ErrClosed) {
+		return nil
+	}
+	return err
 }
 
 func (terminal *nativeTerminal) write(value []byte) error {
@@ -481,12 +491,29 @@ func TestNativeTerminalHarnessBoundsCancellationAndFailure(t *testing.T) {
 		if startErr != nil {
 			t.Fatal(startErr)
 		}
-		result, closeErr := terminal.close(ctx)
-		if closeErr != nil || result.exitCode == 0 {
-			t.Fatalf("direct close result = %+v, error = %v", result, closeErr)
+		_, waitErr := terminal.waitFor(ctx, "blocking", func(screen tuittest.Screen) bool {
+			return screen.Contains("blocking")
+		})
+		if waitErr != nil {
+			t.Fatal(waitErr)
 		}
-		if _, closeErr = terminal.close(ctx); closeErr != nil {
-			t.Fatalf("second close: %v", closeErr)
+		closeStarted := time.Now()
+		result, closeErr := terminal.close(ctx)
+		if closeErr != nil || result.captureErr != nil || result.closeErr != nil {
+			t.Fatalf(
+				"direct close result = %+v, capture error = %v, close error = %v",
+				result,
+				result.captureErr,
+				closeErr,
+			)
+		}
+		if elapsed := time.Since(closeStarted); elapsed > nativeTerminalCloseTimeout+2*time.Second {
+			t.Fatalf("direct close exceeded its bound: %v", elapsed)
+		}
+		second, closeErr := terminal.close(ctx)
+		if closeErr != nil || second.exitCode != result.exitCode ||
+			second.captureErr != nil || second.closeErr != nil {
+			t.Fatalf("second close result = %+v, error = %v; first = %+v", second, closeErr, result)
 		}
 	})
 
@@ -626,6 +653,28 @@ func TestNativeTerminalCancellationRetainsAuthoritativeCloseFailure(t *testing.T
 	close(terminal.done)
 	if _, err := terminal.close(t.Context()); !errors.Is(err, want) {
 		t.Fatalf("native failure caller close error = %v, want %v", err, want)
+	}
+}
+
+func TestNativeTerminalClosedReadRequiresDeliberateClose(t *testing.T) {
+	t.Parallel()
+	closedRead := fmt.Errorf("read native terminal: %w", os.ErrClosed)
+	terminal := &nativeTerminal{pty: &failingNativePTY{}}
+	if terminal.closing.Load() || !errors.Is(closedRead, os.ErrClosed) {
+		t.Fatal("closed-read regression precondition is invalid")
+	}
+	if got := normalizeNativeTerminalCaptureError(terminal.closing.Load(), closedRead); !errors.Is(got, os.ErrClosed) {
+		t.Fatalf("spontaneous closed read = %v, want preserved os.ErrClosed", got)
+	}
+	if closeErr := terminal.closePTY(); closeErr != nil {
+		t.Fatal(closeErr)
+	}
+	if got := normalizeNativeTerminalCaptureError(terminal.closing.Load(), closedRead); got != nil {
+		t.Fatalf("deliberate-close read error = %v, want nil", got)
+	}
+	other := errors.New("capture failure")
+	if got := normalizeNativeTerminalCaptureError(terminal.closing.Load(), other); !errors.Is(got, other) {
+		t.Fatalf("unrelated capture error = %v, want %v", got, other)
 	}
 }
 

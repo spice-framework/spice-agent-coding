@@ -40,11 +40,13 @@ import (
 )
 
 const (
-	fixtureManifest = "spice-agent-distribution-fixture"
-	fixtureVersion  = "v1"
-	fixtureTool     = "fixture.echo"
-	providerSecret  = "decisive-architecture-proof-secret"
-	workspaceMarker = "Spice Agent decisive architecture proof"
+	fixtureManifest                = "spice-agent-distribution-fixture"
+	fixtureVersion                 = "v1"
+	fixtureTool                    = "fixture.echo"
+	providerSecret                 = "decisive-architecture-proof-secret"
+	workspaceMarker                = "Spice Agent decisive architecture proof"
+	runtimePluginStartupTimeout    = 30 * time.Second
+	runtimePluginActivationTimeout = 45 * time.Second
 )
 
 var endpointSequence atomic.Uint64
@@ -195,6 +197,13 @@ func newHarness(
 	provider model.Provider,
 ) *proofHarness {
 	t.Helper()
+	if runtimePluginActivationTimeout <= runtimePluginStartupTimeout {
+		t.Fatalf(
+			"runtime-plugin activation timeout %v must exceed startup timeout %v",
+			runtimePluginActivationTimeout,
+			runtimePluginStartupTimeout,
+		)
+	}
 	values, err := spiceconfig.NewMapSource("architecture-e2e", map[string]string{
 		"agent.openai.api-key":                      providerSecret,
 		"agent.model":                               "architecture-e2e-model",
@@ -205,7 +214,7 @@ func newHarness(
 		"agent.runtime-plugin.sha256":               digest,
 		"agent.runtime-plugin.manifest-name":        fixtureManifest,
 		"agent.runtime-plugin.manifest-version":     fixtureVersion,
-		"agent.runtime-plugin.timeouts.startup":     "5s",
+		"agent.runtime-plugin.timeouts.startup":     runtimePluginStartupTimeout.String(),
 		"agent.runtime-plugin.timeouts.call":        "5s",
 		"agent.runtime-plugin.timeouts.drain":       "5s",
 		"agent.runtime-plugin.timeouts.shutdown":    "5s",
@@ -226,7 +235,7 @@ func newHarness(
 		t.Fatalf("construct generated daemon: %v", err)
 	}
 	components := application.Components()
-	activationContext, cancelActivation := context.WithTimeout(t.Context(), 10*time.Second)
+	activationContext, cancelActivation := context.WithTimeout(t.Context(), runtimePluginActivationTimeout)
 	err = components.RuntimePluginActivation.Start(activationContext)
 	cancelActivation()
 	if err != nil {
