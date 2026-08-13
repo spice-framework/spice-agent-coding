@@ -190,8 +190,14 @@ func (session *sessionConnection) canRetryObservation(err error) bool {
 }
 
 func (session *sessionConnection) waitToReconnect() bool {
+	return session.owner.waitToReconnectContext(session.owner.context())
+}
+
+func (session *sessionConnection) waitToReconnectContext(ctx context.Context) bool {
 	if session.owner.config.ReconnectDelay == 0 {
 		select {
+		case <-ctx.Done():
+			return false
 		case <-session.owner.closed:
 			return false
 		default:
@@ -201,6 +207,8 @@ func (session *sessionConnection) waitToReconnect() bool {
 	timer := time.NewTimer(session.owner.config.ReconnectDelay)
 	defer timer.Stop()
 	select {
+	case <-ctx.Done():
+		return false
 	case <-session.owner.closed:
 		return false
 	case <-timer.C:
@@ -245,41 +253,59 @@ func (session *sessionConnection) retryObservation(
 func (session *sessionConnection) restoreConnection(expectedGeneration uint64) error {
 	session.owner.reconnectMutex.Lock()
 	defer session.owner.reconnectMutex.Unlock()
+	_, err := session.owner.restoreConnectionLocked(session.owner.context(), expectedGeneration)
+	return err
+}
 
+type restoredConnection struct {
+	session    client.Session
+	generation uint64
+	fresh      bool
+}
+
+func (session *sessionConnection) restoreConnectionLocked(
+	ctx context.Context,
+	expectedGeneration uint64,
+) (restoredConnection, error) {
 	current, generation := session.owner.currentClientGeneration()
 	if generation != expectedGeneration {
-		return nil
+		return restoredConnection{session: current, generation: generation}, nil
 	}
 	if current == nil {
-		return errors.New("current client session is unavailable")
+		return restoredConnection{}, errors.New("current client session is unavailable")
 	}
 	connection := current.Connection()
 	claim, err := client.NewReconnectClaim(connection.ClientID(), connection.OwnershipEpoch())
 	if err != nil {
-		return fmt.Errorf("construct reconnect claim: %w", err)
+		return restoredConnection{}, fmt.Errorf("construct reconnect claim: %w", err)
 	}
 	reconnectRequest, err := session.owner.newReconnectRequest(claim)
 	if err != nil {
-		return err
+		return restoredConnection{}, err
 	}
-	replacement, fresh, err := session.owner.acquireRestoredClient(reconnectRequest)
+	replacement, fresh, err := session.owner.acquireRestoredClient(ctx, reconnectRequest)
 	if err != nil {
-		return err
+		return restoredConnection{}, err
 	}
 	if replacement == nil {
-		return errors.New("connector returned a nil restored client session")
+		return restoredConnection{}, errors.New("connector returned a nil restored client session")
 	}
 	if err = session.owner.validateConnection(replacement.Connection()); err != nil {
-		return errors.Join(err, replacement.Close())
+		return restoredConnection{}, errors.Join(err, replacement.Close())
 	}
 
 	session.owner.clientMutex.Lock()
 	if session.owner.clientGeneration != expectedGeneration || session.owner.clientSession != current {
+		active := session.owner.clientSession
+		activeGeneration := session.owner.clientGeneration
 		session.owner.clientMutex.Unlock()
-		return replacement.Close()
+		return restoredConnection{
+			session: active, generation: activeGeneration,
+		}, replacement.Close()
 	}
 	session.owner.clientSession = replacement
 	session.owner.clientGeneration++
+	replacementGeneration := session.owner.clientGeneration
 	session.owner.clientMutex.Unlock()
 	if fresh {
 		session.owner.resetDaemonInteractionState()
@@ -289,13 +315,17 @@ func (session *sessionConnection) restoreConnection(expectedGeneration uint64) e
 	if fresh {
 		message = "daemon connection restored with a fresh session"
 	}
-	return errors.Join(session.owner.publishActivity(message), closeErr)
+	err = errors.Join(session.owner.publishActivity(message), closeErr)
+	return restoredConnection{
+		session: replacement, generation: replacementGeneration, fresh: fresh,
+	}, err
 }
 
 func (session *sessionConnection) acquireRestoredClient(
+	ctx context.Context,
 	reconnectRequest client.InitializeRequest,
 ) (client.Session, bool, error) {
-	replacement, err := session.owner.initializeForRestore(reconnectRequest, false)
+	replacement, err := session.owner.initializeForRestore(ctx, reconnectRequest, false)
 	if err == nil || !session.owner.reconnectSessionUnavailable(err) {
 		return replacement, false, err
 	}
@@ -306,7 +336,7 @@ func (session *sessionConnection) acquireRestoredClient(
 	if err != nil {
 		return nil, false, err
 	}
-	replacement, err = session.owner.initializeForRestore(freshRequest, true)
+	replacement, err = session.owner.initializeForRestore(ctx, freshRequest, true)
 	return replacement, err == nil, err
 }
 
@@ -343,21 +373,28 @@ func (session *sessionConnection) newFreshRequest() (client.InitializeRequest, e
 }
 
 func (session *sessionConnection) initializeForRestore(
+	ctx context.Context,
 	request client.InitializeRequest,
 	retryUnavailable bool,
 ) (client.Session, error) {
 	for {
-		replacement, err := session.owner.connector.Initialize(session.owner.context(), request)
+		replacement, err := session.owner.connector.Initialize(ctx, request)
 		if err == nil {
 			return replacement, nil
 		}
 		if session.owner.closedForRestore() {
 			return nil, client.ErrClosed
 		}
+		if cause := context.Cause(ctx); cause != nil {
+			return nil, cause
+		}
 		if !session.owner.retryInitialization(err, retryUnavailable) {
 			return nil, err
 		}
-		if !session.owner.waitToReconnect() {
+		if !session.owner.waitToReconnectContext(ctx) {
+			if cause := context.Cause(ctx); cause != nil {
+				return nil, cause
+			}
 			return nil, client.ErrClosed
 		}
 	}
@@ -385,6 +422,22 @@ func (session *sessionConnection) retryInitialization(err error, retryUnavailabl
 func (session *sessionConnection) reconnectSessionUnavailable(err error) bool {
 	status, ok := errors.AsType[*client.StatusError](err)
 	return ok && status != nil && status.Code() == client.ErrorUnavailable && status.Retryable()
+}
+
+func (session *sessionConnection) rejectedStartCanRetry(ctx context.Context, err error) bool {
+	if context.Cause(ctx) != nil || errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	if _, uncertain := errors.AsType[*client.UncertainOperationError](err); uncertain {
+		return false
+	}
+	status, ok := errors.AsType[*client.StatusError](err)
+	if !ok || status == nil || status.Code() != client.ErrorUnavailable || !status.Retryable() {
+		return false
+	}
+	_, correlated := status.Operation()
+	return !correlated
 }
 
 func (session *sessionConnection) activeRunExists() bool {

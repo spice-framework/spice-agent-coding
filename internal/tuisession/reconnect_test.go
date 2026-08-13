@@ -233,6 +233,123 @@ func TestReconnectRetryClassificationAndClosedState(t *testing.T) {
 	}
 }
 
+func TestSubmitRetriesOnceOnlyAfterFreshDaemonRestore(t *testing.T) {
+	t.Parallel()
+	config, _, connection := testConfig(t)
+	unavailable := reconnectStatusError(t, client.ErrorUnavailable, true)
+	run := mustRun(t, "fresh-submit")
+	current := &fakeClientSession{connection: connection, startErr: unavailable}
+	fresh := &fakeClientSession{
+		connection:  connection,
+		startResult: mustStartResult(t, run),
+		eventStreams: []client.EventStream{newEventStream(
+			eventResult{frame: mustEventFrame(t, mustEvent(t, run, 1, client.EventRunCompleted))},
+		)},
+	}
+	connector := &reconnectConnector{outcomes: []reconnectOutcome{{err: unavailable}, {session: fresh}}}
+	session := reconnectTestSession(t, config, connector, current)
+	t.Cleanup(func() { cleanupTestSession(t, session.Close) })
+
+	result, err := session.performSubmit(context.Background(), mustText(t, "one prompt"))
+	if err != nil || !strings.Contains(result.Message().String(), run.ID()) {
+		t.Fatalf("fresh submit result = %q, error %v", result.Message().String(), err)
+	}
+	current.mutex.Lock()
+	currentCalls := current.startCalls
+	firstRequest := current.startRequests[0]
+	current.mutex.Unlock()
+	fresh.mutex.Lock()
+	freshCalls := fresh.startCalls
+	secondRequest := fresh.startRequests[0]
+	fresh.mutex.Unlock()
+	if currentCalls != 1 || freshCalls != 1 || firstRequest.Operation() != secondRequest.Operation() ||
+		firstRequest.Input().MessageID() != secondRequest.Input().MessageID() ||
+		firstRequest.Input().Text() != secondRequest.Input().Text() {
+		t.Fatalf("fresh retry calls old/new=%d/%d or changed operation/input identity", currentCalls, freshCalls)
+	}
+	first := <-session.updates
+	second := <-session.updates
+	activity, activityOK := first.update.Activity()
+	history, historyOK := second.update.PromptHistory()
+	if !activityOK || activity.String() != "daemon connection restored with a fresh session" ||
+		!historyOK || len(history) != 1 || history[0].String() != "one prompt" {
+		t.Fatalf("fresh submit updates activity=%q/%v history=%v/%v", activity.String(), activityOK, history, historyOK)
+	}
+}
+
+func TestSubmitFreshRetryIsFailClosed(t *testing.T) {
+	t.Parallel()
+	config, _, connection := testConfig(t)
+	unavailable := reconnectStatusError(t, client.ErrorUnavailable, true)
+	acceptedRun := mustRun(t, "accepted-once")
+	tests := []struct {
+		name             string
+		startResult      client.StartResult
+		startErr         error
+		connector        *reconnectConnector
+		cancelContext    bool
+		wantRestoreCalls int
+		wantError        bool
+	}{
+		{
+			name: "accepted operation is not retried", startResult: mustStartResult(t, acceptedRun),
+			connector: &reconnectConnector{},
+		},
+		{
+			name: "ordinary error is not retried", startErr: errors.New("provider rejected request"),
+			connector: &reconnectConnector{}, wantError: true,
+		},
+		{
+			name:      "operation correlated unavailable is not retried",
+			startErr:  reconnectStatusErrorWithOperation(t, client.ErrorUnavailable, true),
+			connector: &reconnectConnector{}, wantError: true,
+		},
+		{
+			name: "uncertain operation is not retried", startErr: reconnectUncertainError(t),
+			connector: &reconnectConnector{}, wantError: true,
+		},
+		{
+			name: "restore failure is not retried", startErr: unavailable,
+			connector:        &reconnectConnector{outcomes: []reconnectOutcome{{err: reconnectStatusError(t, client.ErrorInternal, false)}}},
+			wantRestoreCalls: 1, wantError: true,
+		},
+		{
+			name: "same daemon reconnect is not retried", startErr: unavailable,
+			connector:        &reconnectConnector{outcomes: []reconnectOutcome{{session: &fakeClientSession{connection: connection}}}},
+			wantRestoreCalls: 1, wantError: true,
+		},
+		{
+			name: "cancelled caller is not retried", startErr: unavailable,
+			connector: &reconnectConnector{}, cancelContext: true, wantError: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			current := &fakeClientSession{
+				connection: connection, startResult: test.startResult, startErr: test.startErr,
+			}
+			session := reconnectTestSession(t, config, test.connector, current)
+			ctx := context.Background()
+			if test.cancelContext {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithCancel(ctx)
+				cancel()
+			}
+			_, err := session.performSubmit(ctx, mustText(t, "bounded prompt"))
+			if (err != nil) != test.wantError {
+				t.Fatalf("perform submit error = %v, want error %v", err, test.wantError)
+			}
+			current.mutex.Lock()
+			calls := current.startCalls
+			current.mutex.Unlock()
+			if calls != 1 || len(test.connector.capturedRequests()) != test.wantRestoreCalls {
+				t.Fatalf("start/restore calls = %d/%d, want 1/%d", calls, len(test.connector.capturedRequests()), test.wantRestoreCalls)
+			}
+		})
+	}
+}
+
 func reconnectTestSession(
 	t *testing.T,
 	config Config,
@@ -247,6 +364,40 @@ func reconnectTestSession(
 	adapted.clientSession = current
 	adapted.clientGeneration = 1
 	return adapted
+}
+
+func reconnectStatusErrorWithOperation(t *testing.T, code client.ErrorCode, retryable bool) error {
+	t.Helper()
+	operation, err := client.NewOperationID("correlated-operation")
+	if err != nil {
+		t.Fatal(err)
+	}
+	facts, err := client.NewErrorFacts("correlated status", retryable, &operation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	status, err := client.NewStatusError(code, facts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return status
+}
+
+func reconnectUncertainError(t *testing.T) error {
+	t.Helper()
+	operation, err := client.NewOperationID("uncertain-operation")
+	if err != nil {
+		t.Fatal(err)
+	}
+	facts, err := client.NewErrorFacts("uncertain start", true, &operation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := client.NewUncertainOperationError(facts, operation, "start")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return result
 }
 
 func reconnectStatusError(t *testing.T, code client.ErrorCode, retryable bool) error {

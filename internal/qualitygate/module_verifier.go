@@ -4,11 +4,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io/fs"
 	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // moduleVerifier owns module, generated-source, release-artifact, and tree-integrity checks.
@@ -91,13 +93,83 @@ func (owner moduleVerifier) verifyReleaseArtifacts(ctx context.Context, root, di
 	return (commandRunner{}).command(ctx, root, environment, "go", (moduleVerifier{}).releaseArtifactTestArguments(root, normalized)...)
 }
 
+func (owner moduleVerifier) verifyLiveRelease(ctx context.Context, root, directory string) error {
+	normalized, err := (releaseArtifactPath{}).normalizeReleaseArtifactDirectory(directory)
+	if err != nil {
+		return err
+	}
+	environment, err := (moduleVerifier{}).liveReleaseEnvironment(runtime.GOOS, os.LookupEnv)
+	if err != nil {
+		return err
+	}
+	environment["GOFLAGS"] = "-mod=vendor"
+	environment["GOPROXY"] = "off"
+	environment["GOSUMDB"] = "off"
+	environment["GOTOOLCHAIN"] = "local"
+	return (commandRunner{}).command(
+		ctx, root, environment, "go",
+		(moduleVerifier{}).liveReleaseTestArguments(root, normalized)...,
+	)
+}
+
 func (owner moduleVerifier) releaseArtifactTestArguments(root, directory string) []string {
 	return []string{
 		"test", "-tags=spice_release_artifacts", "-count=1",
-		"-run=^TestVerifiedNativeReleaseArchive$", "./internal/installedacceptance",
+		"-run=^TestVerifiedReleasePhase6$",
+		"./internal/installedacceptance",
 		"-args", "-spice-release-candidate-root=" + root,
 		"-spice-release-artifact-dir=" + directory,
 	}
+}
+
+func (owner moduleVerifier) liveReleaseTestArguments(root, directory string) []string {
+	return []string{
+		"test", "-tags=spice_release_artifacts,spice_release_live", "-count=1",
+		"-run=^TestVerifiedLiveReleaseWorkflow$", "./internal/installedacceptance",
+		"-args", "-spice-release-candidate-root=" + root,
+		"-spice-release-artifact-dir=" + directory,
+	}
+}
+
+func (owner moduleVerifier) liveReleaseEnvironment(
+	goos string,
+	lookup func(string) (string, bool),
+) (map[string]string, error) {
+	if lookup == nil {
+		return nil, errors.New("live release environment lookup is required")
+	}
+	acknowledgement, _ := lookup("SPICE_DISTRIBUTION_LIVE_PROVIDER")
+	if acknowledgement != "1" {
+		return nil, errors.New("live release verification requires SPICE_DISTRIBUTION_LIVE_PROVIDER=1")
+	}
+	result := map[string]string{"SPICE_DISTRIBUTION_LIVE_PROVIDER": "1"}
+	for _, required := range []string{"OPENAI_API_KEY", "OPENAI_MODEL"} {
+		value, found := lookup(required)
+		if !found || strings.TrimSpace(value) == "" {
+			return nil, fmt.Errorf("live release verification requires %s", required)
+		}
+		result[required] = value
+	}
+	for _, optional := range []string{"OPENAI_BASE_URL", "OPENAI_ORGANIZATION", "OPENAI_PROJECT"} {
+		if value, found := lookup(optional); found && strings.TrimSpace(value) != "" {
+			result[optional] = value
+		}
+	}
+	acknowledgement, found := lookup("SPICE_DISTRIBUTION_EPHEMERAL_RUNNER")
+	if goos == "windows" {
+		if !found || acknowledgement != "1" {
+			return nil, errors.New(
+				"Windows live release verification requires SPICE_DISTRIBUTION_EPHEMERAL_RUNNER=1",
+			)
+		}
+		result["SPICE_DISTRIBUTION_EPHEMERAL_RUNNER"] = "1"
+	} else if found && acknowledgement != "" {
+		return nil, fmt.Errorf(
+			"%s live release verification requires empty SPICE_DISTRIBUTION_EPHEMERAL_RUNNER",
+			goos,
+		)
+	}
+	return result, nil
 }
 
 func (owner moduleVerifier) generatedApplicationChecks() [][]string {

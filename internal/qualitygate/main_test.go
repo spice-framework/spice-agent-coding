@@ -26,6 +26,7 @@ func TestQualityGateTimeoutsCoverEveryModeAndUnknown(t *testing.T) {
 		{mode: "fmt", want: 15 * time.Minute},
 		{mode: "verify", want: 30 * time.Minute},
 		{mode: "release-artifacts", want: 15 * time.Minute},
+		{mode: "release-live", want: 15 * time.Minute},
 		{mode: "opencode-eval", want: maximumOpenCodeEvaluationDuration + time.Minute},
 		{mode: "", want: 15 * time.Minute},
 		{mode: "unknown", want: 15 * time.Minute},
@@ -138,7 +139,7 @@ func TestFormattingBatchesPreserveEveryFileWithinWindowsCommandBounds(t *testing
 
 func TestNetworkAllowedOnlyForBootstrap(t *testing.T) {
 	t.Parallel()
-	for _, mode := range []string{"fast", "check", "fmt", "verify", "release-artifacts", "unknown"} {
+	for _, mode := range []string{"fast", "check", "fmt", "verify", "release-artifacts", "release-live", "unknown"} {
 		if (qualityGate{}).networkAllowed(mode) {
 			t.Fatalf("networkAllowed(%q) = true", mode)
 		}
@@ -217,7 +218,8 @@ func TestReleaseArtifactGateUsesOneOfflineBuildTaggedTest(t *testing.T) {
 	root := t.TempDir()
 	want := []string{
 		"test", "-tags=spice_release_artifacts", "-count=1",
-		"-run=^TestVerifiedNativeReleaseArchive$", "./internal/installedacceptance",
+		"-run=^TestVerifiedReleasePhase6$",
+		"./internal/installedacceptance",
 		"-args", "-spice-release-candidate-root=" + root,
 		"-spice-release-artifact-dir=" + directory,
 	}
@@ -226,6 +228,95 @@ func TestReleaseArtifactGateUsesOneOfflineBuildTaggedTest(t *testing.T) {
 	}
 	if err := (moduleVerifier{}).verifyReleaseArtifacts(t.Context(), t.TempDir(), "relative"); err == nil {
 		t.Fatal("release artifact gate accepted a relative directory")
+	}
+}
+
+func TestLiveReleaseGateRequiresExplicitCredentialsAndRunner(t *testing.T) {
+	t.Parallel()
+	valid := map[string]string{
+		"SPICE_DISTRIBUTION_LIVE_PROVIDER":    "1",
+		"SPICE_DISTRIBUTION_EPHEMERAL_RUNNER": "1",
+		"OPENAI_API_KEY":                      "secret",
+		"OPENAI_MODEL":                        "model",
+		"OPENAI_BASE_URL":                     "https://example.invalid/v1",
+	}
+	lookup := func(values map[string]string) func(string) (string, bool) {
+		return func(name string) (string, bool) {
+			value, found := values[name]
+			return value, found
+		}
+	}
+	environment, err := (moduleVerifier{}).liveReleaseEnvironment("windows", lookup(valid))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(environment) != len(valid) || environment["OPENAI_API_KEY"] != "secret" {
+		t.Fatalf("live release environment = %#v", environment)
+	}
+	for _, mutate := range []func(map[string]string){
+		func(values map[string]string) { delete(values, "SPICE_DISTRIBUTION_LIVE_PROVIDER") },
+		func(values map[string]string) { values["SPICE_DISTRIBUTION_LIVE_PROVIDER"] = "true" },
+		func(values map[string]string) { delete(values, "OPENAI_API_KEY") },
+		func(values map[string]string) { values["OPENAI_MODEL"] = " " },
+		func(values map[string]string) { delete(values, "SPICE_DISTRIBUTION_EPHEMERAL_RUNNER") },
+	} {
+		candidate := maps.Clone(valid)
+		mutate(candidate)
+		if _, err = (moduleVerifier{}).liveReleaseEnvironment("windows", lookup(candidate)); err == nil {
+			t.Fatal("invalid live release environment succeeded")
+		}
+	}
+	linux := maps.Clone(valid)
+	delete(linux, "SPICE_DISTRIBUTION_EPHEMERAL_RUNNER")
+	if _, err = (moduleVerifier{}).liveReleaseEnvironment("linux", lookup(linux)); err != nil {
+		t.Fatal(err)
+	}
+	linux["SPICE_DISTRIBUTION_EPHEMERAL_RUNNER"] = "1"
+	if _, err = (moduleVerifier{}).liveReleaseEnvironment("linux", lookup(linux)); err == nil {
+		t.Fatal("Linux accepted the Windows runner acknowledgement")
+	}
+	if _, err = (moduleVerifier{}).liveReleaseEnvironment("linux", nil); err == nil {
+		t.Fatal("nil live release lookup succeeded")
+	}
+
+	root := t.TempDir()
+	directory := filepath.Join(t.TempDir(), "verified subjects")
+	want := []string{
+		"test", "-tags=spice_release_artifacts,spice_release_live", "-count=1",
+		"-run=^TestVerifiedLiveReleaseWorkflow$", "./internal/installedacceptance",
+		"-args", "-spice-release-candidate-root=" + root,
+		"-spice-release-artifact-dir=" + directory,
+	}
+	if got := (moduleVerifier{}).liveReleaseTestArguments(root, directory); !slices.Equal(got, want) {
+		t.Fatalf("live release arguments = %q, want %q", got, want)
+	}
+}
+
+func TestLiveReleaseEntrypointRequiresExactOptInContract(t *testing.T) {
+	t.Parallel()
+	const valid = ".PHONY: verify-release-live\n\nverify-release-live:\n\tgo run ./internal/qualitygate -mode=release-live -artifacts=\"$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)\"\n"
+	for _, test := range []struct {
+		name, content string
+		wantErr       bool
+	}{
+		{name: "valid", content: valid},
+		{name: "missing mode", content: strings.Replace(valid, "-mode=release-live ", "", 1), wantErr: true},
+		{name: "implicit subjects", content: strings.Replace(valid, " -artifacts=\"$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)\"", "", 1), wantErr: true},
+		{name: "not phony", content: strings.Replace(valid, ".PHONY: verify-release-live", ".PHONY: verify", 1), wantErr: true},
+		{name: "network helper", content: strings.Replace(valid, "go run", "curl example.invalid && go run", 1), wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			writeFile(t, root, "Makefile", test.content)
+			err := (qualityGate{}).checkLiveReleaseEntrypoint(root)
+			if test.wantErr && err == nil {
+				t.Fatal("checkLiveReleaseEntrypoint() error = nil")
+			}
+			if !test.wantErr && err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }
 

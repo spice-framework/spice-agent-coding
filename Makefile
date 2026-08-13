@@ -1,4 +1,4 @@
-.PHONY: tools-bootstrap fast check coverage fmt verify verify-release verify-release-artifacts eval-opencode dev-daemon dev-terminal
+.PHONY: tools-bootstrap fast check coverage fmt verify verify-release verify-release-artifacts verify-release-live eval-opencode dev-daemon dev-terminal
 
 tools-bootstrap:
 	go run ./internal/qualitygate -mode=tools-bootstrap
@@ -22,6 +22,9 @@ verify-release: verify
 
 verify-release-artifacts:
 	go run ./internal/qualitygate -mode=release-artifacts -artifacts="$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)"
+
+verify-release-live:
+	go run ./internal/qualitygate -mode=release-live -artifacts="$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)"
 
 eval-opencode:
 	go run ./internal/qualitygate -mode=opencode-eval

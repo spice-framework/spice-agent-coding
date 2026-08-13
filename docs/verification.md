@@ -35,8 +35,8 @@ not an older `go` that may appear first on `PATH`.
 - `make verify-release` is the unconditional alias consumed by the central
   distribution workflow. The repository identity gate requires this exact
   alias before any release tag is considered valid.
-- `make verify-release-artifacts` is a separate, tag-independent installed-byte
-  gate. Set `SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR` to a canonical absolute
+- `make verify-release-artifacts` is a separate, tag-independent deterministic
+  installed-byte gate. Set `SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR` to a canonical absolute
   directory containing exactly the nine subjects already authenticated by the
   independent Toolchain verifier: six archives, release metadata, SPDX SBOM,
   and `checksums.txt`. The Sigstore bundle is verification evidence rather than
@@ -46,7 +46,10 @@ not an older `go` that may appear first on `PATH`.
 The release-artifact gate rejects missing, extra, non-regular, or symlinked
 subjects; noncanonical checksums; metadata, target, payload, or SBOM drift; and
 archive traversal, duplicate entries, undeclared paths, invalid modes, sizes,
-or payload hashes. It extracts the native archive beneath a path containing
+or payload hashes. It extracts all six archives twice beneath distinct clean
+paths containing spaces and Unicode and requires exact installed membership,
+bytes, and modes. Cross-architecture binaries are never executed. It extracts
+the native archive beneath a path containing
 spaces and Unicode, runs both exact binaries with `--version` and `--check`,
 then proves explicit `serve`/`attach` and zero-argument managed sibling startup
 and cleanup. It also drives the exact terminal bytes through Linux PTY or
@@ -70,6 +73,25 @@ by a disposable runner. Linux and macOS require that acknowledgement to be
 empty. The retired `SPICE_AGENT_VERIFIED_ARTIFACT_DIR` and
 `SPICE_AGENT_EPHEMERAL_RUNNER` aliases are rejected. The gate is an installed
 execution check, not a replacement for provenance or checksum verification.
+
+One unconditional Phase 6 suite entrypoint runs the all-six installation,
+native PTY/ConPTY replacement-and-history proof, five-sample installed
+performance budget, and deterministic decisive workflow through compiled read, replace, and shell
+tools, the required runtime plugin, provider/compiled-process/plugin
+cancellation, reconnect fencing, exactly-once terminals, privilege warnings,
+and secret scans. See [Phase 6 installed release evidence](phase6-release-evidence.md).
+
+`make verify-release-live` is the separate, credential-gated external provider
+proof. It uses the same independently verified artifact directory but is never
+called by `make fast`, `make check`, `make verify`, `make verify-release`,
+or `make verify-release-artifacts`. Set
+`SPICE_DISTRIBUTION_LIVE_PROVIDER=1`, `OPENAI_API_KEY`, and `OPENAI_MODEL`
+only for an explicitly authorized invocation. Windows additionally requires
+the existing ephemeral-runner acknowledgement. The quality gate passes only
+those values plus optional OpenAI base URL, organization, and project settings
+to the exact release process.
+After shutdown, the live proof scans bounded terminal/daemon output, endpoint
+metadata, and all test-owned persisted roots for the credential canary.
 
 The architecture-proof acceptance additionally runs `spice generate --check`,
 `spice generate --diff`, and `spice beans --explain` against the selected

@@ -92,8 +92,9 @@ func (session *Session) Receive(ctx context.Context) (agenttui.SessionUpdate, er
 	}
 }
 
-// Perform translates one TUI intent into exactly one client mutation. Start,
-// respond, and cancel are never retried by this adapter.
+// Perform translates one TUI intent into a client mutation. Respond and cancel
+// are never retried. A Start rejected as unavailable can be retried once with
+// the same operation identity only after a synchronized fresh-daemon restore.
 func (session *Session) Perform(ctx context.Context, intent agenttui.Intent) (agenttui.CommandResult, error) {
 	if ctx == nil {
 		return agenttui.CommandResult{}, errors.New("perform TUI intent: context must not be nil")

@@ -153,12 +153,14 @@ func TestProductionSpiceDevSupervisorsPreserveTerminalAcrossDaemonReplacement(t 
 		bytes.Equal(secondDaemon.Process().InstanceID(), firstDaemon.Process().InstanceID()) {
 		t.Fatal("valid daemon-only edit retained the prior daemon process identity")
 	}
+	beforeSecond := terminalOutput.Count("dual-supervisor-two")
+	beginProductionPrompt(t, terminalSupervisor, terminalOutput, "second supervisor prompt")
 	terminalOutput.waitForText(t, "daemon connection restored with a fresh session")
 	assertProductionTerminalUnchanged(
 		t, terminalSupervisor, terminalSupervisorPID, terminalIdentity, terminalOutput,
 	)
 
-	runProductionPrompt(t, terminalSupervisor, terminalOutput, providerDirectory, "second supervisor prompt", 2)
+	awaitProductionPrompt(t, terminalOutput, providerDirectory, 2, beforeSecond)
 	waitForOutputCount(t, daemonOutput, `"event":"agent.run.completed"`, 2)
 	assertProductionHistory(t, terminalSupervisor, terminalOutput)
 	if count := strings.Count(daemonOutput.String(), `"event":"agent.run.completed"`); count != 2 {
@@ -291,9 +293,29 @@ func runProductionPrompt(
 ) {
 	t.Helper()
 	before := output.Count("dual-supervisor-two")
+	beginProductionPrompt(t, terminal, output, prompt)
+	awaitProductionPrompt(t, output, providerDirectory, completed, before)
+}
+
+func beginProductionPrompt(
+	t *testing.T,
+	terminal *productionSupervisor,
+	output *eventBuffer,
+	prompt string,
+) {
+	t.Helper()
 	terminal.write(t, prompt)
 	output.waitForText(t, prompt)
 	terminal.write(t, "\r")
+}
+
+func awaitProductionPrompt(
+	t *testing.T,
+	output *eventBuffer,
+	providerDirectory string,
+	completed, before int,
+) {
+	t.Helper()
 	waitForDevelopmentFile(t, filepath.Join(providerDirectory, "checkpoint"), output)
 	if err := os.WriteFile(filepath.Join(providerDirectory, "release"), []byte("release\n"), 0o600); err != nil {
 		t.Fatalf("release deterministic development provider: %v", err)

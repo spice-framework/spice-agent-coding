@@ -158,6 +158,10 @@ type fakeClientSession struct {
 	interactionStreams []client.InteractionStream
 	interactionErrors  []error
 	startCalls         int
+	startRequests      []client.StartRequest
+	startResults       []client.StartResult
+	startErrors        []error
+	startHook          func(int)
 	startResult        client.StartResult
 	startErr           error
 	cancelCalls        int
@@ -175,12 +179,29 @@ func (session *fakeClientSession) Connection() client.Connection { return sessio
 
 func (session *fakeClientSession) Start(
 	_ context.Context,
-	_ client.StartRequest,
+	request client.StartRequest,
 ) (client.StartResult, error) {
 	session.mutex.Lock()
-	defer session.mutex.Unlock()
 	session.startCalls++
-	return session.startResult, session.startErr
+	session.startRequests = append(session.startRequests, request)
+	index := session.startCalls - 1
+	hook := session.startHook
+	var result client.StartResult
+	var err error
+	if index < len(session.startResults) {
+		result = session.startResults[index]
+	}
+	if index < len(session.startErrors) {
+		err = session.startErrors[index]
+	}
+	if index >= len(session.startErrors) && index >= len(session.startResults) {
+		result, err = session.startResult, session.startErr
+	}
+	session.mutex.Unlock()
+	if hook != nil {
+		hook(index)
+	}
+	return result, err
 }
 
 func (session *fakeClientSession) Events(

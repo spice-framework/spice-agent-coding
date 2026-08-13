@@ -35,19 +35,10 @@ var releaseCandidateRoot = flag.String(
 	"absolute repository root containing the candidate's canonical inert release metadata",
 )
 
-// TestVerifiedNativeReleaseArchive executes exact released bytes only after the
+// verifyNativeReleaseArchive executes exact released bytes only after the
 // caller has independently verified and supplied the complete subject set.
-func TestVerifiedNativeReleaseArchive(t *testing.T) {
-	if verifiedArtifactDirectory == nil || *verifiedArtifactDirectory == "" {
-		t.Fatal("-spice-release-artifact-dir is required")
-	}
-	if releaseCandidateRoot == nil || *releaseCandidateRoot == "" {
-		t.Fatal("-spice-release-candidate-root is required")
-	}
-	set, err := releaseinstallation.NewVerifier().VerifyCandidate(*releaseCandidateRoot, *verifiedArtifactDirectory)
-	if err != nil {
-		t.Fatalf("validate independently verified release subjects: %v", err)
-	}
+func verifyNativeReleaseArchive(t *testing.T) {
+	set := verifiedReleaseSet(t)
 	extraction := filepath.Join(t.TempDir(), "Spice Agent π installed bytes")
 	installRoot, err := set.ExtractNative(extraction, runtime.GOOS, runtime.GOARCH)
 	if err != nil {

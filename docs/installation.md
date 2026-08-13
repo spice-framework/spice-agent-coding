@@ -29,3 +29,10 @@ Verify every published file against `checksums.txt` and its GitHub artifact
 attestation before extracting an archive. The attestation is bound to the
 exact source tag, commit, and centrally pinned distribution workflow. The
 release also publishes an SPDX SBOM for independent dependency inspection.
+
+Repository release evidence installs every Linux, macOS, and Windows archive
+for both amd64 and arm64 into clean roots and compares exact contents and modes.
+Only a host-compatible archive is executable; cross-architecture extraction is
+structural verification, not an emulation claim. Native Windows and Linux
+installed-byte performance budgets and the deterministic decisive workflow are
+recorded in [Phase 6 installed release evidence](phase6-release-evidence.md).

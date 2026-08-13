@@ -20,7 +20,7 @@ import (
 type qualityGate struct{}
 
 func (owner qualityGate) execute() int {
-	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, verify, release-artifacts, or opencode-eval")
+	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, verify, release-artifacts, release-live, or opencode-eval")
 	artifacts := flag.String("artifacts", "", "absolute independently verified release-subject directory")
 	flag.Parse()
 	ctx, cancel := (qualityGate{}).qualityGateContext(context.Background(), *mode)
@@ -102,6 +102,13 @@ func (owner qualityGate) runConfigured(ctx context.Context, root, mode, artifact
 					return (moduleVerifier{}).verifyReleaseArtifacts(ctx, root, artifacts)
 				}},
 			}
+		case "release-live":
+			steps = []step{
+				identity,
+				{"credential-gated live release workflow", func() error {
+					return (moduleVerifier{}).verifyLiveRelease(ctx, root, artifacts)
+				}},
+			}
 		case "opencode-eval":
 			steps = []step{
 				{"advisory OpenCode free-model evaluation", func() error {
@@ -143,6 +150,9 @@ func (owner qualityGate) checkRepositoryContract(root string) error {
 	if err := (qualityGate{}).checkReleaseArtifactEntrypoint(root); err != nil {
 		return err
 	}
+	if err := (qualityGate{}).checkLiveReleaseEntrypoint(root); err != nil {
+		return err
+	}
 	if err := (qualityGate{}).checkDevelopmentEntrypoints(root); err != nil {
 		return err
 	}
@@ -150,6 +160,27 @@ func (owner qualityGate) checkRepositoryContract(root string) error {
 		return err
 	}
 	return (qualityGate{}).checkReleaseWorkflow(root)
+}
+
+func (owner qualityGate) checkLiveReleaseEntrypoint(root string) error {
+	content, err := os.ReadFile(filepath.Join(root, "Makefile")) // #nosec G304 -- fixed repository workflow path.
+	if err != nil {
+		return fmt.Errorf("read Makefile: %w", err)
+	}
+	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
+	const target = "verify-release-live:\n\tgo run ./internal/qualitygate -mode=release-live -artifacts=\"$(SPICE_DISTRIBUTION_VERIFIED_ARTIFACT_DIR)\"\n"
+	if strings.Count(normalized, target) != 1 {
+		return errors.New("makefile must expose the exact credential-gated live release gate")
+	}
+	for line := range strings.SplitSeq(normalized, "\n") {
+		if targets, ok := strings.CutPrefix(line, ".PHONY:"); ok {
+			if !slices.Contains(strings.Fields(targets), "verify-release-live") {
+				return errors.New("makefile must declare verify-release-live phony")
+			}
+			return nil
+		}
+	}
+	return errors.New("makefile has no .PHONY declaration")
 }
 
 func (owner qualityGate) checkCIWorkflow(root string) error {

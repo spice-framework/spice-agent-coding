@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "harness_commit": "b33067c66885b4e287f7ac308dc66464c6473d99",
+  "release_commit": "96fefab2cfcd4ff849582e0d4d328ec8c782f16d",
+  "unit": "microseconds",
+  "samples": 5,
+  "aggregation": "median",
+  "time_material_regression_percent": 20,
+  "allocation_material_regression_percent": 10,
+  "allocation_scope": "not applicable to cross-process installed metrics",
+  "platforms": {
+    "linux/amd64": {
+      "evidence": "Go 1.26.5, WSL2 Linux/amd64 on AMD Ryzen 9 5900X",
+      "metrics": {
+        "build-both-binaries": {
+          "observed": [12451269, 18599416, 20334686, 23245064, 33455499],
+          "median": 20334686,
+          "ceiling": 60000000
+        },
+        "daemon-plugin-ready": {
+          "observed": [113067, 122615, 122996, 132412, 153657],
+          "median": 122996,
+          "ceiling": 1000000
+        },
+        "generation-check": {
+          "observed": [16235637, 17537994, 18155140, 24502825, 27113830],
+          "median": 18155140,
+          "ceiling": 45000000
+        },
+        "ipc-initialize-health": {
+          "observed": [1300, 1558, 1770, 2041, 2905],
+          "median": 1770,
+          "ceiling": 25000
+        },
+        "plugin-cancel-terminal": {
+          "observed": [410, 632, 768, 805, 1013],
+          "median": 768,
+          "ceiling": 10000
+        },
+        "plugin-drain-shutdown": {
+          "observed": [34099, 34541, 34608, 34752, 37303],
+          "median": 34608,
+          "ceiling": 250000
+        },
+        "plugin-execute": {
+          "observed": [616, 907, 980, 1031, 1170],
+          "median": 980,
+          "ceiling": 10000
+        },
+        "start-first-event": {
+          "observed": [2, 3, 6, 8, 25],
+          "median": 6,
+          "ceiling": 10000
+        },
+        "tui-first-frame": {
+          "observed": [22710, 23086, 24982, 25371, 28282],
+          "median": 24982,
+          "ceiling": 500000
+        },
+        "tui-reconnect": {
+          "observed": [125756, 129845, 129971, 131321, 133277],
+          "median": 129971,
+          "ceiling": 1000000
+        },
+        "tui-resize": {
+          "observed": [688, 877, 991, 1476, 2051],
+          "median": 991,
+          "ceiling": 25000
+        }
+      }
+    },
+    "windows/amd64": {
+      "evidence": "Go 1.26.5, Windows/amd64 on AMD Ryzen 9 5900X",
+      "metrics": {
+        "build-both-binaries": {
+          "observed": [4840173, 5206938, 5305845, 6497127, 6608122],
+          "median": 5305845,
+          "ceiling": 15000000
+        },
+        "daemon-plugin-ready": {
+          "observed": [85577, 86128, 91311, 129602, 1497207],
+          "median": 91311,
+          "ceiling": 3000000
+        },
+        "generation-check": {
+          "observed": [10551397, 12747700, 12815031, 16105219, 19877254],
+          "median": 12815031,
+          "ceiling": 30000000
+        },
+        "ipc-initialize-health": {
+          "observed": [1048, 1559, 2053, 2111, 2120],
+          "median": 2053,
+          "ceiling": 25000
+        },
+        "plugin-cancel-terminal": {
+          "observed": [0, 0, 524, 531, 539],
+          "median": 524,
+          "ceiling": 10000
+        },
+        "plugin-drain-shutdown": {
+          "observed": [35354, 37082, 37435, 38551, 41488],
+          "median": 37435,
+          "ceiling": 250000
+        },
+        "plugin-execute": {
+          "observed": [514, 524, 536, 1090, 1126],
+          "median": 536,
+          "ceiling": 10000
+        },
+        "start-first-event": {
+          "observed": [0, 516, 526, 526, 532],
+          "median": 526,
+          "ceiling": 10000
+        },
+        "tui-first-frame": {
+          "observed": [52117, 54666, 57560, 58573, 620303],
+          "median": 57560,
+          "ceiling": 2000000
+        },
+        "tui-reconnect": {
+          "observed": [118609, 125441, 126716, 127845, 129865],
+          "median": 126716,
+          "ceiling": 1000000
+        },
+        "tui-resize": {
+          "observed": [503, 508, 527, 576, 1637],
+          "median": 527,
+          "ceiling": 25000
+        }
+      }
+    }
+  }
+}

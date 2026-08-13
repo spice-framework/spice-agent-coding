@@ -46,17 +46,11 @@ func (session *sessionCommands) performSubmit(
 	if err != nil {
 		return agenttui.CommandResult{}, fmt.Errorf("submit prompt: %w", err)
 	}
-	clientSession := session.owner.currentClient()
-	operationContext, cancel := session.owner.operationContext(ctx)
-	result, err := clientSession.Start(operationContext, request)
-	cancel()
+	result, err := session.owner.startSubmittedRun(ctx, request)
 	if err != nil {
 		return agenttui.CommandResult{}, fmt.Errorf("submit prompt: %w", err)
 	}
 	session.owner.stateMutex.Lock()
-	session.owner.activeRun = result.Run()
-	session.owner.hasActiveRun = true
-	session.owner.eventCursor = 0
 	session.owner.promptHistory = (historyBuffer{}).append(session.owner.promptHistory, prompt)
 	history := slices.Clone(session.owner.promptHistory)
 	session.owner.stateMutex.Unlock()
@@ -65,6 +59,47 @@ func (session *sessionCommands) performSubmit(
 	}
 	session.owner.startWorker(func() { session.owner.observeEvents(result.Run()) })
 	return (commandResultFactory{}).new("run " + result.Run().ID() + " started")
+}
+
+func (session *sessionCommands) startSubmittedRun(
+	ctx context.Context,
+	request client.StartRequest,
+) (client.StartResult, error) {
+	session.owner.reconnectMutex.Lock()
+	defer session.owner.reconnectMutex.Unlock()
+	clientSession, generation := session.owner.currentClientGeneration()
+	operationContext, cancel := session.owner.operationContext(ctx)
+	result, err := clientSession.Start(operationContext, request)
+	cancel()
+	if err != nil {
+		originalErr := err
+		if !session.owner.rejectedStartCanRetry(ctx, err) {
+			return client.StartResult{}, err
+		}
+		restoreContext, restoreCancel := session.owner.operationContext(ctx)
+		restored, restoreErr := session.owner.restoreConnectionLocked(restoreContext, generation)
+		restoreCancel()
+		if restoreErr != nil {
+			return client.StartResult{}, errors.Join(
+				originalErr, fmt.Errorf("restore daemon for rejected start: %w", restoreErr),
+			)
+		}
+		if !restored.fresh || restored.session == nil || restored.generation == generation {
+			return client.StartResult{}, originalErr
+		}
+		retryContext, retryCancel := session.owner.operationContext(ctx)
+		result, err = restored.session.Start(retryContext, request)
+		retryCancel()
+		if err != nil {
+			return client.StartResult{}, errors.Join(originalErr, fmt.Errorf("retry rejected start once: %w", err))
+		}
+	}
+	session.owner.stateMutex.Lock()
+	session.owner.activeRun = result.Run()
+	session.owner.hasActiveRun = true
+	session.owner.eventCursor = 0
+	session.owner.stateMutex.Unlock()
+	return result, nil
 }
 
 func (session *sessionCommands) performCancel(ctx context.Context) (agenttui.CommandResult, error) {
