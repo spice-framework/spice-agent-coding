@@ -8,9 +8,9 @@ Repositories do not carry divergent local policy copies.
 
 The product graph selects public Spice `v0.1.0-preview.4` at commit
 `9970279b7a2f029abd140ba6ee45df554cb159e2`. The independent tools module pins
-the exact `spicestyle` verifier from Toolchain `v0.1.0-preview.7` at commit
-`e83e4ff8639ed6e3aa49c6dd8b2e3ba0d5174e08`. Its module and `go.mod` sums are
-`h1:XgNwiSCrnwh+iDxi3RJX8pbRTTpdL7NDiMedE861U6g=` and
+the exact `spicestyle` verifier from Toolchain `v0.1.0-preview.8` at commit
+`2eb210494b806da023b518fcda8d07fdf32605e2`. Its module and `go.mod` sums are
+`h1:syajJg1GSYZT1TZbvBmXFh/X/cDi3dnb+9t0GXGvaJg=` and
 `h1:nezzFkAq9TDdavVL5sYJm2nOKNWAu1p9VTz3XFihgUg=`. The repository-owned
 quality gate checks the product and tools selections independently.
 

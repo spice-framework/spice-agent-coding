@@ -1,7 +1,7 @@
 # Generated daemon target
 
 The distribution pins the Spice runtime at `v0.1.0-preview.4`, Toolchain at
-`v0.1.0-preview.7`, and Agent core at `v0.1.0-preview.7`. This coordinated pin supplies the
+`v0.1.0-preview.8`, and Agent core at `v0.1.0-preview.7`. This coordinated pin supplies the
 canonical `@ConfigurationProperties` contract, hyphenated property-prefix
 segments, exact generated health-source injection, and plan-dependent runtime
 plugin recovery policy used by this target.

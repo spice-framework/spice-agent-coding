@@ -159,7 +159,7 @@ github.com/spice-framework/spice-agent-tui/cmd/spice-agent-tui-annotations
 github.com/spice-framework/spice-agent-tui/internal/annotationtool
 github.com/spice-framework/spice-agent-tui/internal/presentation
 github.com/spice-framework/spice-agent-tui/terminal
-# github.com/spice-framework/toolchain v0.1.0-preview.7
+# github.com/spice-framework/toolchain v0.1.0-preview.8
 ## explicit; go 1.26.0
 github.com/spice-framework/toolchain/cmd/spice
 github.com/spice-framework/toolchain/cmd/spice-annotation-core
@@ -181,6 +181,7 @@ github.com/spice-framework/toolchain/compiler/enum
 github.com/spice-framework/toolchain/compiler/event
 github.com/spice-framework/toolchain/compiler/generate
 github.com/spice-framework/toolchain/compiler/graph
+github.com/spice-framework/toolchain/compiler/internal/generationscope
 github.com/spice-framework/toolchain/compiler/lifecycle
 github.com/spice-framework/toolchain/compiler/load
 github.com/spice-framework/toolchain/compiler/modulith

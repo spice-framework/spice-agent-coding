@@ -10,7 +10,7 @@
     "bridge_dir": "cmd/spice-agentd",
     "manifest_path": ".spice/spice_agentd.manifest.json"
   },
-  "generator_version": "v0.1.0-preview.7",
+  "generator_version": "v0.1.0-preview.8",
   "go_format_line": "1.26",
   "input_sha256": "sha256:cc98a4d4f68a309d6dc7db3bd9fb4efb59f16742dd4ddf186ed1759032fca68f",
   "files": [
@@ -1285,7 +1285,7 @@
     },
     {
       "path": "internal/spicegen/spice_agentd/spice_assembly_gen.go",
-      "sha256": "sha256:fe763779dcb67b2bd1624b24925de1d1fdb89b108c94e59bc829b026fc7cbb0f",
+      "sha256": "sha256:8d127368ee2dc1a07acd4d4405c082311ddcb10c77457e56224f3ed2e4056803",
       "role": "target-assembly",
       "related_sources": [
         {

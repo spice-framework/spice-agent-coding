@@ -8,7 +8,7 @@
     "output_dir": "internal/spicegen/architectureproof",
     "manifest_path": ".spice/architectureproof.manifest.json"
   },
-  "generator_version": "v0.1.0-preview.7",
+  "generator_version": "v0.1.0-preview.8",
   "go_format_line": "1.26",
   "input_sha256": "sha256:9404e5deec802038e5cd8755126dc016e267d2ecf630b79492c82624058efa15",
   "files": [

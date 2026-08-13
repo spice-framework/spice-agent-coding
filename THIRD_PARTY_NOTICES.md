@@ -1649,7 +1649,7 @@ Source: https://github.com/spice-framework/spice-agent-tui
        limitations under the License.
 
 
-## `github.com/spice-framework/toolchain` `v0.1.0-preview.7`
+## `github.com/spice-framework/toolchain` `v0.1.0-preview.8`
 
 Source: https://github.com/spice-framework/toolchain
 

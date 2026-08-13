@@ -54,8 +54,8 @@ github.com/spice-framework/spice-agent-tools-coding v0.1.0-preview.1 h1:HMJsMrrX
 github.com/spice-framework/spice-agent-tools-coding v0.1.0-preview.1/go.mod h1:MB3mlhtp+Ix2SW/ZB/Pa0WjOlvgwhQmd0mT/9HEQFe8=
 github.com/spice-framework/spice-agent-tui v0.1.0-preview.2 h1:WOyasmHWrLQHfXxFG20D/AufbJ9RnPrZvemaa+/mmac=
 github.com/spice-framework/spice-agent-tui v0.1.0-preview.2/go.mod h1:2EvMOqKnzX4wztrURPg7Q9pXiqQR2wsE0vv6a93BQt4=
-github.com/spice-framework/toolchain v0.1.0-preview.7 h1:XgNwiSCrnwh+iDxi3RJX8pbRTTpdL7NDiMedE861U6g=
-github.com/spice-framework/toolchain v0.1.0-preview.7/go.mod h1:nezzFkAq9TDdavVL5sYJm2nOKNWAu1p9VTz3XFihgUg=
+github.com/spice-framework/toolchain v0.1.0-preview.8 h1:syajJg1GSYZT1TZbvBmXFh/X/cDi3dnb+9t0GXGvaJg=
+github.com/spice-framework/toolchain v0.1.0-preview.8/go.mod h1:nezzFkAq9TDdavVL5sYJm2nOKNWAu1p9VTz3XFihgUg=
 github.com/tidwall/gjson v1.14.2/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/gjson v1.19.0 h1:xwxm7n691Uf3u5OFjzngavjGTh55KX5q/9w9xHW88JU=
 github.com/tidwall/gjson v1.19.0/go.mod h1:V37/opeE/JbLUOfH0QTXiNez2l0RUjYUhpT4szFQAfc=
