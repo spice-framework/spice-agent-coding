@@ -1,0 +1,8 @@
+.vscode
+*.autosave
+.DS_Store
+.directory
+desktop.ini
+.*.swp
+__debug_bin*
+.codex

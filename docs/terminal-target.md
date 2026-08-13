@@ -82,8 +82,11 @@ same state without changing the engine protocol.
 The repository gate runs `spice generate --check` and `--diff`, inspects bean
 selection and source mappings, constructs the graph without connecting, builds
 both executables with `-trimpath`, and executes shuffled, race, coverage,
-security, and vendor-offline checks. Real terminal interaction on Windows and
-Linux remains a release-boundary acceptance item.
+security, and vendor-offline checks. The installed-byte release gate additionally
+executes independently verified native archives through Linux PTY and Windows
+ConPTY with bounded virtual-terminal capture, physical resize, reconnect, real
+input, and process-tree cleanup. It does not use the accessible pipe mode or a
+test-only runtime switch.
 
 Coding tools invoked by the daemon have the current user process's filesystem
 and process privileges. The terminal prints the required warning; this preview

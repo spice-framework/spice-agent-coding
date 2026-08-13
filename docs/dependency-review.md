@@ -13,6 +13,21 @@ transitive Apache-2.0, BSD, and MIT dependencies. The distribution adds no
 independent third-party runtime dependency. `make verify` runs gosec and
 govulncheck over the selected product graph and reproduces vendor contents.
 
+Native installed-byte verification directly imports
+`github.com/Kodecable/crosspty v1.1.0` only from tests. The maintained public
+TUI preview already selects that exact module. It is BSD-3-Clause, uses
+`github.com/creack/pty v1.1.24` (MIT) on Unix, and uses Go `x/sys` on Windows;
+all are checksum-pinned and covered by govulncheck. CrossPTY supports Linux PTY
+and Windows 10 1809/Server 2019 or later ConPTY, exposes bounded graceful/forced
+process-group cleanup, and receives only a closed secret-minimal environment.
+The harness caps retained terminal output at 256 KiB and gives every wait,
+close, and process lifecycle a context or explicit timeout. CrossPTY's nested
+ActiveState, photostorm, and Go derivation licenses are deterministic source
+inputs under `internal/releaseassets/attributions`; release-asset generation
+copies them into `THIRD_PARTY_NOTICES.md` because ordinary `go mod vendor`
+retains only the module-root license. No PTY dependency is linked into either
+released executable.
+
 Daemon event logging uses Spice Agent's standard-library-only production
 logging package and the Spice core `slog.Handler` boundary. It owns one bounded
 mailbox and lifecycle consumer, performs no network or file I/O, filters model

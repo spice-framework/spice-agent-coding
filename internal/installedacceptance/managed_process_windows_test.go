@@ -15,7 +15,7 @@ type managedProcessWitness struct {
 }
 
 func openManagedProcessWitness(pid uint32) (*managedProcessWitness, error) {
-	handle, err := windows.OpenProcess(windows.SYNCHRONIZE, false, pid)
+	handle, err := windows.OpenProcess(windows.SYNCHRONIZE|windows.PROCESS_TERMINATE, false, pid)
 	if err != nil {
 		return nil, err
 	}

@@ -279,10 +279,20 @@ type process struct {
 
 func startProcess(t *testing.T, binary string, arguments []string, environment map[string]string) *process {
 	t.Helper()
+	return startProcessWithEnvironment(t, binary, arguments, mergedEnvironment(environment))
+}
+
+func startProcessWithEnvironment(
+	t *testing.T,
+	binary string,
+	arguments []string,
+	environment []string,
+) *process {
+	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), acceptanceTimeout)
 	t.Cleanup(cancel)
 	command := exec.CommandContext(ctx, binary, arguments...) // #nosec G204 -- test-built binary and fixed acceptance arguments.
-	command.Env = mergedEnvironment(environment)
+	command.Env = environment
 	stdin, err := command.StdinPipe()
 	if err != nil {
 		t.Fatal(err)

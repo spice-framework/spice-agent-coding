@@ -49,7 +49,21 @@ archive traversal, duplicate entries, undeclared paths, invalid modes, sizes,
 or payload hashes. It extracts the native archive beneath a path containing
 spaces and Unicode, runs both exact binaries with `--version` and `--check`,
 then proves explicit `serve`/`attach` and zero-argument managed sibling startup
-and cleanup. Linux uses private `XDG_RUNTIME_DIR` and `XDG_CONFIG_HOME` roots.
+and cleanup. It also drives the exact terminal bytes through Linux PTY or
+Windows ConPTY at 80x24, interprets a bounded transcript with the public TUI
+virtual terminal, resizes both layers to 100x30, types Unicode input, replaces
+an explicit daemon while preserving terminal history, and proves ANSI,
+alternate-screen, cursor, clean quit, and managed-sibling cleanup. There is no
+pipe fallback or accessible-mode runtime flag in this native boundary. Linux
+uses private `XDG_RUNTIME_DIR` and `XDG_CONFIG_HOME` roots.
+The managed case deliberately gives the outer PTY owner direct-process-only
+termination, so a Windows Job or Unix process-group teardown cannot satisfy
+the sibling assertion; a separately retained process witness owns only
+failure cleanup. Provider request and response counts remain exactly one
+before and after daemon replacement and after terminal quit.
+The raw transcript remains exact and bounded; only Bubble Tea's two terminal
+capability queries are withheld from the output-only emulator, which cannot
+own or answer an input-device negotiation.
 Windows deliberately exercises the default current-user endpoint and authority
 and therefore fails unless `SPICE_DISTRIBUTION_EPHEMERAL_RUNNER=1` is supplied
 by a disposable runner. Linux and macOS require that acknowledgement to be

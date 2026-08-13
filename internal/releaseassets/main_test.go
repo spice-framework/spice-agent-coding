@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"slices"
@@ -80,6 +82,72 @@ func TestRenderNoticesUsesSortedVersionedModulesAndLicenseText(t *testing.T) {
 		!strings.Contains(content, "    alpha notice\n    second line\n") ||
 		strings.Contains(content, "\r") {
 		t.Fatalf("unexpected notices:\n%s", content)
+	}
+}
+
+func TestRenderNoticesIncludesDeterministicSupplementalAttribution(t *testing.T) {
+	t.Parallel()
+	command := releaseAssetsCommand{}
+	root := t.TempDir()
+	const module = "github.com/Kodecable/crosspty"
+	writeFixture(t, root, "vendor/modules.txt", "# "+module+" v1.1.0\n")
+	writeFixture(t, root, "vendor/"+module+"/LICENSE", "root license\n")
+	for _, name := range command.supplementalNoticeNames(module) {
+		writeFixture(
+			t, root,
+			"internal/releaseassets/attributions/"+module+"/"+name,
+			name+" derived license\r\n",
+		)
+	}
+	notices, err := command.renderNotices(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(notices)
+	if !strings.Contains(content, "vendor/"+module+"/LICENSE") ||
+		!strings.Contains(
+			content,
+			"internal/releaseassets/attributions/"+module+"/LICENSE_ActiveState",
+		) || strings.Index(content, "LICENSE_ActiveState derived license") > strings.Index(content, "root license") ||
+		strings.Contains(content, "\r") {
+		t.Fatalf("unexpected supplemental notices:\n%s", content)
+	}
+	if err = os.Remove(
+		filepath.Join(root, "internal/releaseassets/attributions", module, "LICENSE_go"),
+	); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = command.renderNotices(root); err == nil || !strings.Contains(err.Error(), "want exact") {
+		t.Fatalf("renderNotices() missing required supplemental attribution error = %v", err)
+	}
+}
+
+func TestCrossPTYSupplementalAttributionsMatchPinnedUpstreamBytes(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name   string
+		digest string
+	}{
+		{name: "LICENSE_ActiveState", digest: "9abff047e73764a9b9ee4208cbe4d22ef4844c16d1db70e853aebc292acb47e8"},
+		{name: "LICENSE_go", digest: "22975ebe413674bc619428a26e53412013dccffa69e2f27100dbd8d946fde287"},
+		{name: "LICENSE_photostorm", digest: "2dfaa7e6ac954dad2163d7e364a1adbed1f6b909e9d743131959306a51621c77"},
+	}
+	command := releaseAssetsCommand{}
+	names := command.supplementalNoticeNames("github.com/Kodecable/crosspty")
+	for index, test := range tests {
+		if names[index] != test.name {
+			t.Fatalf("supplemental attribution %d = %q, want %q", index, names[index], test.name)
+		}
+		content, err := os.ReadFile(filepath.Join(
+			"attributions", "github.com", "Kodecable", "crosspty", test.name,
+		))
+		if err != nil {
+			t.Fatal(err)
+		}
+		digest := sha256.Sum256(content)
+		if got := hex.EncodeToString(digest[:]); got != test.digest {
+			t.Fatalf("%s digest = %s, want pinned upstream %s", test.name, got, test.digest)
+		}
 	}
 }
 

@@ -104,6 +104,8 @@ func TestVerifiedNativeReleaseArchive(t *testing.T) {
 		waitForManagedProcessExit(t, witness, metadata, terminal)
 		assertEndpointAbsent(t, store, terminal)
 	})
+
+	assertReleasedNativeTerminal(t, daemonBinary, terminalBinary, store, environment, set)
 }
 
 func releaseProcessEnvironment(t *testing.T) (*endpoint.Store, map[string]string) {

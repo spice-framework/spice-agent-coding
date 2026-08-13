@@ -23,9 +23,10 @@ import (
 )
 
 const (
-	modulePath      = "github.com/spice-framework/spice-agent-coding"
-	noticesPath     = "THIRD_PARTY_NOTICES.md"
-	descriptorsPath = "protocol-descriptors.pb"
+	modulePath              = "github.com/spice-framework/spice-agent-coding"
+	noticesPath             = "THIRD_PARTY_NOTICES.md"
+	descriptorsPath         = "protocol-descriptors.pb"
+	supplementalNoticesPath = "internal/releaseassets/attributions"
 )
 
 // releaseAssetsCommand owns deterministic release-asset rendering.
@@ -169,22 +170,59 @@ func (command releaseAssetsCommand) moduleLicenseFiles(root, module string) ([]s
 	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return nil, fmt.Errorf("module %s escapes vendor root", module)
 	}
-	entries, err := os.ReadDir(moduleRoot) // #nosec G304 -- module root is confined above.
+	result, err := command.licenseFiles(moduleRoot)
 	if err != nil {
 		return nil, fmt.Errorf("read vendor module %s: %w", module, err)
+	}
+	supplementalRoot := filepath.Join(root, supplementalNoticesPath, filepath.FromSlash(module))
+	supplemental, supplementalErr := command.licenseFiles(supplementalRoot)
+	if supplementalErr != nil && !errors.Is(supplementalErr, os.ErrNotExist) {
+		return nil, fmt.Errorf("read supplemental notices for %s: %w", module, supplementalErr)
+	}
+	if err = command.validateSupplementalNotices(module, supplemental); err != nil {
+		return nil, err
+	}
+	result = append(result, supplemental...)
+	slices.Sort(result)
+	if len(result) == 0 {
+		return nil, fmt.Errorf("vendor module %s has no root license or notice file", module)
+	}
+	return result, nil
+}
+
+func (command releaseAssetsCommand) validateSupplementalNotices(module string, files []string) error {
+	names := make([]string, len(files))
+	for index, file := range files {
+		names[index] = filepath.Base(file)
+	}
+	want := command.supplementalNoticeNames(module)
+	if !slices.Equal(names, want) {
+		return fmt.Errorf("supplemental notices for %s are %v, want exact %v", module, names, want)
+	}
+	return nil
+}
+
+func (releaseAssetsCommand) supplementalNoticeNames(module string) []string {
+	if module != "github.com/Kodecable/crosspty" {
+		return []string{}
+	}
+	return []string{"LICENSE_ActiveState", "LICENSE_go", "LICENSE_photostorm"}
+}
+
+func (releaseAssetsCommand) licenseFiles(directory string) ([]string, error) {
+	entries, err := os.ReadDir(directory) // #nosec G304 -- caller confines the repository-owned directory.
+	if err != nil {
+		return nil, err
 	}
 	var result []string
 	for _, entry := range entries {
 		upper := strings.ToUpper(entry.Name())
 		if entry.Type().IsRegular() &&
 			(strings.HasPrefix(upper, "LICENSE") || strings.HasPrefix(upper, "COPYING") || strings.HasPrefix(upper, "NOTICE")) {
-			result = append(result, filepath.Join(moduleRoot, entry.Name()))
+			result = append(result, filepath.Join(directory, entry.Name()))
 		}
 	}
 	slices.Sort(result)
-	if len(result) == 0 {
-		return nil, fmt.Errorf("vendor module %s has no root license or notice file", module)
-	}
 	return result, nil
 }
 

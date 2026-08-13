@@ -140,6 +140,13 @@ pipe-backed input and output, proves prompt-history navigation, and exercises
 generated rollback and reverse cleanup. This is an application-graph and
 Bubble Tea proof, not a PTY/ConPTY presentation or released-archive claim.
 
+The separately tagged `internal/installedacceptance` release boundary consumes
+only an independently verified nine-subject artifact set, extracts its native
+archive beneath a Unicode path, and executes those exact `spice-agent` bytes
+through Linux PTY or Windows ConPTY. A bounded public TUI virtual terminal
+interprets ANSI, Unicode, cursor, alternate-screen, resize, reconnect, and quit
+behavior while process ownership and sibling cleanup remain distribution-owned.
+
 ## Compatibility
 
 `compatibility.json` records Go 1.26.5 plus the exact immutable Spice,

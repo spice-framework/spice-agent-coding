@@ -134,6 +134,27 @@ shutdown leaves the externally owned daemon running. This is the process-level
 attach-or-start ownership contract; exact released-archive byte execution
 remains a distinct Phase 6 release gate.
 
+That release gate now closes the separate native-terminal boundary. After the
+independent verifier authenticates all nine subjects, the candidate extracts
+the exact native archive beneath a path containing spaces and Unicode and
+starts its shipped terminal with cross-platform PTY ownership. Linux uses a
+native PTY and Windows requires ConPTY; there is no pipe fallback. The public
+TUI `tuittest.VirtualTerminal` interprets the bounded output at 80x24 and after
+a physical 100x30 resize. The gate proves ANSI styling, Unicode cell/cursor
+placement, alternate-screen entry/exit, real keyboard input, daemon replacement
+and reconnect without duplicate state, explicit-daemon ownership, managed
+sibling cleanup, and a clean Ctrl+Q exit. It supplies a closed allowlisted
+environment and never enables the accessible test mode.
+Managed-mode PTY cleanup targets only the terminal process, leaving the
+product's ownership path solely responsible for reaping its sibling; a
+separate exact-process witness prevents failure paths from leaking that
+sibling. The loopback provider rejects replay and is rechecked for exactly one
+request and response after replacement and quit.
+The bridge retains the exact raw transcript for bounds, diagnostics, and secret
+checks. Before output-only interpretation it removes only Bubble Tea's
+synchronized-output and Unicode-core mode queries, because those input-device
+queries require a real terminal response and are not presentation output.
+
 The installed suite also starts a fresh private daemon and real Bubble Tea
 terminal for each cancellation boundary. Escape cancels a provider blocked in
 `Recv`; Ctrl+X cancels the compiled shell tool and its test-owned child process;
