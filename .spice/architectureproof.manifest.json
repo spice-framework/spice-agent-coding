@@ -8,9 +8,9 @@
     "output_dir": "internal/spicegen/architectureproof",
     "manifest_path": ".spice/architectureproof.manifest.json"
   },
-  "generator_version": "v0.1.0-preview.2",
+  "generator_version": "v0.1.0-preview.7",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:35dacfab2f8e80446f2634f8a1370be6b55e4db42fac97383fcd03028c8ecb50",
+  "input_sha256": "sha256:9404e5deec802038e5cd8755126dc016e267d2ecf630b79492c82624058efa15",
   "files": [
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/application_spice_gen.go",
@@ -246,11 +246,11 @@
     },
     {
       "path": "internal/spicegen/architectureproof/sources/internal_/architectureproof/model_provider_bean_spice_gen.go",
-      "sha256": "sha256:54f30051bc15189612642bb3bd2e7e581ad753e13ca7408bedc47444e9c57c65",
+      "sha256": "sha256:c8fe1ad813bcf9de573790c13fe2f4a8068efa686535cea7fc8773180da340ae",
       "role": "source-unit",
       "primary_source": {
         "path": "internal/architectureproof/model_provider_bean.go",
-        "line": 15,
+        "line": 16,
         "column": 4,
         "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
       },
@@ -260,7 +260,7 @@
           "contribution": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider",
           "source": {
             "path": "internal/architectureproof/model_provider_bean.go",
-            "line": 15,
+            "line": 16,
             "column": 4,
             "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
           },
@@ -390,6 +390,35 @@
       ]
     },
     {
+      "path": "internal/spicegen/architectureproof/sources/internal_/workspace/properties_spice_gen.go",
+      "sha256": "sha256:6c282ae4192c6481db7bb30146aabe9755f379a88fc48673e429e38b406f360e",
+      "role": "source-unit",
+      "primary_source": {
+        "path": "internal/workspace/properties.go",
+        "line": 8,
+        "column": 4,
+        "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties"
+      },
+      "mappings": [
+        {
+          "kind": "configuration-binding",
+          "contribution": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties",
+          "source": {
+            "path": "internal/workspace/properties.go",
+            "line": 8,
+            "column": 4,
+            "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties"
+          },
+          "generated": {
+            "start_line": 15,
+            "start_column": 4,
+            "end_line": 15,
+            "end_column": 27
+          }
+        }
+      ]
+    },
+    {
       "path": "internal/spicegen/architectureproof/sources/vendor_/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure_spice_gen.go",
       "sha256": "sha256:863d65048384607baab728d4300dcc0399fdcd22b65cbbeca80e63a0808f17fd",
       "role": "source-unit",
@@ -452,7 +481,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_assembly_gen.go",
-      "sha256": "sha256:d95721ced0ce932deae05a45f1e269db99daa87540ec2676ba63d3c000d72db8",
+      "sha256": "sha256:b5f1fce6f81310633f89e98d4cc1c8210d55ad400baaaab24a0816ed32f83bdc",
       "role": "target-assembly",
       "related_sources": [
         {
@@ -505,7 +534,7 @@
         },
         {
           "path": "internal/architectureproof/model_provider_bean.go",
-          "line": 15,
+          "line": 16,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
         },
@@ -532,6 +561,18 @@
           "line": 16,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
+        },
+        {
+          "path": "internal/workspace/properties.go",
+          "line": 8,
+          "column": 4,
+          "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties"
+        },
+        {
+          "path": "internal/workspace/properties.go",
+          "line": 10,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties.Workspace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
@@ -568,7 +609,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_configuration_gen.go",
-      "sha256": "sha256:99802b022ee243ea84e9e518162c373f49b3753d04f5d1d9c415efa53302e8a4",
+      "sha256": "sha256:d6a76e2a35c92e0a79f6dceb7987954197a21c87d293b360d2e723245774745d",
       "role": "target-configuration",
       "related_sources": [
         {
@@ -576,12 +617,24 @@
           "line": 13,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|17:ArchitectureProof"
+        },
+        {
+          "path": "internal/workspace/properties.go",
+          "line": 8,
+          "column": 4,
+          "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties"
+        },
+        {
+          "path": "internal/workspace/properties.go",
+          "line": 10,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties.Workspace"
         }
       ]
     },
     {
       "path": "internal/spicegen/architectureproof/spice_contracts_gen.go",
-      "sha256": "sha256:bcf0338831423aa4d0d188320994f2d3490b3c474514c5d1a727f5d2499e0d22",
+      "sha256": "sha256:9a81ff89e2b9ba2754a8a1ac6419ec4c0c6fa58b758bb683eecc60945aa12f98",
       "role": "target-contracts",
       "related_sources": [
         {
@@ -634,7 +687,7 @@
         },
         {
           "path": "internal/architectureproof/model_provider_bean.go",
-          "line": 15,
+          "line": 16,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
         },
@@ -661,6 +714,18 @@
           "line": 16,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
+        },
+        {
+          "path": "internal/workspace/properties.go",
+          "line": 8,
+          "column": 4,
+          "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties"
+        },
+        {
+          "path": "internal/workspace/properties.go",
+          "line": 10,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties.Workspace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",
@@ -697,7 +762,7 @@
     },
     {
       "path": "internal/spicegen/architectureproof/spice_providers_gen.go",
-      "sha256": "sha256:c85f1d59024961dbc45553cae628fd2e544302b5f33a5e44202d10cc51d77d7a",
+      "sha256": "sha256:11361fb7a13c6855da98495ad094eaa3103f3c4b0293a089c5012ae2d1976d4d",
       "role": "target-providers",
       "related_sources": [
         {
@@ -750,7 +815,7 @@
         },
         {
           "path": "internal/architectureproof/model_provider_bean.go",
-          "line": 15,
+          "line": 16,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|16:NewModelProvider"
         },
@@ -777,6 +842,18 @@
           "line": 16,
           "column": 4,
           "symbol": "spice:symbol:v1|function|72:github.com/spice-framework/spice-agent-coding/internal/architectureproof|0:|19:NewResponsesFixture"
+        },
+        {
+          "path": "internal/workspace/properties.go",
+          "line": 8,
+          "column": 4,
+          "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties"
+        },
+        {
+          "path": "internal/workspace/properties.go",
+          "line": 10,
+          "column": 2,
+          "symbol": "spice:symbol:v1|type|64:github.com/spice-framework/spice-agent-coding/internal/workspace|0:|10:Properties.Workspace"
         },
         {
           "path": "vendor/github.com/spice-framework/spice-agent-tools-coding/autoconfigure/autoconfigure.go",

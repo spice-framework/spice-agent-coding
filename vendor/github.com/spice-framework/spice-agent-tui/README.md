@@ -24,8 +24,17 @@ The implemented slice includes:
   signatures expose no Bubble Tea or internal types;
 - canonical `@UIShell` and `@UIRenderer` provider annotations;
 - explicit `/autoconfigure` fallback beans proven by committed generated Go; and
-- an agent-friendly `tuittest` harness for scripted interaction and pixel-perfect
-  goldens (see [`docs/tuittest.md`](docs/tuittest.md)).
+- an agent-friendly `tuittest` harness for canonical strict-JSON interaction
+  traces, deterministic double replay, committed cell-accurate goldens,
+  accessibility/contrast audits, keyboard-only complex-Unicode lifecycle
+  coverage, non-authoritative embedded-font PNG review artifacts, bounded VT
+  cell/cursor/alternate-screen conformance, and
+  repository-owned real Unix PTY/Windows ConPTY acceptance (see
+  [`docs/tuittest.md`](docs/tuittest.md)); and
+- a removable, nested
+  [`experiments/semantic-shell`](experiments/semantic-shell) Phase 7 proof that
+  consumes the released public Session API using only the standard library and
+  emits deterministic portable JSONL without Bubble Tea.
 
 ## Session boundary
 
@@ -102,6 +111,23 @@ order, exact Session injection, fallback activation, source mapping, generated
 freshness, compilation, explicit `NewApplication` → `Start` → `Shell.Run` →
 `Stop` normal exit, and shutdown without reflection or a runtime registry.
 
+## Code-style boundary
+
+The application-owned fixture at `internal/acceptance/composition` follows the
+canonical Spice `java-structured` profile through the exact schema-2 policy in
+`.spice/style.json`. The independent tools module pins the public Toolchain
+preview that supplies `spicestyle`; `make check` and `make verify` run it
+offline. The policy also names the real generated composition target so the
+gate can distinguish generated ownership from handwritten input and reject a
+generated-marker bypass. Runtime, presentation, `tuittest`, auto-configuration,
+vendor, and the historical semantic-shell module retain their own contracts.
+Because Toolchain preview4 configured roots cannot include the module-root
+package `.`, `moduleOwnership` is the one documented inapplicable style rule;
+the existing composition gate loads both root and fixture and independently
+enforces their Modulith relationship.
+See [`CODE_STYLE.md`](CODE_STYLE.md) and
+[`docs/code-style.md`](docs/code-style.md).
+
 ## Annotations
 
 Applications may define explicit providers with the TUI annotation tool:
@@ -135,7 +161,7 @@ verify` before a commit. Ordinary verification is offline.
 `go-module-v1` release profile. `make verify-release` runs the repository's
 complete local gate. Tag pushes call the organization-owned keyless Go-module
 release workflow at audited commit
-`0fcd43dc8b41fad56c231d0e136ad8c762276ed5`. The
+`a56c451168aae0f2b3075782156d204d75fb7f69`. The
 caller denies permissions by default, grants only contents, OIDC, attestations,
 and artifact-metadata writes to that reusable job, and passes no secrets. The
 repository quality gate rejects pin drift, excess permissions, local release

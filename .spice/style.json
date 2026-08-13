@@ -1,31 +1,86 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "profile": "java-structured",
   "sourceRoots": [
     "cmd",
-    "internal/architecturee2e",
-    "internal/architectureproof",
-    "internal/daemon",
-    "internal/daemoncommand",
-    "internal/daemonprocess",
-    "internal/devacceptance",
-    "internal/distribution",
-    "internal/installedacceptance",
-    "internal/processcontainment",
-    "internal/processplatform",
-    "internal/qualitygate",
-    "internal/releaseassets",
-    "internal/releaseinstallation",
-    "internal/runidentity",
-    "internal/runtimepluginfixture",
-    "internal/testpath",
-    "internal/terminal",
-    "internal/terminalcommand",
-    "internal/terminalconnector",
-    "internal/tuisession"
+    "internal"
   ],
   "generatedRoots": [
     "internal/spicegen"
+  ],
+  "buildSelections": [
+    {
+      "name": "darwin-amd64-default",
+      "sourceRoots": [
+        "cmd",
+        "internal"
+      ],
+      "goos": "darwin",
+      "goarch": "amd64",
+      "cgoEnabled": false,
+      "tags": []
+    },
+    {
+      "name": "darwin-amd64-spice-acceptance",
+      "sourceRoots": [
+        "cmd",
+        "internal"
+      ],
+      "goos": "darwin",
+      "goarch": "amd64",
+      "cgoEnabled": false,
+      "tags": [
+        "spice_acceptance"
+      ]
+    },
+    {
+      "name": "linux-amd64-default",
+      "sourceRoots": [
+        "cmd",
+        "internal"
+      ],
+      "goos": "linux",
+      "goarch": "amd64",
+      "cgoEnabled": false,
+      "tags": []
+    },
+    {
+      "name": "linux-amd64-spice-acceptance",
+      "sourceRoots": [
+        "cmd",
+        "internal"
+      ],
+      "goos": "linux",
+      "goarch": "amd64",
+      "cgoEnabled": false,
+      "tags": [
+        "spice_acceptance"
+      ]
+    },
+    {
+      "name": "windows-amd64-default",
+      "sourceRoots": [
+        "cmd",
+        "internal"
+      ],
+      "goos": "windows",
+      "goarch": "amd64",
+      "cgoEnabled": false,
+      "tags": []
+    },
+    {
+      "name": "windows-amd64-spice-acceptance",
+      "sourceRoots": [
+        "cmd",
+        "internal"
+      ],
+      "goos": "windows",
+      "goarch": "amd64",
+      "cgoEnabled": false,
+      "tags": [
+        "spice_acceptance"
+      ]
+    }
   ],
   "rules": {
     "onePrimaryTypePerFile": "error",
@@ -45,13 +100,14 @@
   },
   "publicRoutes": [],
   "allowedBoundaryFiles": [
+    "**/*_bean.go",
+    "**/*_test.go",
+    "**/*_topic.go",
     "**/doc.go",
     "**/main.go",
-    "**/*_bean.go",
-    "**/*_topic.go",
     "**/package_constants.go",
+    "cmd/*/application.go",
     "internal/architectureproof/application.go",
-    "**/*_test.go",
     "internal/spicegen/**"
   ],
   "packageFunctionExceptions": [
@@ -78,10 +134,16 @@
       "reason": "Go testing entrypoint"
     },
     {
-      "glob": "internal/architectureproof/application.go",
-      "symbol": "ArchitectureProof",
+      "glob": "cmd/*/application.go",
+      "contributionKind": "application",
       "maximum": 1,
-      "reason": "Exact generated-package conformance application marker; not production application precedent"
+      "reason": "Compiler-validated generated application bridge"
+    },
+    {
+      "glob": "internal/architectureproof/application.go",
+      "contributionKind": "application",
+      "maximum": 1,
+      "reason": "Exact generated-package conformance application marker"
     }
   ],
   "packageVariableExceptions": [

@@ -1,5 +1,3 @@
-// Package runidentity supplies the distribution's cryptographically random
-// agent identity source without global application state.
 package runidentity
 
 import (

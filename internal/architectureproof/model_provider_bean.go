@@ -1,6 +1,7 @@
 package architectureproof
 
 // @import { ModelProvider } from "github.com/spice-framework/spice-agent/annotation/agent"
+// @import { Singleton } from "github.com/spice-framework/spice/annotation/core"
 
 import (
 	"time"
@@ -13,6 +14,7 @@ import (
 // configured against the application-owned deterministic endpoint.
 //
 // @ModelProvider(name="architecture-proof-openai")
+// @Singleton
 func NewModelProvider(fixture *ResponsesFixture) (model.Provider, error) {
 	return openaiprovider.New(
 		openaiprovider.Config{

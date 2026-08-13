@@ -1,5 +1,3 @@
-// Command releaseassets deterministically renders release-owned notices and
-// protocol descriptors from the exact committed vendor and Protobuf graphs.
 package main
 
 import "os"

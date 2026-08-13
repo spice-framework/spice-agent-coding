@@ -1,5 +1,3 @@
-// Package processplatform provides the distribution-owned operating-system
-// adapters for the provider-neutral process contracts.
 package processplatform
 
 import (

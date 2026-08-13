@@ -1,7 +1,7 @@
 package architectureproof
 
 const (
-	agentModuleSelection    = "v0.1.0-preview.4"
+	agentModuleSelection    = "v0.1.0-preview.7"
 	providerModuleSelection = "v0.1.0-preview.1"
 	toolsModuleSelection    = "v0.1.0-preview.1"
 

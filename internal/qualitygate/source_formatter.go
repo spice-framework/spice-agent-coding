@@ -70,11 +70,37 @@ func (owner sourceFormatter) checkStyle(ctx context.Context, root string) error 
 	if err != nil {
 		return err
 	}
-	return (commandRunner{}).command(ctx, root, nil, executable, (sourceFormatter{}).styleArguments()...)
+	return (commandRunner{}).command(
+		ctx,
+		root,
+		(sourceFormatter{}).hostileStyleEnvironment(),
+		executable,
+		(sourceFormatter{}).styleArguments()...,
+	)
 }
 
 func (owner sourceFormatter) styleArguments() []string {
-	return []string{"-spicestyle.config=.spice/style.json", "./..."}
+	return []string{"--config=.spice/style.json", "./..."}
+}
+
+// hostileStyleEnvironment proves the pinned Toolchain owns every configured
+// analysis selection and host annotation-tool launch. None of these ambient
+// values may alter diagnostics or trigger a toolchain or module download.
+func (owner sourceFormatter) hostileStyleEnvironment() map[string]string {
+	return map[string]string{
+		"CGO_ENABLED":  "1",
+		"GOAMD64":      "v4",
+		"GOARCH":       "386",
+		"GOAUTH":       "netrc",
+		"GOENV":        "off",
+		"GOEXPERIMENT": "ambientexperiment",
+		"GOFIPS140":    "latest",
+		"GOFLAGS":      "-tags=ambient",
+		"GOOS":         "plan9",
+		"GOPROXY":      "http://127.0.0.1:1",
+		"GOSUMDB":      "invalid.example",
+		"GOTOOLCHAIN":  "go1.99.0+auto",
+	}
 }
 
 func (owner sourceFormatter) goFiles(root string) ([]string, error) {

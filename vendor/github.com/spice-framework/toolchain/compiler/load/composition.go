@@ -345,6 +345,57 @@ func selectProgramRoots(
 	return result
 }
 
+func applicationDependencyPaths(
+	roots []*packages.Package,
+	auxiliary []string,
+) []string {
+	auxiliaryPaths := make(map[string]struct{}, len(auxiliary))
+	for _, packagePath := range auxiliary {
+		auxiliaryPaths[packagePath] = struct{}{}
+	}
+	seen := make(map[string]struct{}, len(roots))
+	queue := make([]*packages.Package, 0, len(roots))
+	var result []string
+	for _, root := range roots {
+		if root == nil {
+			continue
+		}
+		seen[packageIdentity(root)] = struct{}{}
+		if _, isAuxiliary := auxiliaryPaths[root.PkgPath]; !isAuxiliary {
+			queue = append(queue, root)
+		}
+	}
+	for len(queue) != 0 {
+		current := queue[0]
+		queue = queue[1:]
+		modulePath := modulePathOf(current)
+		if modulePath == "" {
+			continue
+		}
+		paths := make([]string, 0, len(current.Imports))
+		for importPath := range current.Imports {
+			paths = append(paths, importPath)
+		}
+		sort.Strings(paths)
+		for _, importPath := range paths {
+			dependency := current.Imports[importPath]
+			if dependency == nil || modulePathOf(dependency) != modulePath ||
+				strings.Contains(dependency.PkgPath, "/internal/spicegen/") {
+				continue
+			}
+			identity := packageIdentity(dependency)
+			if _, found := seen[identity]; found {
+				continue
+			}
+			seen[identity] = struct{}{}
+			result = append(result, dependency.PkgPath)
+			queue = append(queue, dependency)
+		}
+	}
+	sort.Strings(result)
+	return result
+}
+
 func modulePathOf(pkg *packages.Package) string {
 	if pkg == nil || pkg.Module == nil {
 		return ""

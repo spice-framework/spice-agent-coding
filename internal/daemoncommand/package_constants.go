@@ -1,6 +1,3 @@
-// Package daemoncommand defines the transport-neutral command boundary for the
-// Spice Agent daemon. Transport construction is injected through Runner so the
-// package cannot acquire a daemon, listener, or generated application itself.
 package daemoncommand
 
 const (

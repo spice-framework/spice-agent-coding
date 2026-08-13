@@ -1,6 +1,3 @@
-// Package terminalcommand defines the transport-neutral command boundary for
-// the Spice Agent terminal. Client and managed-daemon behavior is injected
-// through Runner and remains outside this package.
 package terminalcommand
 
 const (

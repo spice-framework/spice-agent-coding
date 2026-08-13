@@ -11,6 +11,14 @@ import (
 func ConfigurationSchema() (spiceconfig.Schema, error) {
 	return spiceconfig.NewSchema(
 		spiceconfig.Property{
+			Key:         "agent.workspace",
+			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/workspace",
+			Environment: "SPICE_AGENT_WORKSPACE",
+			Default:     ".",
+			HasDefault:  true,
+		},
+		spiceconfig.Property{
 			Key:         "spice.shutdown-timeout",
 			Kind:        spiceconfig.KindDuration,
 			Environment: "SPICE_SHUTDOWN_TIMEOUT",

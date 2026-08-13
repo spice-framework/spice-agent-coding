@@ -1,3 +1,5 @@
 * text=auto eol=lf
 *.pb -text
 *.png -text
+/tuittest/testdata/*.plain.golden whitespace=-blank-at-eol
+/tuittest/testdata/*.report.txt whitespace=-blank-at-eol

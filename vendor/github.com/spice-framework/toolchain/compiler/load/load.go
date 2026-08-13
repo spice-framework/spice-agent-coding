@@ -28,6 +28,11 @@ type Options struct {
 	// generated-package stub while the spice_generate build tag excludes stale
 	// committed output. The physical application source remains unchanged.
 	PrepareGeneratedApplicationEntrypoints bool
+	// PromoteApplicationDependencies admits same-module packages transitively
+	// imported by an exact application root into the primary typed program.
+	// Compiler-scoped analysis uses this to retain local module declarations
+	// without widening to unrelated application roots.
+	PromoteApplicationDependencies bool
 	// Tests is reserved for a future test-package model. The bootstrap loader
 	// rejects true because go/packages test variants can duplicate logical
 	// package and symbol identities.
@@ -35,8 +40,10 @@ type Options struct {
 }
 
 // Load asks the standard Go package driver to load the requested root package
-// patterns once, then builds deterministic package, symbol, and diagnostic
-// records from that shared type universe.
+// patterns, then builds deterministic package, symbol, and diagnostic records
+// from that shared type universe. Exact application loads repeat the request
+// with discovered same-module dependencies as roots so every promoted package
+// is syntax- and type-information complete.
 func Load(ctx context.Context, options Options, patterns ...string) (*Program, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -53,7 +60,11 @@ func Load(ctx context.Context, options Options, patterns ...string) (*Program, e
 	if options.PrepareGeneratedApplicationEntrypoints {
 		var preparationDiagnostics []Diagnostic
 		var preparationErr error
-		overlay, preparationDiagnostics, preparationErr = addGeneratedApplicationEntrypointOverlays(options.Dir, overlay)
+		overlay, preparationDiagnostics, preparationErr = addGeneratedApplicationEntrypointOverlays(
+			options,
+			patterns,
+			overlay,
+		)
 		if preparationErr != nil {
 			program := &Program{diagnostics: []Diagnostic{{
 				Kind:    "generated-entrypoint",
@@ -88,13 +99,36 @@ func Load(ctx context.Context, options Options, patterns ...string) (*Program, e
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	selectedRoots := selectProgramRoots(
+		roots,
+		requestedPackages,
+		auxiliary,
+		candidates,
+	)
+	if options.PromoteApplicationDependencies && loadErr == nil {
+		dependencyPaths := applicationDependencyPaths(selectedRoots, auxiliary)
+		if len(dependencyPaths) != 0 {
+			if requestedPackages == nil {
+				requestedPackages = make(map[string]struct{}, len(dependencyPaths))
+			}
+			for _, packagePath := range dependencyPaths {
+				requestedPackages[packagePath] = struct{}{}
+			}
+			expandedPatterns := append(append([]string(nil), loadPatterns...), dependencyPaths...)
+			roots, loadErr = packages.Load(config, expandedPatterns...)
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
+			selectedRoots = selectProgramRoots(
+				roots,
+				requestedPackages,
+				auxiliary,
+				candidates,
+			)
+		}
+	}
 	program := programFromRoots(
-		selectProgramRoots(
-			roots,
-			requestedPackages,
-			auxiliary,
-			candidates,
-		),
+		selectedRoots,
 		loadErr,
 		auxiliary,
 	)

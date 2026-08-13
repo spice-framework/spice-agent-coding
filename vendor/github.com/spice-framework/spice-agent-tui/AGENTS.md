@@ -21,6 +21,10 @@ discovery, reconnect, and daemon lifecycle remain owned outside this module.
 - Commands use discrete arguments without a shell. `make tools-bootstrap` is
   the sole explicit network-enabled dependency preparation; ordinary
   verification is offline and workspace-isolated.
+- Application-owned composition code under `internal/acceptance/composition`
+  follows the exact schema-2 `java-structured` contract referenced by
+  `CODE_STYLE.md`. Runtime, presentation, `tuittest`, generated, vendored, and
+  historical experiment sources retain their repository-specific contracts.
 - Do not commit credentials, transcripts, prompts, model output, local state,
   generated binaries, or terminal recordings containing user data.
 

@@ -206,7 +206,8 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.12.0 // indirect
-	github.com/spice-framework/toolchain v0.1.0-preview.2.0.20260810184201-7e71c68fa312 // indirect
+	github.com/spice-framework/spice v0.1.0-preview.4 // indirect
+	github.com/spice-framework/toolchain v0.1.0-preview.7 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/standard-webhooks/standard-webhooks/libraries v0.0.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.3.1 // indirect

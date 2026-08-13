@@ -14,3 +14,7 @@ make verify
 `make verify` is the commit gate. Dependency additions require an update to
 `docs/dependency-review.md` covering maintenance, license, supply-chain risk,
 cancellation, observability, and platform behavior.
+
+Changes to application-owned composition code must also preserve the exact
+schema-2 policy described in `docs/code-style.md`; `make check` and `make
+verify` run the pinned analyzer offline.

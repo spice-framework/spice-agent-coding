@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -239,9 +240,26 @@ func TestExactGoExecutable(t *testing.T) {
 func TestStyleArgumentsAreStrictAndRepositoryWide(t *testing.T) {
 	t.Parallel()
 
-	want := []string{"-spicestyle.config=.spice/style.json", "./..."}
+	want := []string{"--config=.spice/style.json", "./..."}
 	if got := (sourceFormatter{}).styleArguments(); !slices.Equal(got, want) {
 		t.Fatalf("style arguments = %#v, want %#v", got, want)
+	}
+	wantHostile := map[string]string{
+		"CGO_ENABLED":  "1",
+		"GOAMD64":      "v4",
+		"GOARCH":       "386",
+		"GOAUTH":       "netrc",
+		"GOENV":        "off",
+		"GOEXPERIMENT": "ambientexperiment",
+		"GOFIPS140":    "latest",
+		"GOFLAGS":      "-tags=ambient",
+		"GOOS":         "plan9",
+		"GOPROXY":      "http://127.0.0.1:1",
+		"GOSUMDB":      "invalid.example",
+		"GOTOOLCHAIN":  "go1.99.0+auto",
+	}
+	if hostile := (sourceFormatter{}).hostileStyleEnvironment(); !maps.Equal(hostile, wantHostile) {
+		t.Fatalf("hostile style environment = %#v, want %#v", hostile, wantHostile)
 	}
 }
 
@@ -487,6 +505,7 @@ func TestIdentityAndPins(t *testing.T) {
 	writeFile(t, root, "tools/go.mod", strings.Join([]string{
 		"github.com/golangci/golangci-lint/v2 v2.12.2",
 		"github.com/securego/gosec/v2 v2.28.0",
+		"github.com/spice-framework/toolchain " + toolchainVersion,
 		"go.uber.org/nilaway v0.0.0-20260724203407-f4f8ac24c032",
 		"golang.org/x/tools v0.48.0", "golang.org/x/vuln v1.1.4", "mvdan.cc/gofumpt v0.10.0",
 	}, "\n"))

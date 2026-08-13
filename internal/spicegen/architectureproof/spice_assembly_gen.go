@@ -71,6 +71,7 @@ func NewApplicationWithOptions(ctx context.Context, options ApplicationOptions) 
 		ArchitectureProofExecutionPlan:     dependencies.architectureProofExecutionPlan,
 		ArchitectureProofEngine:            dependencies.architectureProofEngine,
 		Proof:                              dependencies.proof,
+		Properties:                         dependencies.properties,
 	}
 	return application, nil
 }

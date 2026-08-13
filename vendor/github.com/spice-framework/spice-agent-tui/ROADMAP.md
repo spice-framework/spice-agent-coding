@@ -1,72 +1,57 @@
 # Roadmap
 
-Spice Agent has one authoritative sequence of implementation outcomes: the
+Spice Agent has one authoritative sequence of phase status, exact commits, and
+acceptance evidence: the
 [canonical implementation ledger](https://github.com/spice-framework/spice-agent/tree/main/docs/implementation).
-This repository does not assign parallel phase numbers. It delivers the TUI
-portion of that ledger while the owning repositories deliver the client,
-protocol, daemon, and distribution contracts.
+This repository does not maintain a second mutable checklist.
 
-## Repository foundation
+## Repository ownership
 
-- [x] Establish Apache-2.0 licensing and governance.
-- [x] Enforce Go 1.26.5 with cross-platform fast/check/verify gates.
-- [x] Publish the bounded UI-neutral values needed by real presentation code.
-- [x] Record explicit selected and unselected compatibility boundaries.
-- [x] Pin the immutable Spice core v0.1.0-preview.2 release and the compatible
-      exact toolchain revision, and publish the explicit-constructor TUI starter
-      manifest without claiming shell auto-configuration.
-- [x] Prove generic result facts through the real tool protocol with alias-positive
-      and source-positioned negative compiler fixtures.
-- [ ] Register the compatible revisions in the development catalog with the
-      first generated application slice.
+`spice-agent-tui` owns only the terminal-facing extension surface:
 
-The checked items describe this repository's scaffold only. Its portion of the
-canonical multi-repository foundation is not complete until the pending catalog
-registration above is proved by executable product code.
+- bounded UI-neutral presentation values and the `Session` boundary;
+- `@UIShell` and `@UIRenderer` descriptors, their authorized annotation tool,
+  and explicit Spice auto-configuration;
+- the Bubble Tea shell, model, renderers, prompt editor, commands, key bindings,
+  status presentation, themes, and accessibility behavior; and
+- the deterministic `tuittest` harness for semantic interaction,
+  cell-accurate captures, canonical strict-JSON double replay, committed
+  lifecycle goldens, accessibility/contrast and complex-Unicode keyboard
+  proofs, non-authoritative deterministic PNG review artifacts, and output-only
+  VT conformance without a daemon or
+  network; repository acceptance separately composes it with the exact test
+  executable under a real Unix PTY or Windows ConPTY without adding process
+  launch to the public API.
 
-## Adopted dependencies
+The kernel, public client transport, daemon supervision, Protobuf/gRPC
+adapters, local IPC, provider and tool implementations, runtime-plugin host,
+distribution commands, installers, and release orchestration remain in their
+own repositories. Applications connect those concerns by injecting an
+ordinary `Session`; this module does not acquire a registry or transport
+container.
 
-- [ ] Adopt the separately reviewed high-level Spice Agent client/session API.
-- [x] Define UI-neutral interaction and semantic-view values locally.
-- [x] Define the UI-facing immutable Session snapshot/update and one-shot effect
-      contracts, including cancellation, panic containment, revision ordering,
-      and nested-intent rejection.
-- [x] Add deterministic fake Session and lifecycle tests without inventing a
-      transport client.
-- [ ] Adopt client-owned reconnect, replay, backpressure, definition selection,
-      daemon discovery, and transcript-redaction behavior.
-- [ ] Keep the kernel, generated gRPC, daemon supervision, and OS IPC outside
-      this module's dependency graph.
+## Cross-repository status
 
-## Terminal product
+Catalog registration, starter-manifest compatibility, generated distribution
+composition, installed Windows/Linux terminal proof, preview publication, and
+later contract stabilization are cross-repository outcomes. Their current
+state and evidence live only in the canonical ledger and its phase documents:
 
-- [x] Review and pin Bubble Tea v2.0.8 with the first production shell code.
-- [x] Implement the deterministic shell/model skeleton, renderer, editor, and
-      keybindings without faking application integration.
-- [x] Publish `@UIShell` and `@UIRenderer` through a typed v1alpha2 Go tool;
-      preserve generic compiler ownership of exact interface identity.
-- [x] Adopt generic `Invocation.Facts` type-domain support from Spice/toolchain
-      to enforce exact `Shell` and `Renderer` annotation results, including aliases.
-- [x] Complete the independent presentation layer: accessible status semantics,
-      grapheme-safe editing and cursor placement, deterministic resize,
-      revisioned snapshot/activity updates, bounded prompt history, keyboard
-      navigation, multi-size light/dark goldens, and clean Ctrl-C cancellation.
-- [x] Ship an agent-friendly `tuittest` harness for scripted interaction,
-      Session injection, accessible/normal captures, and pixel-perfect
-      styled/plain golden comparison without a PTY or daemon.
-- [x] Prepare adapter-neutral Phase 4 contracts: injected ordered key bindings,
-      semantic submit/cancel/respond/quit actions, bounded command and terminal
-      values, command-owned effects with stale-token protection, caller-context
-      cancellation, and line-oriented accessible rendering.
-- [x] Add explicit shell auto-configuration with fallback renderer, Theme,
-      ordered bindings, initial view, OS streams, accessibility config, and
-      Shell; require an application-owned Session.
-- [x] Expose public renderer/shell factories without Bubble Tea or internal
-      presentation types.
-- [x] Prove the public blank-import graph through committed generated Spice Go,
-      freshness checks, external-package construction, startup, and shutdown.
-- [ ] Adapt the bounded command contract to distribution commands after the
-      client runner owns definition and endpoint selection.
-- [ ] Translate the adopted client's reconnect, replay, backpressure, and error
-      contracts into Session updates.
-- [ ] Verify packaged Windows and Linux executables against a real daemon.
+- [Spice-native composition](https://github.com/spice-framework/spice-agent/blob/main/docs/implementation/02-spice-native-composition.md)
+- [Daemon and TUI](https://github.com/spice-framework/spice-agent/blob/main/docs/implementation/05-daemon-and-tui.md)
+- [Architecture-proof release](https://github.com/spice-framework/spice-agent/blob/main/docs/implementation/07-architecture-proof-release.md)
+- [Stress prototypes and stabilization](https://github.com/spice-framework/spice-agent/blob/main/docs/implementation/08-stress-prototypes-and-stabilization.md)
+
+Repository-local changes must preserve the generated Spice composition proof,
+the UI-neutral `Session` boundary, deterministic rendering, cancellation, and
+the public `tuittest` contract. Pre-1.0 APIs remain open to evidence-driven
+revision until the canonical stabilization phase freezes compatibility.
+
+The repository now carries one bounded Phase 7 evidence module:
+[`experiments/semantic-shell`](experiments/semantic-shell) proves an alternate
+semantic client against the published TUI module with no local replacement,
+Bubble Tea import, terminal plugin, or transport ownership. This local evidence
+now includes source-built Agent engine-protocol 1.2/1.3 peers over real local
+IPC on Linux and Windows. It intentionally makes no released-binary N/N-1
+claim and does not mark the cross-repository stabilization phase complete; the
+canonical ledger remains authoritative.

@@ -10,9 +10,9 @@
     "bridge_dir": "cmd/spice-agent",
     "manifest_path": ".spice/spice_agent.manifest.json"
   },
-  "generator_version": "v0.1.0-preview.2",
+  "generator_version": "v0.1.0-preview.7",
   "go_format_line": "1.26",
-  "input_sha256": "sha256:abbcf607b861a01c2890db74fa636b8e6a1743b8d25665f57b383cc7cb70e747",
+  "input_sha256": "sha256:66112704c2c4a6a811f0bb5b7c53418562a15e2a9e28ebfd79f39bd7cc6d6870",
   "files": [
     {
       "path": "internal/spicegen/spice_agent/sources/cmd/spice-agent/application_spice_gen.go",
@@ -907,7 +907,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_assembly_gen.go",
-      "sha256": "sha256:a317e5a085395a668de0e29991201a67ee4cf99b090088237399665eb1757dd7",
+      "sha256": "sha256:761965fd8d26fb287765d1f23ca92757d5ce611ea0896ca0ec58bea16d223ded",
       "role": "target-assembly",
       "related_sources": [
         {
@@ -1173,7 +1173,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_configuration_gen.go",
-      "sha256": "sha256:ab8f24e003e57da13523de095854d5e46b06fbb46e2c0cc1707f9747ba025cf7",
+      "sha256": "sha256:7710f9592b3b6348b755165746aee58f7d079caa83759b98367d254ae4cb1cde",
       "role": "target-configuration",
       "related_sources": [
         {
@@ -1488,7 +1488,7 @@
     },
     {
       "path": "internal/spicegen/spice_agent/spice_providers_gen.go",
-      "sha256": "sha256:61f1908761dea47641f224206887f705771352f8b67e616adeff534c7b6bde81",
+      "sha256": "sha256:d08dfbbb9970fcb4df805393bc70b7b777c9e4a37f05728bd5d425e7a560fc9f",
       "role": "target-providers",
       "related_sources": [
         {

@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/build/constraint"
 	"go/token"
 	"go/types"
 	"path/filepath"
@@ -21,6 +22,7 @@ import (
 	"github.com/spice-framework/spice/annotation"
 	"github.com/spice-framework/spice/annotation/sdk"
 	"github.com/spice-framework/toolchain/compiler/load"
+	"github.com/spice-framework/toolchain/compiler/modulith"
 	"github.com/spice-framework/toolchain/compiler/provider"
 	"github.com/spice-framework/toolchain/compiler/resolve"
 )
@@ -113,7 +115,16 @@ func Build(
 		}}}
 	}
 
-	return buildJavaStructured(program, resolution, providers, nil)
+	return buildJavaStructured(
+		program,
+		resolution,
+		providers,
+		nil,
+		"",
+		nil,
+		modulith.Universe{},
+		true,
+	)
 }
 
 // BuildConfigured validates the typed phase using the shared schema-two policy.
@@ -122,6 +133,116 @@ func BuildConfigured(
 	resolution resolve.Result,
 	providers provider.Catalog,
 	configuration Configuration,
+) Catalog {
+	return BuildConfiguredAt(
+		inferredWorkspaceRoot(program),
+		program,
+		resolution,
+		providers,
+		configuration,
+	)
+}
+
+// BuildConfiguredAt validates schema two against one exact workspace root.
+// Compiler-service callers must use this form so configured roots and file
+// exceptions are never inferred from arbitrary absolute-path suffixes.
+func BuildConfiguredAt(
+	workspaceRoot string,
+	program *load.Program,
+	resolution resolve.Result,
+	providers provider.Catalog,
+	configuration Configuration,
+) Catalog {
+	return buildConfiguredAt(
+		workspaceRoot,
+		program,
+		resolution,
+		providers,
+		configuration,
+		nil,
+		modulith.Universe{},
+		true,
+	)
+}
+
+// BuildConfiguredSelectionAt validates schema two under one exact declared Go
+// build selection. Existing callers retain strict filename matching without
+// selection-derived suffix exceptions.
+func BuildConfiguredSelectionAt(
+	workspaceRoot string,
+	program *load.Program,
+	resolution resolve.Result,
+	providers provider.Catalog,
+	configuration Configuration,
+	selection BuildSelection,
+) Catalog {
+	return buildConfiguredAt(
+		workspaceRoot,
+		program,
+		resolution,
+		providers,
+		configuration,
+		&selection,
+		modulith.Universe{},
+		true,
+	)
+}
+
+// BuildConfiguredSelectionWithModuleUniverseAt validates one exact declared
+// build selection against a compiler-derived registry of module identities
+// discovered in all configured selections.
+func BuildConfiguredSelectionWithModuleUniverseAt(
+	workspaceRoot string,
+	program *load.Program,
+	resolution resolve.Result,
+	providers provider.Catalog,
+	configuration Configuration,
+	selection BuildSelection,
+	universe modulith.Universe,
+) Catalog {
+	return buildConfiguredAt(
+		workspaceRoot,
+		program,
+		resolution,
+		providers,
+		configuration,
+		&selection,
+		universe,
+		true,
+	)
+}
+
+// BuildConfiguredSourceSelectionAt validates source-owned schema-two rules
+// before one application composition scope exists. Provider- and
+// application-semantic rules remain owned by the subsequent scoped build.
+func BuildConfiguredSourceSelectionAt(
+	workspaceRoot string,
+	program *load.Program,
+	resolution resolve.Result,
+	configuration Configuration,
+	selection BuildSelection,
+) Catalog {
+	return buildConfiguredAt(
+		workspaceRoot,
+		program,
+		resolution,
+		provider.Catalog{},
+		configuration,
+		&selection,
+		modulith.Universe{},
+		false,
+	)
+}
+
+func buildConfiguredAt(
+	workspaceRoot string,
+	program *load.Program,
+	resolution resolve.Result,
+	providers provider.Catalog,
+	configuration Configuration,
+	selection *BuildSelection,
+	universe modulith.Universe,
+	applicationSemantics bool,
 ) Catalog {
 	if err := configuration.Validate(); err != nil {
 		kind := "configuration.schema"
@@ -134,31 +255,79 @@ func BuildConfigured(
 			Message: err.Error(),
 		}}}
 	}
+	if selection != nil && !configurationContainsSelection(configuration, *selection) {
+		return Catalog{diagnostics: []Diagnostic{{
+			Kind:    "configuration.build-selection",
+			Message: "style build selection must exactly match one declared schema-two selection",
+		}}}
+	}
 	if program == nil {
 		return Catalog{diagnostics: []Diagnostic{{
 			Kind:    "internal",
 			Message: "style profile requires a loaded program",
 		}}}
 	}
+	workspaceRoot = filepath.Clean(workspaceRoot)
+	if workspaceRoot == "." || !filepath.IsAbs(workspaceRoot) {
+		return Catalog{diagnostics: []Diagnostic{{
+			Kind:    "configuration.source-selection",
+			Message: "style profile requires an absolute workspace root",
+		}}}
+	}
 	configuration = configuration.Clone()
-	return buildJavaStructured(program, resolution, providers, &configuration.Rules)
+	if diagnostics := configuredSourceOwnershipDiagnostics(
+		program,
+		workspaceRoot,
+		configuration,
+	); len(diagnostics) != 0 {
+		sortDiagnostics(diagnostics)
+		return Catalog{diagnostics: diagnostics}
+	}
+	return buildJavaStructured(
+		program,
+		resolution,
+		providers,
+		&configuration,
+		workspaceRoot,
+		selection,
+		universe,
+		applicationSemantics,
+	)
 }
 
 func buildJavaStructured(
 	program *load.Program,
 	resolution resolve.Result,
 	providers provider.Catalog,
-	rules *Rules,
+	configuration *Configuration,
+	workspaceRoot string,
+	selection *BuildSelection,
+	universe modulith.Universe,
+	applicationSemantics bool,
 ) Catalog {
-	files := handwrittenFiles(program.PrimaryPackages())
+	files := handwrittenFiles(
+		program.PrimaryPackages(),
+		configuration,
+		workspaceRoot,
+	)
 	typesByFile, typeFiles := declaredTypes(program.PrimarySymbols(), files)
 	annotatedFunctions := functionAnnotationKinds(resolution)
 	packageNames := primaryPackageNames(program.PrimaryPackages())
 	catalog := Catalog{}
-	catalog.diagnostics = append(
-		catalog.diagnostics,
-		fileStructureDiagnostics(files)...,
-	)
+	structureDiagnostics := fileStructureDiagnostics(files, configuration, selection)
+	if configuration != nil {
+		structureDiagnostics = applyPackageVariableExceptions(
+			structureDiagnostics,
+			program.PrimarySymbols(),
+			files,
+			configuration.PackageVariableExceptions,
+		)
+		structureDiagnostics = append(
+			structureDiagnostics,
+			configuredStructuralDiagnostics(program, files, *configuration)...,
+		)
+	}
+	catalog.diagnostics = append(catalog.diagnostics, structureDiagnostics...)
 	catalog.diagnostics = append(
 		catalog.diagnostics,
 		receiverLocationDiagnostics(
@@ -167,33 +336,61 @@ func buildJavaStructured(
 			typeFiles,
 		)...,
 	)
-	catalog.diagnostics = append(
-		catalog.diagnostics,
-		freeFunctionDiagnostics(
-			program.PrimarySymbols(),
-			files,
-			typesByFile,
-			annotatedFunctions,
-			packageNames,
-		)...,
-	)
-	catalog.diagnostics = append(
-		catalog.diagnostics,
-		constructorDiagnostics(providers.Providers())...,
-	)
-	catalog.diagnostics = append(
-		catalog.diagnostics,
-		implicitInterfaceDiagnostics(
-			program.PrimarySymbols(),
-			providers.Providers(),
-		)...,
-	)
+	if configuration == nil {
+		catalog.diagnostics = append(
+			catalog.diagnostics,
+			freeFunctionDiagnostics(
+				program.PrimarySymbols(),
+				files,
+				typesByFile,
+				annotatedFunctions,
+				packageNames,
+			)...,
+		)
+	} else {
+		catalog.diagnostics = append(
+			catalog.diagnostics,
+			configuredFreeFunctionDiagnostics(
+				program,
+				program.PrimarySymbols(),
+				files,
+				typesByFile,
+				resolution,
+				packageNames,
+				*configuration,
+			)...,
+		)
+	}
+	if applicationSemantics {
+		catalog.diagnostics = append(
+			catalog.diagnostics,
+			constructorDiagnostics(providers.Providers())...,
+		)
+		catalog.diagnostics = append(
+			catalog.diagnostics,
+			implicitInterfaceDiagnostics(
+				program.PrimarySymbols(),
+				providers.Providers(),
+			)...,
+		)
+	}
 	catalog.diagnostics = append(
 		catalog.diagnostics,
 		loggingDiagnostics(files)...,
 	)
-	if rules != nil {
-		catalog.diagnostics = filterConfiguredDiagnostics(catalog.diagnostics, *rules)
+	if configuration != nil && applicationSemantics {
+		catalog.diagnostics = append(
+			catalog.diagnostics,
+			configuredTypedDiagnostics(
+				program,
+				resolution,
+				providers,
+				files,
+				*configuration,
+				universe,
+			)...,
+		)
+		catalog.diagnostics = filterConfiguredDiagnostics(catalog.diagnostics, configuration.Rules)
 	}
 	sortDiagnostics(catalog.diagnostics)
 	return catalog
@@ -340,11 +537,16 @@ type sourceFile struct {
 	packagePath string
 	packageName string
 	physical    string
+	relative    string
 	fileSet     *token.FileSet
 	syntax      *ast.File
 }
 
-func handwrittenFiles(packages []load.Package) map[string]sourceFile {
+func handwrittenFiles(
+	packages []load.Package,
+	configuration *Configuration,
+	workspaceRoot string,
+) map[string]sourceFile {
 	result := make(map[string]sourceFile)
 	for _, pkg := range packages {
 		if pkg.Raw == nil || pkg.Raw.Fset == nil {
@@ -357,10 +559,19 @@ func handwrittenFiles(packages []load.Package) map[string]sourceFile {
 				ast.IsGenerated(file.Syntax) {
 				continue
 			}
+			relative := physical
+			if configuration != nil {
+				var found bool
+				relative, found = workspaceRelativeFile(workspaceRoot, physical)
+				if !found || pathUnderConfigurationRoot(relative, configuration.GeneratedRoots) {
+					continue
+				}
+			}
 			result[physical] = sourceFile{
 				packagePath: pkg.Path,
 				packageName: pkg.Name,
 				physical:    physical,
+				relative:    relative,
 				fileSet:     pkg.Raw.Fset,
 				syntax:      file.Syntax,
 			}
@@ -392,7 +603,11 @@ func declaredTypes(
 	return byFile, byType
 }
 
-func fileStructureDiagnostics(files map[string]sourceFile) []Diagnostic {
+func fileStructureDiagnostics(
+	files map[string]sourceFile,
+	configuration *Configuration,
+	selection *BuildSelection,
+) []Diagnostic {
 	paths := sortedFilePaths(files)
 	var diagnostics []Diagnostic
 	for _, path := range paths {
@@ -410,6 +625,9 @@ func fileStructureDiagnostics(files map[string]sourceFile) []Diagnostic {
 			}
 		}
 		boundary := approvedBoundaryFile(path)
+		if configuration != nil {
+			boundary = configuredBoundaryFile(file.relative, configuration.AllowedBoundaryFiles)
+		}
 		if len(typeSpecs) == 0 && !boundary {
 			position, physical := positions(file, file.syntax.Name.Pos())
 			diagnostics = append(diagnostics, Diagnostic{
@@ -451,7 +669,7 @@ func fileStructureDiagnostics(files map[string]sourceFile) []Diagnostic {
 		}
 		if len(typeSpecs) == 1 {
 			expected := typeFileName(typeSpecs[0].Name.Name)
-			if !strings.EqualFold(filepath.Base(path), expected) {
+			if !selectedTypeFileName(file, expected, selection) {
 				position, physical := positions(file, typeSpecs[0].Name.Pos())
 				diagnostics = append(diagnostics, Diagnostic{
 					Position:         position,
@@ -527,6 +745,236 @@ func fileStructureDiagnostics(files map[string]sourceFile) []Diagnostic {
 		}
 	}
 	return diagnostics
+}
+
+func selectedTypeFileName(
+	file sourceFile,
+	expected string,
+	selection *BuildSelection,
+) bool {
+	actual := filepath.Base(file.physical)
+	if actual == expected {
+		return true
+	}
+	if selection == nil {
+		return false
+	}
+	stem := strings.TrimSuffix(expected, ".go") + "_"
+	if !strings.HasPrefix(actual, stem) || !strings.HasSuffix(actual, ".go") {
+		return false
+	}
+	suffix := strings.TrimSuffix(strings.TrimPrefix(actual, stem), ".go")
+	if suffix == selection.GOOS || suffix == selection.GOARCH ||
+		suffix == selection.GOOS+"_"+selection.GOARCH {
+		return true
+	}
+	if alias := implicitPlatformAlias(selection.GOOS); alias != "" &&
+		(suffix == alias || suffix == alias+"_"+selection.GOARCH) {
+		return true
+	}
+	if suffix == "unix" && unixBuildTarget(selection.GOOS) {
+		return sourceRequiresUnixFamily(file.syntax, *selection)
+	}
+	for _, tag := range selection.Tags {
+		if suffix == tag {
+			return sourceRequiresPositiveTag(file.syntax, tag)
+		}
+	}
+	return false
+}
+
+func implicitPlatformAlias(goos string) string {
+	switch goos {
+	case "android":
+		return "linux"
+	case "illumos":
+		return "solaris"
+	case "ios":
+		return "darwin"
+	default:
+		return ""
+	}
+}
+
+func unixBuildTarget(goos string) bool {
+	switch goos {
+	case "aix", "android", "darwin", "dragonfly", "freebsd", "hurd",
+		"illumos", "ios", "linux", "netbsd", "openbsd", "solaris":
+		return true
+	default:
+		return false
+	}
+}
+
+func sourceBuildConstraint(file *ast.File) constraint.Expr {
+	if file == nil {
+		return nil
+	}
+	for _, group := range file.Comments {
+		if group == nil || group.End() > file.Package {
+			continue
+		}
+		for _, comment := range group.List {
+			if comment == nil || !constraint.IsGoBuild(comment.Text) {
+				continue
+			}
+			expression, err := constraint.Parse(comment.Text)
+			if err == nil {
+				return expression
+			}
+			return nil
+		}
+	}
+	return nil
+}
+
+func sourceRequiresPositiveTag(file *ast.File, required string) bool {
+	return expressionRequiresPositiveTag(sourceBuildConstraint(file), required)
+}
+
+func expressionRequiresPositiveTag(expression constraint.Expr, required string) bool {
+	if expression == nil {
+		return false
+	}
+	switch value := expression.(type) {
+	case *constraint.TagExpr:
+		return value.Tag == required
+	case *constraint.AndExpr:
+		return expressionRequiresPositiveTag(value.X, required) ||
+			expressionRequiresPositiveTag(value.Y, required)
+	case *constraint.OrExpr:
+		return expressionRequiresPositiveTag(value.X, required) &&
+			expressionRequiresPositiveTag(value.Y, required)
+	case *constraint.NotExpr:
+		return false
+	default:
+		return false
+	}
+}
+
+func sourceRequiresUnixFamily(
+	file *ast.File,
+	selection BuildSelection,
+) bool {
+	expression := sourceBuildConstraint(file)
+	if expression == nil || !knownUnixConstraintTags(expression, selection) {
+		return false
+	}
+	if !expression.Eval(func(tag string) bool {
+		return selectedBuildTag(selection, selection.GOOS, tag)
+	}) {
+		return false
+	}
+	for _, pair := range supportedBuildPairs() {
+		goos, goarch, _ := strings.Cut(pair, "/")
+		if unixBuildTarget(goos) {
+			continue
+		}
+		for _, cgoEnabled := range []bool{false, true} {
+			if expression.Eval(func(tag string) bool {
+				candidate := selection
+				candidate.GOARCH = goarch
+				candidate.CGOEnabled = &cgoEnabled
+				return selectedBuildTag(candidate, goos, tag)
+			}) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func selectedBuildTag(selection BuildSelection, goos string, tag string) bool {
+	if tag == goos || tag == selection.GOARCH || tag == "gc" ||
+		tag == "cgo" && selection.CGOEnabled != nil && *selection.CGOEnabled ||
+		releaseBuildTag(tag) ||
+		tag == implicitPlatformAlias(goos) || tag == "unix" && unixBuildTarget(goos) {
+		return true
+	}
+	for _, selected := range selection.Tags {
+		if tag == selected {
+			return true
+		}
+	}
+	return false
+}
+
+func knownUnixConstraintTags(expression constraint.Expr, selection BuildSelection) bool {
+	known := true
+	expression.Eval(func(tag string) bool {
+		if tag == "gc" || tag == "cgo" || tag == "unix" || releaseBuildTag(tag) ||
+			unixBuildTarget(tag) || schemaBuildOperatingSystem(tag) ||
+			schemaBuildArchitecture(tag) {
+			return false
+		}
+		for _, selected := range selection.Tags {
+			if tag == selected {
+				return false
+			}
+		}
+		known = false
+		return false
+	})
+	return known
+}
+
+func releaseBuildTag(tag string) bool {
+	minor, found := strings.CutPrefix(tag, "go1.")
+	if !found || minor == "" || strings.Contains(minor, ".") {
+		return false
+	}
+	value, err := strconv.Atoi(minor)
+	return err == nil && value >= 1 && value <= 26
+}
+
+func schemaBuildOperatingSystems() []string {
+	values := make(map[string]struct{})
+	for _, pair := range supportedBuildPairs() {
+		goos, _, _ := strings.Cut(pair, "/")
+		values[goos] = struct{}{}
+	}
+	result := make([]string, 0, len(values))
+	for value := range values {
+		result = append(result, value)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func schemaBuildArchitecture(value string) bool {
+	for _, pair := range supportedBuildPairs() {
+		_, goarch, _ := strings.Cut(pair, "/")
+		if value == goarch {
+			return true
+		}
+	}
+	return false
+}
+
+func schemaBuildOperatingSystem(value string) bool {
+	for _, goos := range schemaBuildOperatingSystems() {
+		if value == goos {
+			return true
+		}
+	}
+	return false
+}
+
+func configurationContainsSelection(
+	configuration Configuration,
+	selection BuildSelection,
+) bool {
+	for _, declared := range configuration.BuildSelections {
+		if declared.Name == selection.Name && declared.GOOS == selection.GOOS &&
+			declared.GOARCH == selection.GOARCH &&
+			declared.CGOEnabled != nil && selection.CGOEnabled != nil &&
+			*declared.CGOEnabled == *selection.CGOEnabled &&
+			strings.Join(declared.SourceRoots, "\x00") == strings.Join(selection.SourceRoots, "\x00") &&
+			strings.Join(declared.Tags, "\x00") == strings.Join(selection.Tags, "\x00") {
+			return true
+		}
+	}
+	return false
 }
 
 func receiverLocationDiagnostics(

@@ -280,15 +280,22 @@ func normalizedSpiceVersion(value string) string {
 }
 
 type normalizedRequest struct {
-	root     string
-	target   string
-	patterns []string
-	overlay  map[string]Document
-	mode     AnalysisMode
-	profile  compilerstyle.Profile
-	style    *compilerstyle.Configuration
-	content  string
-	sequence uint64
+	root                string
+	target              string
+	patterns            []string
+	overlay             map[string]Document
+	mode                AnalysisMode
+	profile             compilerstyle.Profile
+	style               *compilerstyle.Configuration
+	selection           *compilerstyle.BuildSelection
+	content             string
+	sequence            uint64
+	styleInventory      bool
+	forceStyleInventory bool
+	generatedEntrypoint bool
+	applicationScope    bool
+	generationInventory bool
+	moduleUniverse      modulith.Universe
 }
 
 // Analyze executes one read-only typed compiler analysis.
@@ -324,7 +331,17 @@ func (service *Service) Analyze(
 		}
 	}
 
-	result, err := service.analyze(analysisCtx, normalized)
+	var result Result
+	switch {
+	case normalized.style != nil:
+		result, err = service.analyzeConfiguredSelections(analysisCtx, normalized)
+	case normalized.mode == AnalysisGenerate:
+		result, err = service.analyzeGenerationScope(analysisCtx, normalized)
+	case normalized.generationInventory:
+		result, err = service.analyze(analysisCtx, normalized)
+	default:
+		result, err = service.analyzeModuleIdentityScope(analysisCtx, normalized)
+	}
 	if err != nil {
 		if staleErr := service.rejectStale(normalized); staleErr != nil {
 			return Result{}, staleErr
@@ -425,6 +442,7 @@ func (service *Service) analyze(
 	}
 	if program != nil {
 		result.goInterfaces = summarizeGoInterfaces(request.root, program)
+		result.loadedFiles = primaryProgramFiles(program)
 	}
 	if !loadDiagnostics.Empty() {
 		result.diagnostics = loadDiagnostics
@@ -495,6 +513,9 @@ func (service *Service) analyze(
 		result.actions = actionsFromDiagnostics(result.diagnostics)
 		return result, nil
 	}
+	result.applicationPackages = applicationPackagePaths(resolution)
+	result.semanticOccurrences = applicationSemanticOccurrences(resolution)
+	result.moduleModel = modulith.Build(program, resolution)
 
 	starterDiagnostics, err := service.starterDependencyDiagnostics(
 		ctx,
@@ -507,6 +528,26 @@ func (service *Service) analyze(
 	if !starterDiagnostics.Empty() {
 		result.diagnostics = starterDiagnostics
 		result.actions = actionsFromDiagnostics(result.diagnostics)
+		return result, nil
+	}
+	if request.styleInventory &&
+		(request.forceStyleInventory || len(result.applicationPackages) != 0) {
+		styleCatalog := compilerstyle.BuildConfiguredSourceSelectionAt(
+			request.root,
+			program,
+			resolution,
+			*request.style,
+			*request.selection,
+		)
+		if diagnostics := styleCatalog.Diagnostics(); len(diagnostics) != 0 {
+			result.diagnostics = versionDiagnostics(
+				diagnosticadapt.Style(request.root, diagnostics),
+				request.overlay,
+			)
+			result.actions = actionsFromDiagnostics(result.diagnostics)
+			return result, nil
+		}
+		result.diagnostics = diagnostic.NewSet()
 		return result, nil
 	}
 
@@ -524,11 +565,14 @@ func (service *Service) analyze(
 		request.profile != compilerstyle.ProfileNone {
 		styleCatalog := compilerstyle.Build(program, resolution, primaryProviderCatalog, request.profile)
 		if request.style != nil {
-			styleCatalog = compilerstyle.BuildConfigured(
+			styleCatalog = compilerstyle.BuildConfiguredSelectionWithModuleUniverseAt(
+				request.root,
 				program,
 				resolution,
 				primaryProviderCatalog,
 				*request.style,
+				*request.selection,
+				request.moduleUniverse,
 			)
 		}
 		if diagnostics := styleCatalog.Diagnostics(); len(diagnostics) != 0 {
@@ -555,9 +599,10 @@ func (service *Service) analyze(
 	}
 	buildOptions.ProviderCatalogs = providerCatalogs
 
-	moduleModel := modulith.Build(program, resolution)
+	moduleModel := modulith.BuildWithUniverse(program, resolution, request.moduleUniverse)
 	result.moduleModel = moduleModel
 	result.moduleGraph = summarizeModuleGraph(moduleModel)
+	buildOptions.ModuleUniverse = request.moduleUniverse
 	model := application.BuildWithOptions(
 		program,
 		resolution,
@@ -846,11 +891,40 @@ func (service *Service) analysisLoadOptions(
 		options.AuxiliaryPackages,
 		service.config.starterCatalog.EntryPointPackages()...,
 	)
-	if request.mode == AnalysisGenerate {
+	if request.selection != nil {
+		options = exactStyleSelectionOptions(options, *request.selection)
+	}
+	if request.mode == AnalysisGenerate || request.generatedEntrypoint {
 		options.PrepareGeneratedApplicationEntrypoints = true
 		options = withAnalysisBuildTag(options)
 	}
+	if request.mode == AnalysisGenerate || request.generationInventory {
+		options = exactGenerationEnvironment(options)
+	}
+	options.PromoteApplicationDependencies = request.applicationScope
 	return withOfflineModuleResolution(options, request.root)
+}
+
+func exactGenerationEnvironment(options load.Options) load.Options {
+	result := cloneLoadOptions(options)
+	if result.Env == nil {
+		result.Env = os.Environ()
+	}
+	for _, setting := range []struct {
+		name  string
+		value string
+	}{
+		{name: "GOAUTH", value: "off"},
+		{name: "GOENV", value: "off"},
+		{name: "GOEXPERIMENT", value: ""},
+		{name: "GOFIPS140", value: "off"},
+		{name: "GOPROXY", value: "off"},
+		{name: "GOSUMDB", value: "off"},
+		{name: "GOTOOLCHAIN", value: "local"},
+	} {
+		result.Env = replaceEnvironment(result.Env, setting.name, setting.value)
+	}
+	return result
 }
 
 func withOfflineModuleResolution(

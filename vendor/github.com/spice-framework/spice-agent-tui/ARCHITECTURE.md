@@ -52,6 +52,20 @@ receive is armed at a time, ordinary work and cancellation use independent
 bounded control lanes, operation tokens reject stale completions, and successful
 prompt submission commits local history exactly once.
 
+The nested `experiments/semantic-shell` module independently consumes the
+released public Session contract. Its standard-library JSONL shell preserves
+the same one-receive, serial ordinary-operation, and independent cancel lanes
+without importing Bubble Tea or terminal plugins. It is a removable Phase 7
+stress prototype, not another production presentation stack; its exact evidence
+and deletion boundary are documented in
+[`docs/semantic-shell-experiment.md`](docs/semantic-shell-experiment.md).
+Its conformance-only adapter pins the exact Agent source commit that defines
+the engine 1.2/1.3 compatibility matrix. Linux and Windows tests launch two
+source-built child peers over current-user local IPC and drive the unchanged
+JSONL submit/respond/cancel path through public Agent client contracts. This
+does not give the TUI a transport, change the root `compatibility.json` null
+client selection, or establish released-binary N/N-1 compatibility.
+
 ## Presentation
 
 The fixed renderer is pure: a semantic snapshot, bounded size, and immutable
@@ -73,12 +87,37 @@ operations before returning a normal exit.
 The public `tuittest` package is the deterministic application-test seam. It
 drives the real private model and renderer without a PTY, daemon, network, or
 Bubble Tea event loop; exposes normalized styled, exact plain, cursor, and
-semantic captures; and requires explicit golden refresh. Its synchronous
-driver applies session state through validated `InjectUpdate` calls and never
+semantic captures; and requires explicit golden refresh. A canonical strict
+JSON `Trace` is an immutable tagged interaction recording. Replay constructs
+two fresh models, applies every event to both, validates independent size,
+cell-width, cursor, revision, accessibility, and alternate-screen invariants,
+and returns evidence only when the complete `Screen` state and performed
+intents match. Every event has a SHA-256 full-screen digest; named lifecycle
+checkpoints use committed styled, plain, and semantic-report goldens. Its
+synchronous driver applies session state through validated `InjectUpdate`
+calls and never
 arms a blocking receive command. Injected Session values serve only effect
 operations, are cancelled on quit, close, or timeout, and cannot turn a timed
 out operation into apparent success. `ScriptSession` separately remains a
 cancellation-aware receive queue for full shell/facade tests.
+
+Accessibility evidence requires explicit plain-text status labels and complete
+semantic status messages, rejects terminal control strings, and drives the
+entire lifecycle through injected keyboard bindings. Shipped theme roles are
+audited against documented light/dark backgrounds at the WCAG ordinary-text
+threshold. A pinned embedded-font renderer creates deterministic PNGs only as
+short-lived human CI artifacts; it neither interprets styled terminal bytes nor
+replaces Screen digests, cell goldens, VT state, or native terminal evidence.
+
+The same package owns an output-only bounded virtual terminal. It interprets
+real VT bytes into the existing immutable `Screen` contract, including Unicode
+cells, cursor visibility and position, alternate-screen transitions, and
+resize. Writes are transcript-bounded and event-driven screen waits use caller
+context without sleeps. Repository-only native acceptance composes that
+emulator with the current test executable under Unix PTY or Windows ConPTY and
+process-group/Job Object cleanup. Arbitrary child-process ownership is not
+added to the public TUI API or production runtime; distribution acceptance
+still owns the shipped executable.
 
 `terminal.NewShell` accepts only public interfaces and immutable values. It
 validates the initial view, snapshots the `Theme` SPI through `NewTheme`, copies
@@ -110,6 +149,23 @@ an actual terminal normal exit through the explicit
 `NewApplication` → `Start` → `Shell.Run` → `Stop` workflow, and shutdown.
 Generated Go is not hand-edited. The generic generated `Application.Run` is not
 the terminal runner; the distribution owns that explicit orchestration.
+
+The handwritten composition fixture is the repository's exact application-code
+boundary for the canonical schema-2 `java-structured` profile. Its providers
+declare singleton ownership explicitly. The style source universe also names
+the real `internal/spicegen/compositionproof` generated root so generated
+ownership is verified without treating generated Go as handwritten input.
+This bounded adoption does not mechanically reshape the public runtime, private
+presentation, `tuittest`, auto-configuration, vendored sources, or the nested
+historical experiment.
+
+Toolchain preview4 schema-2 source roots cannot name the Go module-root package
+`.`. Therefore `moduleOwnership` is the sole inapplicable style rule for this
+nested fixture: enabling it would make the legitimate import of the root TUI
+module unknown to the configured selection. The separate Spice composition
+gate always loads both `.` and the fixture, and remains the authoritative
+Modulith proof for that dependency. Every other applicable schema-2 rule stays
+at error severity.
 
 ## Annotation SDK
 

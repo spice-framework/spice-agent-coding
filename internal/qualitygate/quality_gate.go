@@ -339,6 +339,7 @@ func (owner qualityGate) validateToolPins(path string) error {
 	for _, pin := range []string{
 		"github.com/golangci/golangci-lint/v2 v2.12.2",
 		"github.com/securego/gosec/v2 v2.28.0",
+		"github.com/spice-framework/toolchain " + toolchainVersion,
 		"go.uber.org/nilaway v0.0.0-20260724203407-f4f8ac24c032",
 		"golang.org/x/tools v0.48.0", "golang.org/x/vuln v1.1.4", "mvdan.cc/gofumpt v0.10.0",
 	} {

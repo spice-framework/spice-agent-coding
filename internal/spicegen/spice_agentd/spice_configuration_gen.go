@@ -13,6 +13,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.openai.api-key",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "OPENAI_API_KEY",
 			Required:    true,
 			Secret:      true,
@@ -20,6 +21,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.openai.base-url",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "OPENAI_BASE_URL",
 			Default:     "https://api.openai.com/v1",
 			HasDefault:  true,
@@ -27,16 +29,19 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.openai.organization",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "OPENAI_ORGANIZATION",
 		},
 		spiceconfig.Property{
 			Key:         "agent.openai.project",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "OPENAI_PROJECT",
 		},
 		spiceconfig.Property{
 			Key:         "agent.openai.timeout",
 			Kind:        spiceconfig.KindDuration,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "OPENAI_TIMEOUT",
 			Default:     "2m",
 			HasDefault:  true,
@@ -44,6 +49,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.openai.max-retries",
 			Kind:        spiceconfig.KindInteger,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "OPENAI_MAX_RETRIES",
 			Default:     "0",
 			HasDefault:  true,
@@ -51,17 +57,20 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.model",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "OPENAI_MODEL",
 			Required:    true,
 		},
 		spiceconfig.Property{
 			Key:         "agent.run-authority-directory",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUN_AUTHORITY_DIRECTORY",
 		},
 		spiceconfig.Property{
 			Key:         "agent.logging.mailbox-capacity",
 			Kind:        spiceconfig.KindInteger,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_LOGGING_MAILBOX_CAPACITY",
 			Default:     "1024",
 			HasDefault:  true,
@@ -69,6 +78,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.logging.include-progress",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_LOGGING_INCLUDE_PROGRESS",
 			Default:     "false",
 			HasDefault:  true,
@@ -76,6 +86,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.logging.readiness-impact",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_LOGGING_READINESS_IMPACT",
 			Default:     "false",
 			HasDefault:  true,
@@ -83,11 +94,13 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.required",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_REQUIRED",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.id",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_ID",
 			Default:     "runtime-tool",
 			HasDefault:  true,
@@ -95,66 +108,79 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.path",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_PATH",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.sha256",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_SHA256",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.manifest-name",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_MANIFEST_NAME",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.manifest-version",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_MANIFEST_VERSION",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.working-directory",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_WORKING_DIRECTORY",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.capabilities.filesystem-read",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_FILESYSTEM_READ",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.capabilities.filesystem-write",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_FILESYSTEM_WRITE",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.capabilities.process-execute",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_PROCESS_EXECUTE",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.capabilities.network-access",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_NETWORK_ACCESS",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.capabilities.secrets-read",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_SECRETS_READ",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.capabilities.environment-read",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_ENVIRONMENT_READ",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.capabilities.environment-write",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_ENVIRONMENT_WRITE",
 		},
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.timeouts.startup",
 			Kind:        spiceconfig.KindDuration,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_STARTUP_TIMEOUT",
 			Default:     "10s",
 			HasDefault:  true,
@@ -162,6 +188,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.timeouts.call",
 			Kind:        spiceconfig.KindDuration,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_CALL_TIMEOUT",
 			Default:     "2m",
 			HasDefault:  true,
@@ -169,6 +196,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.timeouts.drain",
 			Kind:        spiceconfig.KindDuration,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_DRAIN_TIMEOUT",
 			Default:     "10s",
 			HasDefault:  true,
@@ -176,6 +204,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.timeouts.shutdown",
 			Kind:        spiceconfig.KindDuration,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_SHUTDOWN_TIMEOUT",
 			Default:     "10s",
 			HasDefault:  true,
@@ -183,6 +212,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.runtime-plugin.timeouts.containment",
 			Kind:        spiceconfig.KindDuration,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/daemon",
 			Environment: "SPICE_AGENT_RUNTIME_PLUGIN_CONTAINMENT_TIMEOUT",
 			Default:     "5s",
 			HasDefault:  true,
@@ -190,6 +220,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.workspace",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/workspace",
 			Environment: "SPICE_AGENT_WORKSPACE",
 			Default:     ".",
 			HasDefault:  true,

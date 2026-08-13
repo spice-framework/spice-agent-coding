@@ -67,7 +67,7 @@ github.com/openai/openai-go/v3/shared/constant
 # github.com/rivo/uniseg v0.4.7
 ## explicit; go 1.18
 github.com/rivo/uniseg
-# github.com/spice-framework/spice v0.1.0-preview.2.0.20260811041952-0e79bc4f3b29
+# github.com/spice-framework/spice v0.1.0-preview.4
 ## explicit; go 1.26.0
 github.com/spice-framework/spice/annotation
 github.com/spice-framework/spice/annotation/async
@@ -109,7 +109,7 @@ github.com/spice-framework/spice/security
 github.com/spice-framework/spice/starter
 github.com/spice-framework/spice/validation
 github.com/spice-framework/spice/web
-# github.com/spice-framework/spice-agent v0.1.0-preview.6.0.20260811054602-8fd9ba5f8a90
+# github.com/spice-framework/spice-agent v0.1.0-preview.7
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent/agent
 github.com/spice-framework/spice-agent/annotation/agent
@@ -149,7 +149,7 @@ github.com/spice-framework/spice-agent-provider-openai/autoconfigure
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-tools-coding
 github.com/spice-framework/spice-agent-tools-coding/autoconfigure
-# github.com/spice-framework/spice-agent-tui v0.1.0-preview.1
+# github.com/spice-framework/spice-agent-tui v0.1.0-preview.2
 ## explicit; go 1.26.0
 github.com/spice-framework/spice-agent-tui
 github.com/spice-framework/spice-agent-tui/annotation/ui
@@ -159,7 +159,7 @@ github.com/spice-framework/spice-agent-tui/cmd/spice-agent-tui-annotations
 github.com/spice-framework/spice-agent-tui/internal/annotationtool
 github.com/spice-framework/spice-agent-tui/internal/presentation
 github.com/spice-framework/spice-agent-tui/terminal
-# github.com/spice-framework/toolchain v0.1.0-preview.2.0.20260811055955-07268323c5f9
+# github.com/spice-framework/toolchain v0.1.0-preview.7
 ## explicit; go 1.26.0
 github.com/spice-framework/toolchain/cmd/spice
 github.com/spice-framework/toolchain/cmd/spice-annotation-core

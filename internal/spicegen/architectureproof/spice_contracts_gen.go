@@ -11,6 +11,7 @@ import (
 
 	architectureproof "github.com/spice-framework/spice-agent-coding/internal/architectureproof"
 	spiceArchitectureproof "github.com/spice-framework/spice-agent-coding/internal/spicegen/architectureproof/sources/internal_/architectureproof"
+	workspace "github.com/spice-framework/spice-agent-coding/internal/workspace"
 	coding "github.com/spice-framework/spice-agent-tools-coding"
 	agent "github.com/spice-framework/spice-agent/agent"
 	interaction "github.com/spice-framework/spice-agent/interaction"
@@ -64,6 +65,8 @@ type Components struct {
 	ArchitectureProofEngine *agent.Engine
 	// Proof is bean "proof".
 	Proof *architectureproof.Proof
+	// Properties is bean "Properties".
+	Properties workspace.Properties
 }
 
 // BeanOverrides provides compile-time-typed singleton replacements.

@@ -13,16 +13,19 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:        "agent.terminal.mode",
 			Kind:       spiceconfig.KindString,
+			Module:     "github.com/spice-framework/spice-agent-coding/internal/terminal",
 			Default:    "managed",
 			HasDefault: true,
 		},
 		spiceconfig.Property{
-			Key:  "agent.terminal.endpoint",
-			Kind: spiceconfig.KindString,
+			Key:    "agent.terminal.endpoint",
+			Kind:   spiceconfig.KindString,
+			Module: "github.com/spice-framework/spice-agent-coding/internal/terminal",
 		},
 		spiceconfig.Property{
 			Key:         "agent.terminal.accessible",
 			Kind:        spiceconfig.KindBoolean,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/terminal",
 			Environment: "SPICE_AGENT_TERMINAL_ACCESSIBLE",
 			Default:     "false",
 			HasDefault:  true,
@@ -30,6 +33,7 @@ func ConfigurationSchema() (spiceconfig.Schema, error) {
 		spiceconfig.Property{
 			Key:         "agent.workspace",
 			Kind:        spiceconfig.KindString,
+			Module:      "github.com/spice-framework/spice-agent-coding/internal/workspace",
 			Environment: "SPICE_AGENT_WORKSPACE",
 			Default:     ".",
 			HasDefault:  true,
