@@ -1,6 +1,6 @@
 # Release history
 
-## `v0.1.0-preview.5` candidate
+## `v0.1.0-preview.5`
 
 Preview 5 advances only the inert distribution identity and exact reusable
 release authority. It retains the published dependency graph, generated
@@ -8,13 +8,25 @@ applications, compatibility contract, release payloads, binary packages,
 build identity, six targets, and native Linux PTY and Windows ConPTY
 installed-byte acceptance unchanged.
 
-The candidate is authorized independently by Development commit
+The release is authorized independently by Development commit
 `9190274257593d4840dd64ba78e13cd6d1e92e46`, Toolchain commit
 `d9d90c66a30f4df85439c5bbd91a88bd3df2215f`, and organization workflow commit
 `fd2c3bef36eebff51796bedf96cfd6d775343d52`. The reviewed Coding product line
 includes PTY/ConPTY acceptance stabilization through commit
-`fcbe54aee8a79448487214c558ffbfad2ae5df22`. This section does not claim that
-an immutable preview 5 tag or release exists.
+`fcbe54aee8a79448487214c558ffbfad2ae5df22`.
+
+The immutable annotated tag object
+`5422abdaf5f60ad0acfceaaaf8ef27b6c3b9dba7` points to candidate commit
+`96fefab2cfcd4ff849582e0d4d328ec8c782f16d`. Release workflow run
+`31739274854` completed validation, deterministic rendering, independent
+verification, installed-byte execution on Linux and Windows, keyless
+attestation, provenance authentication, and protected publication. The
+immutable non-draft prerelease contains the exact six platform archives,
+release metadata, SPDX SBOM, checksums, and portable Sigstore provenance
+bundle: ten assets in total. The public module is recorded by the Go proxy and
+checksum database as
+`h1:4GJFiOKIFV3cmfe+gW6suk+GIU2sGThVb2gDR22zYMI=` with go.mod sum
+`h1:bnoTIdkkKOs/pbO+NqtR6Jj/fRqwuxVE44Y24pVCb/8=`.
 
 ## `v0.1.0-preview.4`
 

@@ -65,6 +65,21 @@ process tree. This process-heavy workflow runs in `make check` and `make
 verify`; `make fast` retains the sub-30-second edit-loop budget by excluding
 only this package.
 
+A second process-heavy acceptance starts the exact `dev-daemon` and
+`dev-terminal` command lines simultaneously from one isolated copy of the
+production repository. Both use the vendored Spice CLI, committed generated
+package-main targets, vendor-only module graph, and acceptance-tag endpoint and
+provider fixtures. The test records both supervisor PIDs, the protected daemon
+process identity, and the terminal candidate PID plus birth identity. An
+invalid daemon-only annotation edit must leave the same reachable daemon and
+the same terminal supervisor and candidate running. Restoring valid daemon
+source must replace only the daemon candidate. The same Bubble Tea process then
+renders its fresh-session reconnect, completes another deterministic provider
+run, and retains both prompt-history entries without replaying a terminal event.
+Cleanup stops and reaps both candidate trees, withdraws the endpoint, and
+requires the copied source and generated ownership bytes to match their initial
+hashes.
+
 `internal/architecturee2e` separately exercises both generated application
 graphs over authenticated local IPC. Its reconnect path holds the final
 provider response while ownership changes, then proves compiled and
