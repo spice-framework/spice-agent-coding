@@ -23,7 +23,7 @@ func (owner qualityGate) execute() int {
 	mode := flag.String("mode", "verify", "verification mode: tools-bootstrap, fast, check, coverage, fmt, verify, release-artifacts, or opencode-eval")
 	artifacts := flag.String("artifacts", "", "absolute independently verified release-subject directory")
 	flag.Parse()
-	ctx, cancel := context.WithTimeout(context.Background(), (qualityGate{}).qualityGateTimeout(*mode))
+	ctx, cancel := (qualityGate{}).qualityGateContext(context.Background(), *mode)
 	defer cancel()
 	root, err := (commandRunner{}).repositoryRoot()
 	if err == nil {
@@ -39,10 +39,18 @@ func (owner qualityGate) execute() int {
 }
 
 func (owner qualityGate) qualityGateTimeout(mode string) time.Duration {
-	if mode == "opencode-eval" {
+	switch mode {
+	case "verify":
+		return 30 * time.Minute
+	case "opencode-eval":
 		return maximumOpenCodeEvaluationDuration + time.Minute
+	default:
+		return 15 * time.Minute
 	}
-	return 15 * time.Minute
+}
+
+func (owner qualityGate) qualityGateContext(parent context.Context, mode string) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(parent, owner.qualityGateTimeout(mode))
 }
 
 func (owner qualityGate) run(ctx context.Context, root, mode string) error {
@@ -138,7 +146,27 @@ func (owner qualityGate) checkRepositoryContract(root string) error {
 	if err := (qualityGate{}).checkDevelopmentEntrypoints(root); err != nil {
 		return err
 	}
+	if err := (qualityGate{}).checkCIWorkflow(root); err != nil {
+		return err
+	}
 	return (qualityGate{}).checkReleaseWorkflow(root)
+}
+
+func (owner qualityGate) checkCIWorkflow(root string) error {
+	content, err := os.ReadFile(filepath.Join(root, ".github", "workflows", "ci.yml")) // #nosec G304 -- fixed repository workflow path.
+	if err != nil {
+		return fmt.Errorf("read CI workflow: %w", err)
+	}
+	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
+	const qualityBoundary = `  quality:
+    name: Quality (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+`
+	if strings.Count(normalized, qualityBoundary) != 1 {
+		return errors.New("CI workflow Quality job must have the exact 40-minute hosted boundary")
+	}
+	return nil
 }
 
 func (owner qualityGate) checkDevelopmentEntrypoints(root string) error {

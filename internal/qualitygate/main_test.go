@@ -10,7 +10,97 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestQualityGateTimeoutsCoverEveryModeAndUnknown(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		mode string
+		want time.Duration
+	}{
+		{mode: "tools-bootstrap", want: 15 * time.Minute},
+		{mode: "fast", want: 15 * time.Minute},
+		{mode: "check", want: 15 * time.Minute},
+		{mode: "coverage", want: 15 * time.Minute},
+		{mode: "fmt", want: 15 * time.Minute},
+		{mode: "verify", want: 30 * time.Minute},
+		{mode: "release-artifacts", want: 15 * time.Minute},
+		{mode: "opencode-eval", want: maximumOpenCodeEvaluationDuration + time.Minute},
+		{mode: "", want: 15 * time.Minute},
+		{mode: "unknown", want: 15 * time.Minute},
+	} {
+		if got := (qualityGate{}).qualityGateTimeout(test.mode); got != test.want {
+			t.Errorf("qualityGateTimeout(%q) = %s, want %s", test.mode, got, test.want)
+		}
+	}
+}
+
+func TestQualityGateContextPreservesDeadlineAndCancellation(t *testing.T) {
+	t.Parallel()
+	before := time.Now().Add(30 * time.Minute)
+	ctx, cancel := (qualityGate{}).qualityGateContext(context.Background(), "verify")
+	deadline, ok := ctx.Deadline()
+	after := time.Now().Add(30 * time.Minute)
+	if !ok || deadline.Before(before) || deadline.After(after) {
+		cancel()
+		t.Fatalf("verify deadline = %v, want within [%v, %v]", deadline, before, after)
+	}
+	cancel()
+	<-ctx.Done()
+	if !errors.Is(ctx.Err(), context.Canceled) {
+		t.Fatalf("directly cancelled context error = %v", ctx.Err())
+	}
+
+	parent, cancelParent := context.WithCancel(context.Background())
+	child, cancelChild := (qualityGate{}).qualityGateContext(parent, "fast")
+	defer cancelChild()
+	cancelParent()
+	<-child.Done()
+	if !errors.Is(child.Err(), context.Canceled) {
+		t.Fatalf("parent-cancelled context error = %v", child.Err())
+	}
+}
+
+func TestCIWorkflowRequiresExactHostedQualityBoundary(t *testing.T) {
+	t.Parallel()
+	const valid = `name: CI
+jobs:
+  quality:
+    name: Quality (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps: []
+`
+	for _, test := range []struct {
+		name, content string
+		wantErr       bool
+	}{
+		{name: "valid", content: valid},
+		{name: "missing", content: "name: CI\njobs: {}\n", wantErr: true},
+		{name: "stale timeout", content: strings.Replace(valid, "timeout-minutes: 40", "timeout-minutes: 20", 1), wantErr: true},
+		{name: "unbounded", content: strings.Replace(valid, "    timeout-minutes: 40\n", "", 1), wantErr: true},
+		{name: "wrong job", content: strings.Replace(valid, "  quality:\n", "  another:\n", 1), wantErr: true},
+		{name: "wrong runner expression", content: strings.Replace(valid, "runs-on: ${{ matrix.os }}", "runs-on: ubuntu-latest", 1), wantErr: true},
+		{name: "duplicate", content: valid + strings.TrimPrefix(valid, "name: CI\njobs:\n"), wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			writeFile(t, root, ".github/workflows/ci.yml", test.content)
+			err := (qualityGate{}).checkCIWorkflow(root)
+			if test.wantErr && err == nil {
+				t.Fatal("checkCIWorkflow() error = nil")
+			}
+			if !test.wantErr && err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+	if err := (qualityGate{}).checkCIWorkflow(t.TempDir()); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("missing workflow error = %v", err)
+	}
+}
 
 func TestFormattingBatchesPreserveEveryFileWithinWindowsCommandBounds(t *testing.T) {
 	t.Parallel()

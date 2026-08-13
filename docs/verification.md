@@ -27,6 +27,11 @@ not an older `go` that may appear first on `PATH`.
   zero-statement, process-heavy acceptance packages: `make check`, shuffled,
   race, and vendor-offline gates already execute them, and their child-process
   work cannot contribute in-process statement coverage.
+  The repository-owned `verify` mode has one fail-closed 30-minute outer
+  deadline, and the hosted Quality job has a 40-minute boundary that includes
+  dependency bootstrap. Other ordinary quality modes retain their 15-minute
+  outer deadline; the separate OpenCode evaluator retains its own bounded
+  evaluation deadline.
 - `make verify-release` is the unconditional alias consumed by the central
   distribution workflow. The repository identity gate requires this exact
   alias before any release tag is considered valid.

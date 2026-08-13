@@ -65,9 +65,6 @@ func TestOpenCodeCatalogPinsExactPackagesAndFreeModels(t *testing.T) {
 		!strings.Contains(auditPrompt, "internal/terminal/terminal_managed_connector_bean.go") {
 		t.Fatal("OpenCode objective prompts lost required facts")
 	}
-	if (qualityGate{}).qualityGateTimeout("verify") != 15*time.Minute || (qualityGate{}).qualityGateTimeout("opencode-eval") != maximumOpenCodeEvaluationDuration+time.Minute {
-		t.Fatal("OpenCode outer deadline drifted")
-	}
 	if cases[0].MaximumSteps != 5 || cases[0].MaximumTools != 8 || cases[1].MaximumSteps != 6 || cases[1].MaximumTools != 12 {
 		t.Fatal("OpenCode bounded case caps drifted")
 	}
