@@ -232,9 +232,7 @@ func TestReleaseArtifactGateUsesOneOfflineBuildTaggedTest(t *testing.T) {
 func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 	t.Parallel()
 	const (
-		stalePreview2WorkflowCommit  = "7f41a3ca854d05dca532eb8fc9a1a9a8315ee55c"
-		stalePreview3WorkflowCommit  = "a8f9cc6ffd3a2744c5cae3b52c05e6e91cbc875e"
-		immediatePriorWorkflowCommit = "e1f1dad30f62387bb11d73f94c626fb20d9ca43e"
+		stalePreview4WorkflowCommit = "3bf54b986b68d386a90e418776b35ca08f234d20"
 	)
 	valid := (qualityGate{}).expectedReleaseWorkflow()
 	for _, test := range []struct {
@@ -245,16 +243,8 @@ func TestReleaseWorkflowRequiresExactKeylessDistributionBoundary(t *testing.T) {
 		{name: "valid", workflow: valid},
 		{name: "missing", omit: true},
 		{
-			name:     "immediate prior authority",
-			workflow: strings.ReplaceAll(valid, releaseWorkflowCommit, immediatePriorWorkflowCommit),
-		},
-		{
-			name:     "stale preview 3 authority",
-			workflow: strings.ReplaceAll(valid, releaseWorkflowCommit, stalePreview3WorkflowCommit),
-		},
-		{
-			name:     "stale preview 2 authority",
-			workflow: strings.ReplaceAll(valid, releaseWorkflowCommit, stalePreview2WorkflowCommit),
+			name:     "stale preview 4 authority",
+			workflow: strings.ReplaceAll(valid, releaseWorkflowCommit, stalePreview4WorkflowCommit),
 		},
 		{name: "wrong workflow", workflow: strings.Replace(valid, "go-distribution-release.yml", "go-module-release.yml", 1)},
 		{name: "wrong pin", workflow: strings.Replace(valid, releaseWorkflowCommit, strings.Repeat("0", 40), 1)},

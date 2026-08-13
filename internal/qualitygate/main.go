@@ -12,7 +12,7 @@ const (
 	agentTUIVersion       = "v0.1.0-preview.2"
 	providerVersion       = "v0.1.0-preview.1"
 	codingToolsVersion    = "v0.1.0-preview.1"
-	releaseWorkflowCommit = "3bf54b986b68d386a90e418776b35ca08f234d20"
+	releaseWorkflowCommit = "fd2c3bef36eebff51796bedf96cfd6d775343d52"
 )
 
 func main() {

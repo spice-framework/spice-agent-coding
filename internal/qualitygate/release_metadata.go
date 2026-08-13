@@ -13,7 +13,7 @@ import (
 const (
 	releaseProfile    = "go-distribution-v1"
 	releaseRepository = "spice-agent-coding"
-	releaseVersion    = "v0.1.0-preview.4"
+	releaseVersion    = "v0.1.0-preview.5"
 )
 
 type releaseMetadata struct {

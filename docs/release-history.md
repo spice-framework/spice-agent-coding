@@ -1,5 +1,21 @@
 # Release history
 
+## `v0.1.0-preview.5` candidate
+
+Preview 5 advances only the inert distribution identity and exact reusable
+release authority. It retains the published dependency graph, generated
+applications, compatibility contract, release payloads, binary packages,
+build identity, six targets, and native Linux PTY and Windows ConPTY
+installed-byte acceptance unchanged.
+
+The candidate is authorized independently by Development commit
+`9190274257593d4840dd64ba78e13cd6d1e92e46`, Toolchain commit
+`d9d90c66a30f4df85439c5bbd91a88bd3df2215f`, and organization workflow commit
+`fd2c3bef36eebff51796bedf96cfd6d775343d52`. The reviewed Coding product line
+includes PTY/ConPTY acceptance stabilization through commit
+`fcbe54aee8a79448487214c558ffbfad2ae5df22`. This section does not claim that
+an immutable preview 5 tag or release exists.
+
 ## `v0.1.0-preview.4`
 
 Preview 4 advances only the inert distribution identity and exact reusable
